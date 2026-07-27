@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "desh-landing-v2",
+  "compatibility_date": "2026-07-27",
+
+  // Assets-only Worker: `next build` with output:"export" emits the whole
+  // site to out/, so there is no server script to run — Cloudflare serves
+  // the static files directly.
+  "assets": {
+    "directory": "./out",
+    // Serve /path as /path.html, matching Next's exported file layout.
+    "html_handling": "auto-trailing-slash",
+    // Exported 404.html is returned for unmatched routes.
+    "not_found_handling": "404-page"
+  }
+}

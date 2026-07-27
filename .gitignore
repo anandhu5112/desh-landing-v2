@@ -42,3 +42,6 @@ next-env.d.ts
 
 # lockfile conflict guard: this project standardises on npm
 yarn.lock
+
+# static export output
+/out/
