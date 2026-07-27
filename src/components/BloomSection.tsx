@@ -132,6 +132,13 @@ export default function BloomSection() {
     // React does not reliably reflect the muted attribute onto the property.
     video.muted = true;
 
+    // The <video> is server-rendered, so the browser may finish loading before
+    // React hydrates and attaches onLoadedData — on a warm cache that is the
+    // normal case. Missing that one event would leave the bloom at opacity 0
+    // forever, invisible against the black field. Catch it here instead of
+    // trusting the event alone. HAVE_CURRENT_DATA (2) means a frame exists.
+    if (video.readyState >= 2) setBloomVisible(true);
+
     let frame = requestAnimationFrame(function tick() {
       frame = requestAnimationFrame(tick);
 
