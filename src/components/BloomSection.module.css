@@ -1,0 +1,372 @@
+/* ============================================================
+   BLOOM SECTION — SIP calculator driving one continuous bloom.
+
+   Copied, not shared. Same house rule as GrowSection/UsSection:
+   this file duplicates nothing and is duplicated by nothing, so
+   editing it cannot disturb a section already signed off.
+
+   Inverted surface: white type on black. The house rule holds —
+   --color-ink supplies the black field, the whites are local
+   --bloom-* variables scoped to .section. Never --foreground,
+   which flips in dark mode.
+   ============================================================ */
+
+.section {
+  --bloom-surface: var(--color-ink, #000000);
+  --bloom-ink: #ffffff;
+  --bloom-muted: rgba(255, 255, 255, 0.52);
+  --bloom-faint: rgba(255, 255, 255, 0.3);
+  --bloom-hairline: rgba(255, 255, 255, 0.1);
+  --bloom-track: rgba(255, 255, 255, 0.13);
+
+  position: relative;
+  width: 100%;
+  /* min-height rather than a fixed 100vh: house typography is considerably
+     larger than the transfer doc assumed, so the panel is allowed to grow
+     instead of clipping. This section scrolls normally — it is not pinned. */
+  min-height: 100vh;
+  margin: 0;
+  padding-block: 96px;
+  background: var(--bloom-surface);
+  color: var(--bloom-ink);
+  font-family: var(--font-inter), sans-serif;
+  line-height: 1.5;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Copy sits on the real 12-column grid, same as every other section. */
+.content {
+  grid-column: 1 / span 5;
+  display: flex;
+  flex-direction: column;
+  /* House 40px rhythm between heading / controls / readout / note. */
+  gap: 40px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--bloom-faint);
+  margin: 0 0 -24px;
+}
+
+/* House heading: DM Sans 64px / line-height 1 / weight 400. */
+.title {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--bloom-ink);
+  margin: 0;
+}
+
+.title em {
+  font-style: normal;
+  color: var(--bloom-muted);
+}
+
+/* ---------- SLIDERS ---------- */
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.control {
+  position: relative;
+}
+
+.controlHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+/* House body size. */
+.controlLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--bloom-muted);
+}
+
+.controlValue {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--bloom-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+/* --fill is written per-slider as an inline custom property from the component. */
+.slider::-webkit-slider-runnable-track {
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.92) 0 var(--fill, 0%),
+    var(--bloom-track) var(--fill, 0%) 100%
+  );
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  margin-top: -6.5px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 0;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.16);
+  transition: box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.slider:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
+}
+.slider:active::-webkit-slider-thumb {
+  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.14);
+}
+.slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.18);
+}
+
+.slider::-moz-range-track {
+  height: 2px;
+  border-radius: 2px;
+  background: var(--bloom-track);
+}
+
+.slider::-moz-range-progress {
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 0;
+  transition: box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.slider:hover::-moz-range-thumb {
+  box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
+}
+.slider:active::-moz-range-thumb {
+  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.14);
+}
+
+/* ---------- READOUT ---------- */
+
+.readout {
+  /* Shorthand on purpose — it kills the UA <dl> bottom margin. */
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--bloom-hairline);
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--bloom-hairline);
+}
+
+.row dt {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--bloom-faint);
+  margin: 0;
+}
+
+.row dd {
+  margin: 0;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--bloom-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowStrong dd {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.final {
+  padding-top: 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.finalLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bloom-faint);
+  margin: 0 0 8px;
+}
+
+/* The one number the section exists for. Between house body (16) and
+   heading (64) so it reads as the answer without outshouting the title. */
+.finalValue {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
+
+.finalCompact {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--bloom-faint);
+  font-variant-numeric: tabular-nums;
+  padding-bottom: 6px;
+  white-space: nowrap;
+}
+
+/* House caption size, matching GrowSection's logo caption. */
+.note {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.24);
+  max-width: 56ch;
+}
+
+/* ---------- BLOOM ---------- */
+
+/* Deliberately outside the grid, per the brief: the flower is full-bleed to
+   the right edge rather than confined to a column. */
+.stage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bloom {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  opacity: 0;
+  transition: opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.bloomReady {
+  opacity: 1;
+}
+
+/* The video frame is matte black but the panel edge is a hard cut; these
+   feather it so the bloom sits in the field rather than in a box. */
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, #000 0%, rgba(0, 0, 0, 0) 14%),
+    linear-gradient(to left, #000 0%, rgba(0, 0, 0, 0) 10%),
+    linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 10%),
+    linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 10%);
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (max-width: 1024px) {
+  .section {
+    padding-block: 64px;
+    display: block;
+  }
+
+  .content {
+    grid-column: 1 / span 12;
+    gap: 32px;
+  }
+
+  .title {
+    font-size: 40px;
+  }
+
+  .finalValue {
+    font-size: 40px;
+  }
+
+  /* Stacked: the bloom becomes a banner above the copy rather than a column. */
+  .stage {
+    position: relative;
+    width: 100%;
+    height: 46vh;
+    min-height: 280px;
+    margin-bottom: 40px;
+  }
+
+  .stage::after {
+    background:
+      linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 12%),
+      linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 12%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloom {
+    transition: none;
+  }
+}
