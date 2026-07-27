@@ -1,0 +1,122 @@
+/*
+ * Mirrors GrowSection.module.css exactly so the two horizontal panels are
+ * visually identical. Duplicated rather than shared, so editing this file can
+ * never affect the already-signed-off India section.
+ */
+
+.card {
+  grid-column: 1 / span 12;
+  background: #ffffff;
+  padding: 64px;
+  display: grid;
+  grid-template-columns: repeat(var(--grid-columns), 1fr);
+  column-gap: var(--grid-gutter);
+  align-items: center;
+  pointer-events: auto;
+}
+
+.text {
+  grid-column: 1 / span 5;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.heading {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.subtext {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+/* Occupies the same slot the India card's logo row does */
+.points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.point {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-ink);
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.tick {
+  color: var(--color-ink);
+  flex: 0 0 auto;
+}
+
+.cta {
+  height: 40px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #000000;
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.media {
+  grid-column: 7 / span 6;
+  display: flex;
+  justify-content: center;
+}
+
+.video {
+  width: 100%;
+  max-width: 540px;
+  /* Source is 1440x1440. Declared up front so the card reserves the right
+     height before metadata loads — otherwise the box falls back to the 2:1
+     default and the card visibly jumps when the video resolves. Also matches
+     the India panel's 540px sphere, keeping both cards the same height. */
+  aspect-ratio: 1 / 1;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+@media (max-width: 1024px) {
+  .card {
+    padding: 40px;
+  }
+
+  .text,
+  .media {
+    grid-column: 1 / span 12;
+  }
+
+  .heading {
+    font-size: 40px;
+  }
+
+  .media {
+    margin-top: 40px;
+  }
+}

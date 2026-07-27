@@ -1,0 +1,193 @@
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 800px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.heroBaseImg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 5;
+}
+
+.heroRevealImg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.revealCanvas {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.zoomWrap {
+  position: absolute;
+  inset: 0;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+/* Content overlay — sibling of .zoomWrap so it is never scaled by the zoom */
+.heroContent {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  padding-top: 140px;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+.heroHeading {
+  grid-column: 1 / span 6;
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--color-ink);
+  pointer-events: auto;
+}
+
+.heroAside {
+  grid-column: 9 / span 4;
+}
+
+.heroSubtext {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-ink);
+  pointer-events: auto;
+}
+
+.heroCta {
+  margin-top: 40px;
+  height: 40px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  background: #000000;
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* Third section — siblings of .zoomWrap so the 1.6x zoom never scales them */
+.growBg {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.growCard {
+  position: absolute;
+  inset: 0;
+  z-index: 13;
+  display: flex;
+  align-items: center;
+  /* Pre-hydration guard only: GSAP sets opacity to 1 on mount and never
+     animates it, so the card slides in at full opacity. Do NOT hide this with
+     a transform — GSAP would parse it into `y` and stack it with yPercent. */
+  opacity: 0;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* Horizontal track holding the India and US panels side by side.
+   align-self overrides .growCard's align-items:center so the track fills
+   height; each panel then handles its own vertical centring. */
+.hTrack {
+  display: flex;
+  width: 200%;
+  height: 100%;
+  align-self: stretch;
+  /* The track is itself a flex item of .growCard, so without this it would
+     shrink straight back to 100% and both panels would render half-width. */
+  flex-shrink: 0;
+  will-change: transform;
+}
+
+.hPanel {
+  flex: 0 0 50%;
+  width: 50%;
+  display: flex;
+  align-items: center;
+}
+
+/* Second-section statement — also a sibling of .zoomWrap, so it is never scaled */
+.heroOutro {
+  position: absolute;
+  inset: 0;
+  z-index: 11;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+/* Positioned so AnimatePresence's popLayout exit resolves against this box */
+.heroOutroInner {
+  position: relative;
+  grid-column: 3 / span 8;
+}
+
+/* Each reveal renders as its own line, so the break is explicit rather
+   than left to text wrapping */
+.heroOutroLine {
+  display: block;
+}
+
+.heroOutroText {
+  font-family: var(--font-dm-sans), sans-serif;
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--color-ink);
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
+  .heroOutroInner {
+    grid-column: 1 / span 12;
+  }
+
+  .heroOutroText {
+    font-size: 40px;
+  }
+
+  .heroContent {
+    padding-top: 96px;
+  }
+
+  .heroHeading {
+    grid-column: 1 / span 12;
+    font-size: 40px;
+  }
+
+  .heroAside {
+    grid-column: 1 / span 12;
+    margin-top: 32px;
+  }
+}
