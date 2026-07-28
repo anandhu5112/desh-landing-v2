@@ -3,11 +3,20 @@
   "name": "desh-landing-v2",
   "compatibility_date": "2026-07-27",
 
-  // Assets-only Worker: `next build` with output:"export" emits the whole
-  // site to out/, so there is no server script to run — Cloudflare serves
-  // the static files directly.
+  // `next build` with output:"export" emits the whole site to out/, so
+  // there is normally nothing for a Worker script to do — asset serving
+  // alone is enough. The one exception is Range requests: the assets-only
+  // path (no "main") does not honor them, which breaks video seeking on
+  // Safari/iOS. Routing through main + env.ASSETS.fetch() fixes that; see
+  // src/worker.ts for the empirical evidence.
+  "main": "src/worker.ts",
   "assets": {
+    "binding": "ASSETS",
     "directory": "./out",
+    // Default behavior only calls the Worker for routes that don't match a
+    // static file, i.e. never for /bloom.mp4. This forces every request
+    // through the fetch handler above so env.ASSETS.fetch() actually runs.
+    "run_worker_first": true,
     // Serve /path as /path.html, matching Next's exported file layout.
     "html_handling": "auto-trailing-slash",
     // Exported 404.html is returned for unmatched routes.
