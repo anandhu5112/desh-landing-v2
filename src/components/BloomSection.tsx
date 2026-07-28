@@ -110,9 +110,7 @@ export default function BloomSection() {
   const rateId = `${ids}-rate`;
   const yearsId = `${ids}-years`;
 
-  const invested = monthly * years * 12;
   const corpus = futureValue(monthly, rate, years);
-  const gains = corpus - invested;
 
   const rateText = `${rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(1)}%`;
   const yearsText = `${years} ${years === 1 ? "year" : "years"}`;
@@ -203,8 +201,6 @@ export default function BloomSection() {
 
       <div className="grid">
         <div className={styles.content}>
-          <p className={styles.eyebrow}>Wealth Bloom · SIP</p>
-
           <h2 className={styles.title}>
             Time creates wealth. <em>Not simply money.</em>
           </h2>
@@ -277,16 +273,9 @@ export default function BloomSection() {
             </div>
           </div>
 
-          <dl className={styles.readout}>
-            <div className={styles.row}>
-              <dt>Total Investment</dt>
-              <dd>{inr(invested)}</dd>
-            </div>
-            <div className={`${styles.row} ${styles.rowStrong}`}>
-              <dt>Estimated Returns</dt>
-              <dd>{inr(gains)}</dd>
-            </div>
-
+          {/* Plain div, not <dl>: with the breakdown rows gone there are no
+              term/description pairs left to describe. */}
+          <div className={styles.readout}>
             <div className={styles.final}>
               <div>
                 <p className={styles.finalLabel}>Final Wealth</p>
@@ -294,7 +283,7 @@ export default function BloomSection() {
               </div>
               <span className={styles.finalCompact}>{compact(corpus)}</span>
             </div>
-          </dl>
+          </div>
 
           <p className={styles.note}>
             Illustrative projection at the assumed rate of return. Investments are
