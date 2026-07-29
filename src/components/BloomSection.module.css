@@ -59,11 +59,6 @@
   margin: 0;
 }
 
-.title em {
-  font-style: normal;
-  color: var(--bloom-muted);
-}
-
 /* ---------- SLIDERS ---------- */
 
 .controls {

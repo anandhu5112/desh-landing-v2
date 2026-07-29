@@ -47,7 +47,12 @@
   z-index: 10;
   display: flex;
   justify-content: center;
-  padding-top: 140px;
+  /* Clears the fixed SiteNav and centers the block in the space below it
+     (not the full viewport — the nav visually consumes the top, so the
+     remaining canvas is what should feel centered). Tuned by measurement
+     against an ~835px-tall viewport; see the .heroContent comment in the
+     component for the source numbers. */
+  padding-top: 400px;
   pointer-events: none;
   will-change: opacity, transform;
 }
@@ -178,7 +183,7 @@
   }
 
   .heroContent {
-    padding-top: 96px;
+    padding-top: 160px;
   }
 
   .heroHeading {

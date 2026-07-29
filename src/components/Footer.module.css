@@ -1,0 +1,118 @@
+/* ============================================================
+   FOOTER — closing band.
+
+   Copied, not shared. Same house rule as every other section: this
+   file duplicates nothing and is duplicated by nothing.
+
+   Every element here — text, icons, the divider — shares one muted
+   grey (#4b4b4b) against the black field. Only the logo stays white.
+   ============================================================ */
+
+.section {
+  --footer-line: #4b4b4b;
+
+  width: 100%;
+  margin: 0;
+  padding-block: 80px 40px;
+  background: var(--color-ink, #000000);
+}
+
+.top {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.tagline {
+  grid-column: 1 / span 8;
+  max-width: 62ch;
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 24px;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--footer-line);
+}
+
+.logo {
+  flex: none;
+  height: 48px;
+  width: auto;
+}
+
+.divider {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: 64px 0 32px;
+  border: none;
+  background: var(--footer-line);
+}
+
+.bottom {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.copyright {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--footer-line);
+}
+
+.socials {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.social {
+  display: inline-flex;
+  color: var(--footer-line);
+  transition: color 0.2s ease;
+}
+
+.social:hover,
+.social:focus-visible {
+  color: #ffffff;
+}
+
+.socialIcon {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 1024px) {
+  .section {
+    padding-block: 56px 32px;
+  }
+
+  .tagline {
+    grid-column: 1 / span 12;
+    font-size: 20px;
+  }
+
+  .divider {
+    margin: 48px 0 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .top {
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+}

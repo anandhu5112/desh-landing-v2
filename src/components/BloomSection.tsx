@@ -183,7 +183,7 @@ export default function BloomSection() {
   }, []);
 
   return (
-    <section className={styles.section}>
+    <section id="wealth-bloom" className={styles.section}>
       {/* Outside the grid on purpose — the bloom is full-bleed, not a column. */}
       <div className={styles.stage}>
         <video
@@ -201,9 +201,7 @@ export default function BloomSection() {
 
       <div className="grid">
         <div className={styles.content}>
-          <h2 className={styles.title}>
-            Time creates wealth. <em>Not simply money.</em>
-          </h2>
+          <h2 className={styles.title}>Wealth grows with time</h2>
 
           <div className={styles.controls}>
             <div className={styles.control}>
