@@ -7,23 +7,22 @@ import styles from "./BloomSection.module.css";
 /**
  * Wealth Bloom — SIP calculator.
  *
- * The flower is not decoration and it never reacts to an individual slider.
- * All three inputs collapse into one projected corpus, and that single number
- * is the playhead position on one continuous bloom timeline. The video is
+ * The flower follows investment duration alone. Monthly investment still
+ * changes the projected corpus, but it never moves the bloom. The video is
  * scrubbed, never played: it passes through every intermediate frame in
- * whichever direction wealth moved, so it can neither replay nor restart.
+ * whichever direction the duration moved, so it can neither replay nor restart.
  */
 
 /** Lives in /public. Static export serves it straight from the origin root. */
 const BLOOM_SRC = "/bloom.mp4";
 
 /**
- * Slider ranges. The corpus bounds below are derived from these, so widening
- * a slider automatically re-normalises the bloom — never hand-tune both.
+ * Slider ranges. Duration also defines the ends of the bloom timeline, so
+ * widening it automatically re-normalises the animation.
  */
 const AMOUNT = { min: 1_000, max: 200_000, step: 1_000, initial: 25_000 } as const;
-const RATE = { min: 6, max: 15, step: 0.5, initial: 12 } as const;
 const YEARS = { min: 1, max: 30, step: 1, initial: 15 } as const;
+const ASSUMED_ANNUAL_RATE = 12;
 
 /**
  * Future value of a SIP due — contributions at the start of each month.
@@ -36,25 +35,9 @@ function futureValue(monthly: number, annualRate: number, years: number): number
   return monthly * ((Math.pow(1 + i, n) - 1) / i) * (1 + i);
 }
 
-const CORPUS_MIN = futureValue(AMOUNT.min, RATE.min, YEARS.min);
-const CORPUS_MAX = futureValue(AMOUNT.max, RATE.max, YEARS.max);
-const LOG_MIN = Math.log(CORPUS_MIN);
-const LOG_SPAN = Math.log(CORPUS_MAX) - LOG_MIN;
-
-/** Gentle ease-out. 1 is linear; 3 saturates the timeline far too early. */
-const EASE_EXP = 1.45;
-
-/**
- * Corpus → position on the bloom timeline, 0..1.
- *
- * Normalising linearly would pin every realistic SIP at effectively zero next
- * to the ₹2,00,000 × 15% × 30yr ceiling, so the corpus is normalised on a log
- * scale first. The ease-out on top lets small amounts bloom visibly straight
- * away while large ones keep maturing instead of hitting full bloom early.
- */
-function bloomProgress(corpus: number): number {
-  const t = Math.min(1, Math.max(0, (Math.log(corpus) - LOG_MIN) / LOG_SPAN));
-  return 1 - Math.pow(1 - t, EASE_EXP);
+/** Duration → position on the bloom timeline, 0..1. */
+function bloomProgress(years: number): number {
+  return Math.min(1, Math.max(0, (years - YEARS.min) / (YEARS.max - YEARS.min)));
 }
 
 /** How far the playhead closes on its target each frame — botanical, unhurried. */
@@ -96,7 +79,6 @@ function fillStyle(value: number, min: number, max: number): CSSProperties {
 
 export default function BloomSection() {
   const [monthly, setMonthly] = useState<number>(AMOUNT.initial);
-  const [rate, setRate] = useState<number>(RATE.initial);
   const [years, setYears] = useState<number>(YEARS.initial);
   const [bloomVisible, setBloomVisible] = useState(false);
 
@@ -107,21 +89,19 @@ export default function BloomSection() {
 
   const ids = useId();
   const amountId = `${ids}-amount`;
-  const rateId = `${ids}-rate`;
   const yearsId = `${ids}-years`;
 
-  const corpus = futureValue(monthly, rate, years);
+  const corpus = futureValue(monthly, ASSUMED_ANNUAL_RATE, years);
 
-  const rateText = `${rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(1)}%`;
   const yearsText = `${years} ${years === 1 ? "year" : "years"}`;
 
-  // Wealth — and only wealth — moves the bloom.
+  // Duration — and only duration — moves the bloom.
   useEffect(() => {
-    const next = bloomProgress(corpus);
+    const next = bloomProgress(years);
     targetRef.current = next;
     // Open already at the implied stage rather than animating in from a bud.
     if (headRef.current === null) headRef.current = next;
-  }, [corpus]);
+  }, [years]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -228,28 +208,6 @@ export default function BloomSection() {
 
             <div className={styles.control}>
               <div className={styles.controlHead}>
-                <label className={styles.controlLabel} htmlFor={rateId}>
-                  Expected Annual Return
-                </label>
-                <span className={styles.controlValue}>{rateText}</span>
-              </div>
-              <input
-                id={rateId}
-                className={styles.slider}
-                type="range"
-                min={RATE.min}
-                max={RATE.max}
-                step={RATE.step}
-                value={rate}
-                onChange={(event) => setRate(Number(event.target.value))}
-                style={fillStyle(rate, RATE.min, RATE.max)}
-                aria-label="Expected annual return percentage"
-                aria-valuetext={`${rateText} per year`}
-              />
-            </div>
-
-            <div className={styles.control}>
-              <div className={styles.controlHead}>
                 <label className={styles.controlLabel} htmlFor={yearsId}>
                   Investment Duration
                 </label>
@@ -284,7 +242,7 @@ export default function BloomSection() {
           </div>
 
           <p className={styles.note}>
-            Illustrative projection at the assumed rate of return. Investments are
+            Illustrative projection at an assumed 12% annual return. Investments are
             subject to market risk; past performance does not predict future results.
           </p>
         </div>
