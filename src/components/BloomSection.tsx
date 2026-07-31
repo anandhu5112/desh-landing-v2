@@ -14,7 +14,7 @@ import styles from "./BloomSection.module.css";
  */
 
 /** Lives in /public. Static export serves it straight from the origin root. */
-const BLOOM_SRC = "/bloom.mp4";
+const BLOOM_SRC = "/bloom-scrub-v2.mp4";
 
 /**
  * Slider ranges. Duration also defines the ends of the bloom timeline, so
@@ -40,12 +40,12 @@ function bloomProgress(years: number): number {
   return Math.min(1, Math.max(0, (years - YEARS.min) / (YEARS.max - YEARS.min)));
 }
 
-/** How far the playhead closes on its target each frame — botanical, unhurried. */
+/** How far the playhead closes on its target after each decoded frame. */
 const EASE_PER_FRAME = 0.075;
 /** Below this the playhead snaps, so it stops chasing an asymptote forever. */
 const SETTLE = 0.0004;
-/** Finer than one frame at 24fps, so no visible stage is ever skipped. */
-const SEEK_EPSILON = 0.01;
+/** The source is 30fps; requesting sub-frame seeks only makes the decoder work twice. */
+const SEEK_EPSILON = 1 / 30;
 /** Keeps the playhead inside the last frame instead of falling off the end. */
 const TAIL_GUARD = 0.04;
 
@@ -121,7 +121,9 @@ export default function BloomSection() {
       frame = requestAnimationFrame(tick);
 
       // readyState < 1 means no metadata yet, so duration is NaN and seeking throws.
-      if (video.readyState < 1 || headRef.current === null) return;
+      // Pausing the logical playhead while a seek is in flight is just as important:
+      // otherwise it races ahead invisibly and the next decoded frame appears to jump.
+      if (video.readyState < 1 || video.seeking || headRef.current === null) return;
 
       const delta = targetRef.current - headRef.current;
       headRef.current =
@@ -131,8 +133,7 @@ export default function BloomSection() {
 
       const time = Math.max(0, headRef.current * (video.duration - TAIL_GUARD));
 
-      // Without the seeking guard, requests pile up and the scrub turns to mush.
-      if (!video.seeking && Math.abs(video.currentTime - time) > SEEK_EPSILON) {
+      if (Math.abs(video.currentTime - time) > SEEK_EPSILON) {
         video.currentTime = time;
       }
     });
