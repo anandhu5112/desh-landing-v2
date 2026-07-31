@@ -12,7 +12,13 @@
   inset: 0;
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center;
+  /* Top-anchored, not center: on wide/short viewports `cover` overflows
+     vertically and crops from both edges when centered, eating into the
+     transparent sky (top.png's sky is real alpha now, not baked-in white)
+     and pushing the hills up under the hero copy. Anchoring to the top
+     means any vertical overflow is cropped from the bottom only, so the
+     sky-to-horizon position stays consistent regardless of aspect ratio. */
+  background-position: center top;
   z-index: 5;
 }
 
@@ -21,7 +27,13 @@
   inset: 0;
   background-size: cover;
   background-repeat: no-repeat;
-  background-position: center;
+  /* Top-anchored, not center: on wide/short viewports `cover` overflows
+     vertically and crops from both edges when centered, eating into the
+     transparent sky (top.png's sky is real alpha now, not baked-in white)
+     and pushing the hills up under the hero copy. Anchoring to the top
+     means any vertical overflow is cropped from the bottom only, so the
+     sky-to-horizon position stays consistent regardless of aspect ratio. */
+  background-position: center top;
   z-index: 7;
   pointer-events: none;
 }
@@ -40,6 +52,24 @@
   will-change: transform;
 }
 
+/* Rises from behind the hills during the outro. Sits inside .zoomWrap so it
+   scales and travels with the landscape instead of drifting off the horizon.
+   Hidden purely by GSAP's yPercent (see Hero.tsx) — no opacity/fade here. */
+.sun {
+  --sun-size: 34vw;
+  position: absolute;
+  z-index: 4;
+  top: 47%;
+  left: 50%;
+  width: var(--sun-size);
+  height: var(--sun-size);
+  margin-top: calc(var(--sun-size) / -2);
+  margin-left: calc(var(--sun-size) / -2);
+  border-radius: 50%;
+  background: #ffc400;
+  pointer-events: none;
+}
+
 /* Content overlay — sibling of .zoomWrap so it is never scaled by the zoom */
 .heroContent {
   position: absolute;
@@ -49,10 +79,18 @@
   justify-content: center;
   /* Clears the fixed SiteNav and centers the block in the space below it
      (not the full viewport — the nav visually consumes the top, so the
-     remaining canvas is what should feel centered). Tuned by measurement
-     against an ~835px-tall viewport; see the .heroContent comment in the
-     component for the source numbers. */
-  padding-top: 400px;
+     remaining canvas is what should feel centered).
+
+     Also has a hard ceiling now that top.png's sky is real transparency
+     rather than baked-in white: the whole two-line heading block (128px)
+     must clear wherever the landscape's alpha stops being fully transparent,
+     or the copy sits on top of the hills instead of the sky. With
+     background-position now top-anchored (see .heroBaseImg), that boundary
+     is worst-case ~342px from the top of .hero — reached at .hero's own
+     min-height floor (800px) once viewport width crosses into cover's
+     width-driven scaling. 200px + 128px of content leaves real margin
+     under that ceiling. */
+  padding-top: 200px;
   pointer-events: none;
   will-change: opacity, transform;
 }
@@ -150,6 +188,12 @@
   display: flex;
   align-items: center;
   pointer-events: none;
+  /* .heroOutro centers on the full viewport, but the sun it sits over does
+     not — .sun's own position plus the zoom's scale/yPercent at this point
+     in the timeline puts the sun's visual centre a bit below viewport
+     centre. Nudged down to land inside the sun instead. Tuned by
+     measurement against a ~2000px-wide desktop viewport. */
+  transform: translateY(56px);
 }
 
 /* Positioned so AnimatePresence's popLayout exit resolves against this box */
@@ -174,6 +218,10 @@
 }
 
 @media (max-width: 1024px) {
+  .sun {
+    --sun-size: 60vw;
+  }
+
   .heroOutroInner {
     grid-column: 1 / span 12;
   }

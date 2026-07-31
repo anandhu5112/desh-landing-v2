@@ -68,6 +68,7 @@ export default function Hero() {
   const hTrackRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgLayerRef = useRef<HTMLDivElement>(null);
+  const sunRef = useRef<HTMLDivElement>(null);
   const loopControlRef = useRef<{ start: () => void; stop: () => void } | null>(null);
   const outroShownRef = useRef(false);
   const [showOutro, setShowOutro] = useState(false);
@@ -173,7 +174,8 @@ export default function Hero() {
         !heroContentRef.current ||
         !growBgRef.current ||
         !growCardRef.current ||
-        !hTrackRef.current
+        !hTrackRef.current ||
+        !sunRef.current
       )
         return;
 
@@ -215,6 +217,20 @@ export default function Hero() {
           { scale: ZOOM_SCALE, yPercent: ZOOM_Y_PERCENT, ease: "none", duration: 0.9 },
           0.1
         )
+        // Sun rises from behind the hills as the outro statement lands.
+        // top.png's horizon isn't a hard edge — it's a feathered alpha
+        // gradient (~43%-53% down), so yPercent: 50 (half the sun's own
+        // height) isn't enough clearance; the top.png stayed only partly
+        // opaque right where the sun's edge sat, letting it bleed through.
+        // 120 clears the whole feather band with margin. Settles at 0.85,
+        // matching OUTRO_REVEAL_AT — never on screen at the same time as
+        // the spotlight layer, which has already faded out by 0.3.
+        .fromTo(
+          sunRef.current,
+          { yPercent: 120 },
+          { yPercent: 0, ease: "none", duration: 0.35 },
+          0.5
+        )
         // --- Third section. Appended at absolute positions >= 1.0 so the three
         // tweens above keep their exact scroll mapping. The last tween MUST end
         // on exactly 2.0: the timeline duration is what pins the time-per-pixel
@@ -239,6 +255,7 @@ export default function Hero() {
   return (
     <main ref={heroRef} className={styles.hero}>
       <div ref={zoomWrapRef} className={styles.zoomWrap}>
+        <div ref={sunRef} className={styles.sun} />
         <div
           className={styles.heroBaseImg}
           style={{ backgroundImage: "url('/images/top.png')" }}
