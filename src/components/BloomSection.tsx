@@ -8,13 +8,19 @@ import styles from "./BloomSection.module.css";
  * Wealth Bloom — SIP calculator.
  *
  * The flower follows investment duration alone. Monthly investment still
- * changes the projected corpus, but it never moves the bloom. The video is
- * scrubbed, never played: it passes through every intermediate frame in
- * whichever direction the duration moved, so it can neither replay nor restart.
+ * changes the projected corpus, but it never moves the bloom. Predecoded frame
+ * atlases keep slider feedback synchronous: no video seeking, buffering, or
+ * decoder work occurs while the user drags.
  */
 
-/** Lives in /public. Static export serves it straight from the origin root. */
-const BLOOM_SRC = "/bloom.mp4";
+/** Lives in /public. Static export serves these straight from the origin root. */
+const BLOOM_ATLASES = ["/bloom-atlas-01.webp", "/bloom-atlas-02.webp"] as const;
+
+const ATLAS_COLUMNS = 6;
+const FRAMES_PER_ATLAS = 24;
+const FRAME_WIDTH = 540;
+const FRAME_HEIGHT = 720;
+const TOTAL_FRAMES = BLOOM_ATLASES.length * FRAMES_PER_ATLAS;
 
 /**
  * Slider ranges. Duration also defines the ends of the bloom timeline, so
@@ -40,14 +46,10 @@ function bloomProgress(years: number): number {
   return Math.min(1, Math.max(0, (years - YEARS.min) / (YEARS.max - YEARS.min)));
 }
 
-/** How far the playhead closes on its target each frame — botanical, unhurried. */
-const EASE_PER_FRAME = 0.075;
-/** Below this the playhead snaps, so it stops chasing an asymptote forever. */
-const SETTLE = 0.0004;
-/** Finer than one frame at 24fps, so no visible stage is ever skipped. */
-const SEEK_EPSILON = 0.01;
-/** Keeps the playhead inside the last frame instead of falling off the end. */
-const TAIL_GUARD = 0.04;
+/** Responsive follow with a one-frame cap so large jumps still show every stage. */
+const FOLLOW_TIME_MS = 70;
+const MAX_FRAMES_PER_SECOND = 60;
+const SETTLE_FRAME = 0.01;
 
 /**
  * Indian digit grouping, hand-rolled rather than Intl.
@@ -82,10 +84,11 @@ export default function BloomSection() {
   const [years, setYears] = useState<number>(YEARS.initial);
   const [bloomVisible, setBloomVisible] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const targetRef = useRef(0);
-  /** null until the first corpus lands, so the section opens on the right stage. */
-  const headRef = useRef<number | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const initialFrame = bloomProgress(YEARS.initial) * (TOTAL_FRAMES - 1);
+  const targetRef = useRef(initialFrame);
+  const headRef = useRef(initialFrame);
+  const drawnFrameRef = useRef(-1);
 
   const ids = useId();
   const amountId = `${ids}-amount`;
@@ -97,85 +100,98 @@ export default function BloomSection() {
 
   // Duration — and only duration — moves the bloom.
   useEffect(() => {
-    const next = bloomProgress(years);
-    targetRef.current = next;
-    // Open already at the implied stage rather than animating in from a bud.
-    if (headRef.current === null) headRef.current = next;
+    targetRef.current = bloomProgress(years) * (TOTAL_FRAMES - 1);
   }, [years]);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d", { alpha: false });
+    if (!canvas || !context) return;
 
-    // React does not reliably reflect the muted attribute onto the property.
-    video.muted = true;
+    let cancelled = false;
+    let animationFrame = 0;
+    let lastTime = performance.now();
 
-    // The <video> is server-rendered, so the browser may finish loading before
-    // React hydrates and attaches onLoadedData — on a warm cache that is the
-    // normal case. Missing that one event would leave the bloom at opacity 0
-    // forever, invisible against the black field. Catch it here instead of
-    // trusting the event alone. HAVE_CURRENT_DATA (2) means a frame exists.
-    if (video.readyState >= 2) setBloomVisible(true);
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-    let frame = requestAnimationFrame(function tick() {
-      frame = requestAnimationFrame(tick);
+    const draw = (atlases: HTMLImageElement[], frame: number) => {
+      const frameIndex = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.round(frame)));
+      if (drawnFrameRef.current === frameIndex) return;
 
-      // readyState < 1 means no metadata yet, so duration is NaN and seeking throws.
-      if (video.readyState < 1 || headRef.current === null) return;
+      const atlasIndex = Math.floor(frameIndex / FRAMES_PER_ATLAS);
+      const localFrame = frameIndex % FRAMES_PER_ATLAS;
+      const sourceX = (localFrame % ATLAS_COLUMNS) * FRAME_WIDTH;
+      const sourceY = Math.floor(localFrame / ATLAS_COLUMNS) * FRAME_HEIGHT;
 
-      const delta = targetRef.current - headRef.current;
-      headRef.current =
-        Math.abs(delta) < SETTLE
-          ? targetRef.current
-          : headRef.current + delta * EASE_PER_FRAME;
-
-      const time = Math.max(0, headRef.current * (video.duration - TAIL_GUARD));
-
-      // Without the seeking guard, requests pile up and the scrub turns to mush.
-      if (!video.seeking && Math.abs(video.currentTime - time) > SEEK_EPSILON) {
-        video.currentTime = time;
-      }
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, []);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // Some iOS builds refuse to decode a frame until the element has played
-    // once. Nudge it on the first interaction, then pause immediately — the
-    // timeline stays fully scrubbed either way.
-    let nudged = false;
-    const nudge = () => {
-      if (nudged) return;
-      nudged = true;
-      void video
-        .play()
-        .then(() => video.pause())
-        .catch(() => {});
+      context.drawImage(
+        atlases[atlasIndex],
+        sourceX,
+        sourceY,
+        FRAME_WIDTH,
+        FRAME_HEIGHT,
+        0,
+        0,
+        FRAME_WIDTH,
+        FRAME_HEIGHT,
+      );
+      drawnFrameRef.current = frameIndex;
     };
 
-    const events = ["pointerdown", "touchstart", "keydown"] as const;
-    events.forEach((event) => window.addEventListener(event, nudge, { passive: true }));
-    return () => events.forEach((event) => window.removeEventListener(event, nudge));
+    const loadAtlas = async (source: string) => {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = source;
+      await image.decode();
+      return image;
+    };
+
+    void Promise.all(BLOOM_ATLASES.map(loadAtlas))
+      .then((atlases) => {
+        if (cancelled) return;
+
+        draw(atlases, headRef.current);
+        setBloomVisible(true);
+
+        const tick = (now: number) => {
+          const elapsed = Math.min(64, now - lastTime);
+          lastTime = now;
+          const delta = targetRef.current - headRef.current;
+
+          if (reducedMotion.matches || Math.abs(delta) < SETTLE_FRAME) {
+            headRef.current = targetRef.current;
+          } else {
+            const easedStep = delta * (1 - Math.exp(-elapsed / FOLLOW_TIME_MS));
+            const maxStep = (elapsed / 1_000) * MAX_FRAMES_PER_SECOND;
+            headRef.current += Math.max(-maxStep, Math.min(maxStep, easedStep));
+          }
+
+          draw(atlases, headRef.current);
+          animationFrame = requestAnimationFrame(tick);
+        };
+
+        lastTime = performance.now();
+        animationFrame = requestAnimationFrame(tick);
+      })
+      .catch(() => {
+        // Keep the section usable if an atlas request is interrupted or blocked.
+      });
+
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(animationFrame);
+    };
   }, []);
 
   return (
     <section id="wealth-bloom" className={styles.section}>
       {/* Outside the grid on purpose — the bloom is full-bleed, not a column. */}
       <div className={styles.stage}>
-        <video
-          ref={videoRef}
+        <canvas
+          ref={canvasRef}
           className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
-          src={BLOOM_SRC}
-          muted
-          playsInline
-          preload="auto"
-          disablePictureInPicture
+          width={FRAME_WIDTH}
+          height={FRAME_HEIGHT}
           aria-hidden="true"
-          onLoadedData={() => setBloomVisible(true)}
         />
       </div>
 
