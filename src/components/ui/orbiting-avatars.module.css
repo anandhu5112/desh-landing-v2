@@ -1,0 +1,184 @@
+/*
+ * Ported from a Tailwind reference component — this project uses CSS
+ * Modules, not Tailwind (see AGENTS.md). Sizes below are the reference
+ * component's own Tailwind arbitrary values (e.g. w-110 = 27.5rem = 440px)
+ * converted to px, and its two breakpoints (sm/md) collapsed into this
+ * site's single 1024px mobile/desktop boundary for consistency with every
+ * other section, rather than importing Tailwind's own 640/768px scale.
+ */
+
+.container {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Only the top arc of each ring is ever visible — translate(-50%, 50%)
+   pushes the bottom half below .container's bottom edge, clipped by
+   overflow: hidden, so what reads on screen is a horizon of concentric
+   arcs rather than full circles.
+
+   Widths are capped with min(px, %) — not flat px — because .container's
+   own width tracks .media's grid column (roughly half the card), which is
+   narrower than these rings' old fixed sizes at ordinary desktop widths.
+   Uncapped, the rings overflowed .container's sides and got clipped by its
+   overflow: hidden, reading as broken/floating chip fragments instead of
+   concentric arcs. The percentage keeps every ring inside its container at
+   any width; the px figure only caps how large it grows on wide screens. */
+.ring {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.ring0 {
+  width: min(280px, 55%);
+}
+
+.ring1 {
+  width: min(370px, 75%);
+}
+
+.ring2 {
+  width: min(460px, 94%);
+}
+
+/* --start-angle / --counter-offset are set inline per avatar (Footer's
+   fillStyle helper uses the same CSS-custom-property-via-inline-style
+   pattern) — each icon's starting position and its counter-rotation (so
+   the chip itself never visibly tips over as its orbit spins) are unique
+   per instance, so they can't live in a static class. */
+@keyframes orbitCw {
+  from {
+    transform: rotate(var(--start-angle));
+  }
+  to {
+    transform: rotate(calc(var(--start-angle) + 360deg));
+  }
+}
+
+@keyframes orbitCcw {
+  from {
+    transform: rotate(var(--start-angle));
+  }
+  to {
+    transform: rotate(calc(var(--start-angle) - 360deg));
+  }
+}
+
+@keyframes counterCw {
+  from {
+    transform: rotate(var(--counter-offset, 0deg));
+  }
+  to {
+    transform: rotate(calc(var(--counter-offset, 0deg) - 360deg));
+  }
+}
+
+@keyframes counterCcw {
+  from {
+    transform: rotate(var(--counter-offset, 0deg));
+  }
+  to {
+    transform: rotate(calc(var(--counter-offset, 0deg) + 360deg));
+  }
+}
+
+.orbitCw,
+.orbitCcw,
+.counterCw,
+.counterCcw {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.orbitCw {
+  animation-name: orbitCw;
+}
+.orbitCcw {
+  animation-name: orbitCcw;
+}
+.counterCw {
+  animation-name: counterCw;
+}
+.counterCcw {
+  animation-name: counterCcw;
+}
+
+/* Chip diameter is fixed (36px / 48px below), not padding-driven the way
+   an icon glyph was — a photo fills its circle edge-to-edge. iconOrbit's
+   margin-left and chip's margin-top both equal minus half that diameter,
+   same centering trick as before, just re-derived for the new size. */
+.iconOrbit {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  height: 50%;
+  margin-left: -18px;
+  transform-origin: bottom center;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.chip {
+  position: relative;
+  z-index: 1;
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.chipImg {
+  object-fit: cover;
+}
+
+@media (min-width: 1025px) {
+  .container {
+    height: 460px;
+  }
+
+  .ring0 {
+    width: min(400px, 55%);
+  }
+
+  .ring1 {
+    width: min(520px, 75%);
+  }
+
+  .ring2 {
+    width: min(640px, 94%);
+  }
+
+  .iconOrbit {
+    margin-left: -24px;
+  }
+
+  .chip {
+    width: 48px;
+    height: 48px;
+    margin-top: -24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbitCw,
+  .orbitCcw,
+  .counterCw,
+  .counterCcw {
+    animation: none;
+  }
+}
