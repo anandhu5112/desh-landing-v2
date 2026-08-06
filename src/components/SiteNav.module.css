@@ -5,6 +5,11 @@
  * far down the page) has to survive that, or it disappears after the
  * first sliver of scroll. Fixed to the viewport instead, above every
  * other layer including the third/fourth section overlays.
+ *
+ * One centered black pill (Figma node 297:6248) — logo, links, and
+ * Contact us all live inside it and share its background, unlike the
+ * previous logo-left/pill-right layout. Nothing here needs to track what
+ * section is behind it; the pill is always legible.
  */
 .nav {
   position: fixed;
@@ -12,108 +17,188 @@
   left: 0;
   right: 0;
   z-index: 100;
-  /* The row itself lets clicks/drags through to the hero's spotlight and
-     sphere beneath it; only the interactive children opt back in. Same
-     pattern as .heroContent. */
+  padding-top: var(--space-nav-padding-top);
+  display: flex;
+  justify-content: center;
+  /* Only .pill's own children are click targets; the rest of this
+     full-width row lets clicks/drags through to the hero's spotlight and
+     sphere beneath it. */
   pointer-events: none;
   transform: translateY(0);
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Slides fully off-screen rather than fading — -100% of its own box height
-   clears it completely, so there's no lingering click target underneath. */
+/* -100% of the row's own height (padding-top + content) clears it fully. */
 .navHidden {
   transform: translateY(-100%);
 }
 
-.navGrid {
+.pill {
+  pointer-events: auto;
+  display: flex;
   align-items: center;
-  padding-block: 32px;
+  gap: var(--space-40);
+  /* Right padding matches top/bottom; left gets more to optically balance
+     the logo mark's own left edge (matches Figma's 20px/10px). */
+  padding-block: var(--space-8);
+  padding-inline: 20px 10px;
+  background: #000000;
+  border-radius: 16px;
 }
 
 .brand {
-  grid-column: 1 / span 3;
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  width: fit-content;
-  pointer-events: auto;
+  flex: none;
 }
 
-/* Source is 166x74 (~2.24:1). Height-constrained, width auto, so it scales
+/* Source is 63x20.5 (~3.07:1). Height-constrained, width auto, so it scales
    proportionally regardless of the intrinsic width/height next/image needs. */
 .brandLogo {
-  height: 30px;
+  height: 20px;
   width: auto;
 }
 
 .links {
-  grid-column: 5 / span 8;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 32px;
+  gap: var(--space-32);
+  min-width: 0;
 }
 
 .link {
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
+  font-size: var(--fs-nav);
   line-height: 1.5;
-  font-weight: 400;
+  font-weight: 500;
   color: #9c9c9c;
   text-decoration: none;
-  pointer-events: auto;
+  white-space: nowrap;
   transition: color 0.2s ease;
 }
 
 .link:hover,
 .link:focus-visible {
-  color: #000000;
+  color: #ffffff;
 }
 
 .contactCta {
+  flex: none;
   height: 40px;
-  padding: 0 16px;
+  padding-inline: var(--space-16);
   display: inline-flex;
   align-items: center;
   background: #efefef;
   color: #000000;
   font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  border-radius: 6px;
+  font-size: var(--fs-nav);
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
   text-decoration: none;
-  pointer-events: auto;
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
 }
 
 .contactCta:hover,
 .contactCta:focus-visible {
+  opacity: 0.85;
+}
+
+/* Mobile stand-in for .links — hidden above 640px alongside .links' own
+   reveal (see the breakpoint below). Sits inside the same pill as the
+   logo, so the pill just narrows to [logo, toggle] rather than being
+   swapped out for a separate element. */
+.menuButton {
+  display: none;
+  pointer-events: auto;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+@keyframes mobileMenuFadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobileMenu {
+  pointer-events: auto;
+  margin-top: var(--space-16);
+  margin-inline: var(--space-16);
+  padding: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
   background: #000000;
+  border-radius: 16px;
+  animation: mobileMenuFadeInDown 0.2s ease;
+}
+
+.mobileLink {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 1.5;
+  font-weight: 500;
+  color: #9c9c9c;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.mobileLink:hover,
+.mobileLink:focus-visible {
   color: #ffffff;
 }
 
-@media (max-width: 1024px) {
-  .navGrid {
-    padding-block: 24px;
-  }
+.mobileContactCta {
+  height: 40px;
+  padding-inline: var(--space-16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #efefef;
+  color: #000000;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  font-weight: 500;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
 
-  .brand {
-    grid-column: 1 / span 4;
-  }
-
-  .links {
-    grid-column: 5 / span 8;
-    gap: 20px;
-  }
+.mobileContactCta:hover,
+.mobileContactCta:focus-visible {
+  opacity: 0.85;
 }
 
 @media (max-width: 640px) {
-  /* "Services" drops first — Contact us and the calculator link are the
-     two a mobile visitor is actually here for. Targets the first <a> in
-     .links, which is always Services regardless of its class. */
-  .link:first-of-type {
+  .links {
     display: none;
+  }
+
+  .menuButton {
+    display: inline-flex;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobileMenu {
+    animation: none;
   }
 }

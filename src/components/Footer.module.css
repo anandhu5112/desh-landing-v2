@@ -1,39 +1,413 @@
 /* ============================================================
-   FOOTER — closing band.
+   FOOTER — the site's closing band.
 
    Copied, not shared. Same house rule as every other section: this
    file duplicates nothing and is duplicated by nothing.
 
-   Every element here — text, icons, the divider — shares one muted
-   grey (#4b4b4b) against the black field. Only the logo stays white.
+   Combines the "build your portfolio together" CTA and the closing
+   footer bar into one continuous section over a single background
+   image — matches the Figma "end image" frame, where both pieces
+   share one scene instead of a white card sitting on a black band.
    ============================================================ */
 
 .section {
-  --footer-line: #4b4b4b;
+  --footer-min-height: 820px;
 
+  position: relative;
   width: 100%;
   margin: 0;
-  padding-block: 80px 40px;
+  min-height: var(--footer-min-height);
   background: var(--color-ink, #000000);
+  overflow: hidden;
 }
+
+/* Transparent above the hills, so it sits directly on .section's black —
+   spans the full width and keeps its own aspect ratio (not cropped),
+   anchored to the bottom so the scene lines up with the footer bar.
+   z-index 2: above .heroCard (auto/0) so the hills paint over the card's
+   own bottom edge — the card sits "behind" the scene, per the reference —
+   but still below .barPanel (3) so the closing tagline/copyright text
+   stays on top of the image, unobscured. */
+.bgImage {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* footer-bg.png only fades in from black at its own top; this darkens its
+   bottom so the tagline/copyright row stays legible over the grass. Sits
+   directly above .bgImage so it darkens the image, same as before. */
+.fade {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, 0.55) 78%,
+    rgba(0, 0, 0, 0.88) 100%
+  );
+  pointer-events: none;
+}
+
+/* Two grids now (the hero block, and the tagline/divider/copyright bar —
+   see Footer.tsx), not one — justify-content: space-between spaces them
+   to .content's top and bottom edges, opening up a gap between them
+   instead of the two sitting flush together. That gap is where the
+   image's chairs and hills show through. min-height is a floor, not a
+   cap: on the stacked mobile layout, where content routinely needs more
+   than 820px, this never risks clipping it the way a fixed height would.
+
+   No z-index here anymore (was 1, above .bgImage/.fade) — position:
+   relative without a z-index doesn't open its own stacking context, so
+   .hero/.heroCard (no z-index of their own, see below) and .barPanel
+   (z-index: 3, see below) compare directly against .bgImage/.fade
+   instead of moving as one block above them. */
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* This gap is the ONLY thing controlling how deep .bgImage's hills
+     reach into .heroCard's own bottom edge (see .heroCard's comment) —
+     .heroCard's own height/padding has zero effect on that overlap, since
+     .bgImage is bottom: 0 anchored to .section's total height, which
+     shrinks or grows by exactly however much this gap does.
+
+     A flat px value can't work here: .bgImage is width: 100%/height: auto,
+     so footer-bg.png's own height scales linearly with viewport width
+     (its hill line sits a fixed 38.34vw down the page), while .heroCard
+     is capped at max-width: 1100px and stops growing. A gap tuned for a
+     ~1470px viewport let the hills climb back up past .whatsappCard's
+     button at ~2000px, because the image kept growing past it. Scaling
+     the gap by the same 38.34vw keeps the overlap roughly constant across
+     viewport widths instead. Clamped: 24px floor keeps it from going
+     negative below ~1024px where the two-column card layout itself gives
+     way to the stacked mobile one; 550px ceiling keeps ultra-wide screens
+     from opening an oversized gap (erring toward less overlap there, not
+     more, which only ever risks showing too much of the card, never
+     hiding it). Coefficient derived from footer-bg.png's actual 4006x1536
+     aspect ratio; offset re-tuned (417.6 → 453.4) when .heroCard's bottom
+     padding grew to 120px with its bottom corners squared off (see
+     .heroCard) — the card's whole bottom edge needs to sink under solid
+     hill, not just graze it, so the target overlap now clears the hill
+     line by ~70px past .heroCard's true bottom instead of ~34px. */
+  gap: clamp(24px, calc(38.34vw - 453.4px), 550px);
+  min-height: var(--footer-min-height);
+  /* Top is asymmetric, not the --space-32 both edges share below — the
+     fixed SiteNav pill's own bottom edge sits ~90px from the viewport
+     top, and .heroCard used to start at just 32px, so on scroll-snap the
+     nav pill visibly crowded the card's rounded top corner. 130px clears
+     the pill with room to spare. Bottom is untouched: .barPanel's
+     distance from the section's own bottom was never part of the
+     complaint. */
+  padding-top: 130px;
+  padding-bottom: var(--space-32);
+}
+
+/* Closing tagline/copyright bar — needs to stay above .bgImage/.fade
+   (z-index: 2) so the photo can paint over .heroCard above without also
+   swallowing this text. */
+.barPanel {
+  position: relative;
+  z-index: 3;
+}
+
+/* GrowSection/UsSection/BloomSection all sit a flat 16px from the true
+   viewport edge (see their own .panel), not the page's usual centered/
+   margined --grid. Matches that here so the footer lines up the same
+   distance from the edge instead of jumping in from the wider
+   --page-margin inset. */
+.panel {
+  max-width: none;
+  padding-inline: var(--space-16);
+}
+
+/* ---- hero: portfolio CTA + WhatsApp community card ----
+   Figma node 299:6259 — one white card that sits BEHIND footer-bg.png
+   (see .bgImage's z-index: 2 above .heroCard's own auto/0) — the hills
+   paint over the card's lower half instead of the card floating
+   completely in front of the photo. */
+
+.hero {
+  grid-column: 1 / -1;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  /* No min-height here anymore — .content's justify-content: space-between
+     (plus its own padding-block) now controls how far this sits from the
+     section's top and from .barPanel below, rather than this row's own
+     height doing it via vertical centering in a tall box. Keeping a
+     min-height here would keep this row tall regardless, leaving
+     space-between no room to open up the gap that reveals the image's
+     chairs and hills between the two panels. */
+}
+
+.heroCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-40);
+  width: 100%;
+  max-width: 1100px;
+  /* Padding is asymmetric (72px top, 120px bottom) and the bottom corners
+     are square, not rounded — the extra room and the sharp edge both
+     exist to sink entirely into .bgImage's hills below, rather than
+     ending on a rounded corner that would peek out past the hillside.
+     .heroCard's own top position is still driven entirely by .content's
+     padding-top (unaffected by this), so this only grows the card
+     downward, into the overlap — see .content's gap comment for how that
+     overlap amount itself is derived. */
+  padding-top: 72px;
+  padding-bottom: 120px;
+  padding-inline: var(--space-64);
+  background: #ffffff;
+  background-clip: padding-box;
+  border-radius: 40px 40px 0 0;
+  /* Rim light, not a content divider. background-clip: padding-box is load-
+     bearing here, not decorative — background defaults to border-box, which
+     paints .heroCard's own white fill underneath the border too, so a
+     translucent white stroke blends with white and disappears completely.
+     padding-box stops the fill at the border's inner edge, leaving the
+     stroke to blend with whatever is actually behind the card in the
+     stacking order instead: .section's black (rgba(255,255,255,0.24) over
+     black composites to ~#3d3d3d, matching the reference) up top, and
+     .bgImage's hills lower down, where the bottom edge sinks in (see
+     padding-bottom above) — same rim-light effect the reference shows,
+     invisible once truly submerged under solid hill, defined everywhere
+     else. */
+  border: 4px solid rgba(255, 255, 255, 0.24);
+}
+
+.heroText {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-32);
+  text-align: center;
+}
+
+/* House heading — black now that it sits on .heroCard's own white
+   background rather than directly on the photo. */
+.heading {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading);
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: var(--ls-heading);
+  color: #000000;
+  margin: 0;
+}
+
+/* "Let's build your" / "portfolio together" each render as their own
+   TextRotate, so the break is explicit rather than left to text wrapping —
+   same pattern as BloomSection's .title .titleLine. Scoped under .heading
+   (not a bare .headingLine) so this reliably beats TextRotate's own
+   "inline-flex" utility class regardless of globals.css vs. CSS-module
+   cascade order. */
+.heading .headingLine {
+  display: block;
+}
+
+/* .heroText's own text-align: center (see below) has no effect here —
+   each line's actual words sit inside TextRotate's inner flex container
+   (its AnimatePresence child, className "flex flex-wrap"), and text-align
+   doesn't control flex-item position, justify-content does. Without this,
+   both lines shared the same left edge instead of being centered as a
+   block — the shorter "portfolio together" line rides justify-content's
+   flex-start default rather than sitting under the middle of the line
+   above it. */
+.heading .headingLine > div {
+  justify-content: center;
+}
+
+.subtext {
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 300;
+  letter-spacing: var(--ls-body);
+  color: #000000;
+  margin: 0;
+}
+
+/* Hover micro-interaction — a re-triggerable echo of the text's own
+   scroll-in reveal (blur + lift + fade), not a one-shot. Plays once per
+   hover entry rather than a plain transition, since a transition alone
+   can't pass through the blurred "mid-reveal" state on the way back to
+   sharp. Shared by both headings in this file (.heading and
+   .whatsappHeading) and both bodies of copy (.subtext and
+   .whatsappSubtext), not just the hero block. */
+@keyframes textHover {
+  0% {
+    opacity: 0.45;
+    filter: blur(6px);
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.heading:hover,
+.subtext:hover,
+.whatsappHeading:hover,
+.whatsappSubtext:hover {
+  animation: textHover 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Local override on the shared Button — same 40px/10px/14px pattern
+   GrowSection/UsSection/Hero already use, rather than the bespoke
+   ctaWhite this replaces. Button's own default black gradient already
+   matches Figma's CTA here; .ctaGreen (below) is the one exception that
+   overrides it. */
+.cta {
+  height: 40px;
+  border-radius: 10px;
+  font-size: var(--fs-nav);
+}
+
+.ctaGreen {
+  background: #00b531;
+}
+
+.heroDivider {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  border: none;
+  background: #e5e5e5;
+}
+
+/* No explicit width, and nothing here transitions — .whatsappCard's size
+   is purely a consequence of its content (auto, both axes), so growing
+   .qrWrap on hover (see below) widens and heightens this in exact
+   lockstep, every frame, for free. An earlier version instead transitioned
+   this element's own width to a separately-computed target in parallel
+   with .qrWrap's — two independent transitions that could drift out of
+   sync frame-to-frame, which read as jerky, stuttering growth. There's
+   only one animated value now. */
+.whatsappCard {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-24);
+  background: #f7f6f4;
+  border-radius: 16px;
+  padding: var(--space-16);
+  transition: background-color 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.whatsappCard:hover {
+  background: #ffc400;
+}
+
+/* Grows to .whatsappTextCol's height on hover (--qr-hover-size is set
+   inline from a ResizeObserver measurement in Footer.tsx) via real
+   width/height, not transform: scale — .whatsappCard has no explicit size
+   of its own (auto, sized by its content), so it grows to contain the
+   bigger QR automatically, staying within the card rather than
+   overflowing past it or overlapping .whatsappTextCol. */
+.qrWrap {
+  flex: none;
+  width: 166px;
+  height: 166px;
+  border-radius: 8px;
+  overflow: hidden;
+  transition:
+    width 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.whatsappCard:hover .qrWrap {
+  width: var(--qr-hover-size, 166px);
+  height: var(--qr-hover-size, 166px);
+}
+
+.qrImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Fixed at Figma's own 335px text-column width — the extra description
+   line (.whatsappSubtext) needs the room, and a fixed width keeps the
+   hover-grow measurement (see .qrWrap) stable instead of reflowing every
+   frame. flex-shrink: 0 so .qrWrap growing on hover can never squeeze it
+   narrower either — the card just grows wider to fit both instead. */
+.whatsappTextCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
+  width: 335px;
+  flex-shrink: 0;
+}
+
+.avatarStack {
+  display: flex;
+  align-items: center;
+}
+
+.avatarImg {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  object-fit: cover;
+}
+
+.avatarStack > .avatarImg:not(:last-child) {
+  margin-right: -8px;
+}
+
+.whatsappHeading {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.whatsappSubtext {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  font-weight: 400;
+  color: #686868;
+  margin: 0;
+}
+
+/* ---- footer bar: tagline/logo, divider, copyright/socials ---- */
 
 .top {
   grid-column: 1 / -1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 40px;
+  gap: var(--space-footer-top-gap);
 }
 
 .tagline {
   grid-column: 1 / span 8;
   max-width: 62ch;
   margin: 0;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 24px;
-  line-height: 1.45;
-  font-weight: 400;
-  color: var(--footer-line);
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 300;
+  letter-spacing: var(--ls-body);
+  color: #ffffff;
 }
 
 .logo {
@@ -45,9 +419,10 @@
 .divider {
   grid-column: 1 / -1;
   height: 1px;
-  margin: 64px 0 32px;
+  margin-block-start: var(--space-footer-divider-margin-top);
+  margin-block-end: var(--space-footer-divider-margin-bottom);
   border: none;
-  background: var(--footer-line);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .bottom {
@@ -55,33 +430,33 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--space-footer-bottom-gap);
 }
 
 .copyright {
   margin: 0;
   font-family: var(--font-inter), sans-serif;
-  font-size: 14px;
+  font-size: var(--fs-nav);
   line-height: 1.5;
   font-weight: 400;
-  color: var(--footer-line);
+  color: #ffffff;
 }
 
 .socials {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-24);
 }
 
 .social {
   display: inline-flex;
-  color: var(--footer-line);
-  transition: color 0.2s ease;
+  color: #ffffff;
+  transition: opacity 0.2s ease;
 }
 
 .social:hover,
 .social:focus-visible {
-  color: #ffffff;
+  opacity: 0.7;
 }
 
 .socialIcon {
@@ -91,28 +466,62 @@
 
 @media (max-width: 1024px) {
   .section {
-    padding-block: 56px 32px;
+    min-height: 820px;
+  }
+
+  .heroCard {
+    padding-block: var(--space-40);
+    padding-inline: var(--space-24);
+  }
+
+  .whatsappCard {
+    width: 100%;
   }
 
   .tagline {
     grid-column: 1 / span 12;
-    font-size: 20px;
-  }
-
-  .divider {
-    margin: 48px 0 24px;
   }
 }
 
 @media (max-width: 640px) {
+  .whatsappCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* Stacked under .qrWrap rather than beside it — the fixed 335px design
+     width (see base rule) was sized to sit next to a 166px-wide QR
+     column, not to the card's now full mobile width. */
+  .whatsappTextCol {
+    width: 100%;
+  }
+
+  .qrWrap {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
   .top {
     flex-direction: column;
-    gap: 32px;
   }
 
   .bottom {
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qrWrap,
+  .whatsappCard {
+    transition: none;
+  }
+
+  .heading:hover,
+  .subtext:hover,
+  .whatsappHeading:hover,
+  .whatsappSubtext:hover {
+    animation: none;
   }
 }

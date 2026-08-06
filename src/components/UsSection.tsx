@@ -1,44 +1,77 @@
-import AutoplayVideo from "./AutoplayVideo";
+"use client";
+
+import Image from "next/image";
+import Button from "@/components/ui/Button";
+import ScrollRevealVideo from "@/components/ScrollRevealVideo";
+import { TextRotate } from "@/components/ui/text-rotate";
+import { useInView } from "@/hooks/useInView";
 import styles from "./UsSection.module.css";
 
-const POINTS = [
-  "Invest in top US companies",
-  "Grow your wealth in USD",
-  "Start with a small amount",
+/** Mirrors GrowSection's own copy of the same constant — house rule: this
+    file duplicates nothing and is duplicated by nothing. */
+const AVATARS = [
+  "/images/join-avatar-1.png",
+  "/images/join-avatar-2.png",
+  "/images/join-avatar-3.png",
+  "/images/join-avatar-4.png",
 ];
 
 /**
- * Second horizontal panel. Structurally identical to GrowSection — same grid
- * spans, typography and 40px rhythm — with a video in place of the sphere.
+ * US content — second half of ServicesSection's combined India+US block
+ * (Figma node 288:6214's second block). Media left, text right — the flip
+ * is deliberate, matching Figma's own layout for this block. No scroll-snap
+ * of its own — see GrowSection's identical comment.
  */
 export default function UsSection() {
+  // Observes .text, not the heading itself — see GrowSection's identical
+  // comment for why a zero-area heading can't be the observed element.
+  const [textColRef, headingInView] = useInView<HTMLDivElement>();
+
   return (
-    <div className="grid">
-      <div className={styles.card}>
-        <div className={styles.text}>
-          <h2 className={styles.heading}>Invest beyond borders</h2>
-          <p className={styles.subtext}>
-            Own the world&apos;s leading companies and build long-term wealth in
-            US dollars.
-          </p>
-          <ul className={styles.points}>
-            {POINTS.map((point) => (
-              <li key={point} className={styles.point}>
-                <span className={styles.tick} aria-hidden="true">
-                  ✓
-                </span>
-                {point}
-              </li>
-            ))}
-          </ul>
-          <button type="button" className={styles.cta}>
-            Explore US Investing <span aria-hidden="true">→</span>
-          </button>
-        </div>
+    <section className={styles.section}>
+      <div className={`grid ${styles.panel}`}>
         <div className={styles.media}>
-          <AutoplayVideo src="/images/us-invest.mp4" className={styles.video} />
+          <ScrollRevealVideo src="/videos/us-dollar.mp4" className={styles.video} />
+        </div>
+        <div ref={textColRef} className={styles.text}>
+          <div className={styles.avatarStack}>
+            {AVATARS.map((src) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                width={36}
+                height={36}
+                className={styles.avatarImg}
+              />
+            ))}
+          </div>
+          <h2 className={styles.heading}>
+            <TextRotate
+              texts={["Invest"]}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              trigger={headingInView}
+            />{" "}
+            <TextRotate
+              texts={["beyond borders"]}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              trigger={headingInView}
+            />
+          </h2>
+          <p className={styles.subtext}>
+            Own shares in the world&apos;s leading companies and build long
+            term wealth through global diversification all from one seamless
+            platform.
+          </p>
+          <Button type="button" className={styles.cta}>
+            Talk to an Advisor
+          </Button>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

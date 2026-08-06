@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import type { Variants } from "motion/react";
-import { TextReveal } from "@/components/ui/text-reveal";
-import GrowSection from "./GrowSection";
-import UsSection from "./UsSection";
+import type { MotionProps } from "motion/react";
+import { TextRotate } from "@/components/ui/text-rotate";
+import Button from "@/components/ui/Button";
+import { heroFrameFilledRef } from "@/lib/heroProgress";
 import styles from "./Hero.module.css";
 
 if (typeof window !== "undefined") {
@@ -17,17 +17,27 @@ if (typeof window !== "undefined") {
 // Spotlight reveal — unchanged from original
 const SPOTLIGHT_R = 260;
 
-// On-load text reveal (motion/react) — heading leads, subtext follows
+// On-load text reveal (motion/react)
 const REVEAL_HEADING_DELAY = 0.15;
-const REVEAL_SUBTEXT_DELAY = 0.8;
 
-// The zoom itself always occupies the first 150% of scroll; the pin is then
-// extended for each stage that follows (card rise, then horizontal scroll).
-// The timeline duration grows in lockstep (1.0 per 150%), so the
-// time-per-pixel ratio never changes — 1.0/1167 === 2.0/2334 === 3.0/3501 —
-// and every pre-existing tween keeps its exact scroll mapping.
+// The heading renders as two separate TextRotate spans ("Invest like a
+// true" and "global citizen") so each can be staggered independently.
+// TextRotate's word-splitting staggers one item per word (no separate items
+// for the spaces between them), so "Invest like a true" is 4 staggered
+// items at the heading's own per-word stagger — 0.05 / speedReveal-
+// equivalent(1.2) — and the second span's delay continues that same
+// cascade instead of restarting it. Same trick as OUTRO_LINE2_DELAY below.
+const HEADING_STAGGER = 0.05 / 1.2;
+const HEADING_LINE1_WORDS = 4;
+const REVEAL_HEADING_LINE2_DELAY =
+  REVEAL_HEADING_DELAY + HEADING_LINE1_WORDS * HEADING_STAGGER;
+
+// The pin covers exactly the spotlight-zoom/frame-fill/outro sequence — one
+// timeline unit per 150% of scroll. GrowSection/UsSection are regular
+// vertical sections below Hero now, not additional pinned stages, so the
+// pin is no longer extended past this single unit.
 const ZOOM_SCROLL_PCT = 150;
-const TOTAL_SCROLL_PCT = 450;
+const TOTAL_SCROLL_PCT = ZOOM_SCROLL_PCT;
 const ZOOM_END = `+=${TOTAL_SCROLL_PCT}%`;
 
 // Progress at which the second-section statement reveals. This is a fraction
@@ -36,24 +46,28 @@ const ZOOM_END = `+=${TOTAL_SCROLL_PCT}%`;
 // 0.85 of the zoom's own 150% == the same absolute scroll pixel (~992px).
 const OUTRO_REVEAL_AT = 0.85 * (ZOOM_SCROLL_PCT / TOTAL_SCROLL_PCT);
 
-// Faster exit on scroll-back. Only the `exit` key is overridden, so the
-// preset's enter animation (hidden/visible) is left untouched.
-const OUTRO_EXIT_CONTAINER: Variants = {
-  exit: { transition: { staggerChildren: 0.015, staggerDirection: -1 } },
-};
+// How long the white-margin frame takes to fill the viewport, in the
+// timeline's absolute units (1.0 per 150%, see above). heroContent's own
+// fade-out starts right after, at this same position, so the two aren't
+// racing each other. HERO_FRAME_FILL_PROGRESS is the same point expressed
+// as ScrollTrigger's own 0..1 progress, for SiteNav (see heroProgress.ts) —
+// derived, not hand-copied, so it can't drift out of sync with the tween.
+const FRAME_FILL_DURATION = 0.2;
+const HERO_FRAME_FILL_PROGRESS = FRAME_FILL_DURATION / (TOTAL_SCROLL_PCT / ZOOM_SCROLL_PCT);
 
-// Line 1 is 3 segments ("Distance" / " " / "shouldn't,") and the stagger is
-// 0.05 / speedReveal(1.2) = 0.0417s, so line 2 starts at 3 * 0.0417 to keep
+// Line 1 is 2 words ("Distance" / "shouldn't,") at the same per-word
+// stagger as the heading, so line 2 starts at 2 * HEADING_STAGGER to keep
 // the word cascade continuous across the break.
-const OUTRO_LINE2_DELAY = 0.125;
+const OUTRO_LINE2_DELAY = 2 * HEADING_STAGGER;
 
-const OUTRO_EXIT_ITEM: Variants = {
-  exit: {
-    filter: "blur(12px)",
-    opacity: 0,
-    y: 20,
-    transition: { duration: 0.15, ease: "easeIn" },
-  },
+// Faster, non-staggered exit on scroll-back — TextRotate's exit is a single
+// flat target (unlike TextReveal's container/item variants), so the reverse
+// per-character cascade the old exit had is simplified to one quick fade.
+const OUTRO_EXIT: MotionProps["exit"] = {
+  opacity: 0,
+  y: 20,
+  filter: "blur(12px)",
+  transition: { duration: 0.15, ease: "easeIn" },
 };
 
 const ZOOM_SCALE = 1.6;
@@ -63,9 +77,6 @@ export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const zoomWrapRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
-  const growBgRef = useRef<HTMLDivElement>(null);
-  const growCardRef = useRef<HTMLDivElement>(null);
-  const hTrackRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imgLayerRef = useRef<HTMLDivElement>(null);
   const sunRef = useRef<HTMLDivElement>(null);
@@ -172,15 +183,25 @@ export default function Hero() {
         !zoomWrapRef.current ||
         !imgLayerRef.current ||
         !heroContentRef.current ||
-        !growBgRef.current ||
-        !growCardRef.current ||
-        !hTrackRef.current ||
         !sunRef.current
       )
         return;
 
-      // Full opacity from the outset — the card is hidden by position, not fade.
-      gsap.set(growCardRef.current, { opacity: 1 });
+      // Read the white-margin frame's starting size from CSS (see
+      // .hero's --hero-frame-inset/--hero-frame-radius) rather than
+      // hardcoding it here, so the responsive breakpoints stay the single
+      // source of truth. Captured as a plain object, not a ref, because
+      // clip-path's inset()/round syntax isn't one of GSAP's built-in
+      // animatable properties — it's tweened as two numbers and written to
+      // the element manually in onUpdate below. Top edge only — matches
+      // .zoomWrap's own pre-hydration clip-path (see Hero.module.css),
+      // which leaves right/bottom/left flush from the start.
+      const zoomWrapEl = zoomWrapRef.current;
+      const heroFrameStyle = getComputedStyle(heroRef.current);
+      const frame = {
+        topInset: parseFloat(heroFrameStyle.getPropertyValue("--hero-frame-inset")) || 0,
+        topRadius: parseFloat(heroFrameStyle.getPropertyValue("--hero-frame-radius")) || 0,
+      };
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -199,6 +220,10 @@ export default function Hero() {
             if (self.progress > 0.001) loopControlRef.current?.stop();
             else loopControlRef.current?.start();
 
+            // SiteNav reads this to hold off hiding until the white-margin
+            // frame has finished filling the viewport (see heroProgress.ts).
+            heroFrameFilledRef.current = self.progress >= HERO_FRAME_FILL_PROGRESS;
+
             // Reveal the second-section statement as the zoom settles.
             // Guarded by a ref so we only re-render on an actual transition.
             const shouldShow = self.progress >= OUTRO_REVEAL_AT;
@@ -211,7 +236,28 @@ export default function Hero() {
       });
 
       tl.to(imgLayerRef.current, { opacity: 0, ease: "none", duration: 0.3 }, 0)
-        .to(heroContentRef.current, { opacity: 0, y: -40, ease: "none", duration: 0.25 }, 0)
+        // White-margin frame snaps to full-bleed first. heroContent (and
+        // SiteNav, via heroFrameFilledRef) only start fading once this is
+        // done, so the frame settling and the copy leaving never fight for
+        // attention at the same time — they go out one after the other.
+        .to(
+          frame,
+          {
+            topInset: 0,
+            topRadius: 0,
+            ease: "none",
+            duration: FRAME_FILL_DURATION,
+            onUpdate: () => {
+              zoomWrapEl.style.clipPath = `inset(${frame.topInset}px 0 0 0 round ${frame.topRadius}px ${frame.topRadius}px 0 0)`;
+            },
+          },
+          0
+        )
+        .to(
+          heroContentRef.current,
+          { opacity: 0, y: -40, ease: "none", duration: 0.25 },
+          FRAME_FILL_DURATION
+        )
         .to(
           zoomWrapRef.current,
           { scale: ZOOM_SCALE, yPercent: ZOOM_Y_PERCENT, ease: "none", duration: 0.9 },
@@ -225,29 +271,15 @@ export default function Hero() {
         // 120 clears the whole feather band with margin. Settles at 0.85,
         // matching OUTRO_REVEAL_AT — never on screen at the same time as
         // the spotlight layer, which has already faded out by 0.3.
+        // Sun rise is the timeline's last beat — GrowSection/UsSection pick
+        // up as regular vertical sections once the pin releases, not as
+        // further stages of this timeline.
         .fromTo(
           sunRef.current,
           { yPercent: 120 },
           { yPercent: 0, ease: "none", duration: 0.35 },
           0.5
-        )
-        // --- Third section. Appended at absolute positions >= 1.0 so the three
-        // tweens above keep their exact scroll mapping. The last tween MUST end
-        // on exactly 2.0: the timeline duration is what pins the time-per-pixel
-        // ratio, so a shorter end would silently shift everything above.
-        // Slides in at full opacity — no fade. It is hidden purely by sitting
-        // one viewport below the fold at yPercent: 100.
-        .fromTo(
-          growCardRef.current,
-          { yPercent: 100 },
-          { yPercent: 0, ease: "none", duration: 0.75 },
-          1.0
-        )
-        .to(growBgRef.current, { opacity: 1, ease: "none", duration: 0.6 }, 1.4)
-        // --- Fourth section. Slides the two-panel track left by one full
-        // viewport. Runs 2.0 -> 3.0, so the timeline ends on exactly 3.0 and
-        // everything above keeps its scroll mapping.
-        .to(hTrackRef.current, { xPercent: -50, ease: "none", duration: 1.0 }, 2.0);
+        );
     },
     { scope: heroRef }
   );
@@ -268,80 +300,67 @@ export default function Hero() {
         />
       </div>
       <div ref={heroContentRef} className={styles.heroContent}>
-        <div className="grid">
-          <TextReveal
-            as="h1"
-            className={styles.heroHeading}
-            delay={REVEAL_HEADING_DELAY}
-            per="word"
-            preset="fade-in-blur"
-            speedReveal={1.2}
-          >
-            Invest like a true global citizen
-          </TextReveal>
-          <div className={styles.heroAside}>
-            <TextReveal
-              as="p"
-              className={styles.heroSubtext}
-              delay={REVEAL_SUBTEXT_DELAY}
-              per="word"
-              preset="fade-in-blur"
-              speedReveal={2.2}
-            >
-              Crafted specifically for NRIs to help them grow your wealth in top global
-              asset classes.
-            </TextReveal>
-            <button type="button" className={styles.heroCta}>
-              Talk to an Advisor
-            </button>
-          </div>
+        <div className={styles.heroInner}>
+          <h1 className={styles.heroHeading}>
+            {/* animatePresenceInitial: trigger is never gated here (always
+                true from mount), so this content IS present at
+                AnimatePresence's own first render — without this, its
+                default (false) would skip the enter animation entirely
+                and the words would just pop in instead of staggering. */}
+            <TextRotate
+              texts={["Invest like a true"]}
+              delay={REVEAL_HEADING_DELAY}
+              staggerDuration={HEADING_STAGGER}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              animatePresenceInitial
+            />{" "}
+            <TextRotate
+              texts={["global citizen"]}
+              delay={REVEAL_HEADING_LINE2_DELAY}
+              staggerDuration={HEADING_STAGGER}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              animatePresenceInitial
+            />
+          </h1>
+          <p className={styles.heroSubtext}>
+            Crafted specifically for NRIs to help them grow your wealth in top global
+            asset classes.
+          </p>
+          <Button type="button" className={styles.heroCta}>
+            Talk to an Advisor
+          </Button>
         </div>
       </div>
       <div className={styles.heroOutro}>
         <div className="grid">
           <div className={styles.heroOutroInner}>
             <h2 className={styles.heroOutroText}>
-              <TextReveal
-                as="span"
-                className={styles.heroOutroLine}
-                per="word"
-                preset="fade-in-blur"
-                speedReveal={1.2}
+              <TextRotate
+                mainClassName={styles.heroOutroLine}
+                texts={["Distance shouldn't,"]}
+                staggerDuration={HEADING_STAGGER}
+                splitBy="words"
+                auto={false}
+                loop={false}
                 trigger={showOutro}
-                variants={{
-                  container: OUTRO_EXIT_CONTAINER,
-                  item: OUTRO_EXIT_ITEM,
-                }}
-              >
-                {"Distance shouldn't,"}
-              </TextReveal>
-              <TextReveal
-                as="span"
-                className={styles.heroOutroLine}
-                per="word"
-                preset="fade-in-blur"
-                speedReveal={1.2}
+                exit={OUTRO_EXIT}
+              />
+              <TextRotate
+                mainClassName={styles.heroOutroLine}
+                texts={["slow your money down."]}
+                staggerDuration={HEADING_STAGGER}
+                splitBy="words"
+                auto={false}
+                loop={false}
                 delay={OUTRO_LINE2_DELAY}
                 trigger={showOutro}
-                variants={{
-                  container: OUTRO_EXIT_CONTAINER,
-                  item: OUTRO_EXIT_ITEM,
-                }}
-              >
-                {"slow your money down."}
-              </TextReveal>
+                exit={OUTRO_EXIT}
+              />
             </h2>
-          </div>
-        </div>
-      </div>
-      <div ref={growBgRef} className={styles.growBg} />
-      <div ref={growCardRef} className={styles.growCard}>
-        <div ref={hTrackRef} className={styles.hTrack}>
-          <div className={styles.hPanel}>
-            <GrowSection />
-          </div>
-          <div className={styles.hPanel}>
-            <UsSection />
           </div>
         </div>
       </div>

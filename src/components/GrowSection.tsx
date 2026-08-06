@@ -1,96 +1,92 @@
+"use client";
+
 import Image from "next/image";
-import SphereImageGrid, { type ImageData } from "@/components/ui/img-sphere";
+import Button from "@/components/ui/Button";
+import ScrollRevealVideo from "@/components/ScrollRevealVideo";
+import { TextRotate } from "@/components/ui/text-rotate";
+import { useInView } from "@/hooks/useInView";
 import styles from "./GrowSection.module.css";
 
-// AMC logos — all 512x512 squares, so object-cover fills the circle without cropping.
-const BASE_SPHERE_IMAGES: Omit<ImageData, "id">[] = [
-  { src: "/images/amc/axis_groww.png", alt: "Axis Mutual Fund" },
-  { src: "/images/amc/birla_groww.png", alt: "Aditya Birla Mutual Fund" },
-  { src: "/images/amc/boi_groww.png", alt: "Bank of India Mutual Fund" },
-  { src: "/images/amc/canara_groww.png", alt: "Canara Robeco Mutual Fund" },
-  { src: "/images/amc/edelweiss_groww.png", alt: "Edelweiss Mutual Fund" },
-  { src: "/images/amc/escorts_groww.png", alt: "Escorts Mutual Fund" },
-  { src: "/images/amc/hdfc_groww.png", alt: "HDFC Mutual Fund" },
-  { src: "/images/amc/hsbc_groww.png", alt: "HSBC Mutual Fund" },
-  { src: "/images/amc/icici_groww.png", alt: "ICICI Prudential Mutual Fund" },
-  { src: "/images/amc/idfc_groww.png", alt: "IDFC Mutual Fund" },
-  { src: "/images/amc/indiabulls_groww.png", alt: "Indiabulls Mutual Fund" },
-  { src: "/images/amc/invesco_groww.png", alt: "Invesco Mutual Fund" },
-  { src: "/images/amc/jioblackrock_groww.png", alt: "Jio BlackRock Mutual Fund" },
-  { src: "/images/amc/jm_groww.png", alt: "JM Financial Mutual Fund" },
-  { src: "/images/amc/kotak_groww.png", alt: "Kotak Mutual Fund" },
-  { src: "/images/amc/lic_groww.png", alt: "LIC Mutual Fund" },
-  { src: "/images/amc/mirae_groww.png", alt: "Mirae Asset Mutual Fund" },
-  { src: "/images/amc/motilal_groww.png", alt: "Motilal Oswal Mutual Fund" },
-  { src: "/images/amc/peerless_groww.png", alt: "Peerless Mutual Fund" },
-  { src: "/images/amc/ppfas_groww.png", alt: "Parag Parikh Mutual Fund" },
-  { src: "/images/amc/quantum_groww.png", alt: "Quantum Mutual Fund" },
-  { src: "/images/amc/reliance_groww.png", alt: "Reliance Mutual Fund" },
-  { src: "/images/amc/sbi_groww.png", alt: "SBI Mutual Fund" },
-  { src: "/images/amc/tata_groww.png", alt: "Tata Mutual Fund" },
-  { src: "/images/amc/trust_groww.png", alt: "Trust Mutual Fund" },
-  { src: "/images/amc/uti_groww.png", alt: "UTI Mutual Fund" },
-  { src: "/images/amc/whiteoak_groww.png", alt: "WhiteOak Capital Mutual Fund" },
+/** Figma node 317:7182 — four fund-partner badges, each its own bordered/
+    shadowed tile rendered from its real exported asset, not the single
+    flattened 194x73 raster this replaces (which pixelated badly once
+    scaled past its native size — these are 512x512/250x250 source, crisp
+    at any reasonable badge size). Replaces the generic avatar stack
+    UsSection still uses; this section's own assets, not shared with it. */
+const BADGES = [
+  "/images/india-badge-1.png",
+  "/images/india-badge-2.png",
+  "/images/india-badge-3.png",
+  "/images/india-badge-4.png",
 ];
 
-const SPHERE_IMAGES: ImageData[] = Array.from({ length: 60 }, (_, i) => {
-  const base = BASE_SPHERE_IMAGES[i % BASE_SPHERE_IMAGES.length];
-  return { id: `sphere-${i + 1}`, ...base, alt: `${base.alt}` };
-});
-
 /**
- * Third-section content. Purely presentational — the reveal animation is
- * driven by the Hero's GSAP timeline, so nothing here touches scroll state.
+ * India content — first half of ServicesSection's combined India+US block
+ * (Figma node 288:6214's first block). Text left, media right. Copied, not
+ * shared with UsSection: same house rule as every other section. No scroll-
+ * snap of its own — ServicesSection owns one shared snap/rise for the pair
+ * so the two read as a single continuous block, not two separate stops.
  */
 export default function GrowSection() {
+  // Observes .text, not the heading itself — see the identical comment on
+  // every other section's heading trigger for why a zero-area heading can't
+  // be the observed element.
+  const [textColRef, headingInView] = useInView<HTMLDivElement>();
+
   return (
-    <div className="grid">
-      <div className={styles.card}>
-        <div className={styles.text}>
-          <h2 className={styles.heading}>Grow your wealth in India.</h2>
-          <p className={styles.subtext}>
-            Access carefully selected mutual funds designed to help NRIs invest
-            confidently and achieve their long term financial goals.
-          </p>
-          <div className={styles.logoRow}>
-            <Image
-              src="/images/amfi.png"
-              alt="AMFI"
-              width={51}
-              height={63}
-              className={styles.logo}
-            />
-            <Image
-              src="/images/sebi.png"
-              alt="SEBI"
-              width={105}
-              height={46}
-              className={styles.logo}
-            />
-            <span className={styles.logoCaption}>
-              registered mutual fund distributor
+    <section className={styles.section}>
+      <div className={`grid ${styles.panel}`}>
+        <div ref={textColRef} className={styles.text}>
+          <div className={styles.badgeStack}>
+            {BADGES.map((src) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                width={72}
+                height={72}
+                className={styles.badge}
+              />
+            ))}
+            <span className={`${styles.badge} ${styles.badgePlus}`}>
+              <Image
+                src="/images/india-badge-plus.svg"
+                alt=""
+                width={17}
+                height={17}
+                className={styles.badgePlusIcon}
+              />
             </span>
           </div>
-          <button type="button" className={styles.cta}>
-            Start Investing
-          </button>
+          <h2 className={styles.heading}>
+            <TextRotate
+              texts={["Grow your"]}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              trigger={headingInView}
+            />{" "}
+            <TextRotate
+              texts={["wealth in India."]}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              trigger={headingInView}
+            />
+          </h2>
+          <p className={styles.subtext}>
+            Access professionally managed mutual funds that help NRIs
+            participate in India&apos;s long term growth with confidence and
+            convenience.
+          </p>
+          <Button type="button" className={styles.cta}>
+            Talk to an Advisor
+          </Button>
         </div>
         <div className={styles.media}>
-          <SphereImageGrid
-            images={SPHERE_IMAGES}
-            containerSize={540}
-            sphereRadius={180}
-            baseImageScale={0.15}
-            dragSensitivity={0.8}
-            momentumDecay={0.96}
-            maxRotationSpeed={6}
-            hoverScale={1.3}
-            perspective={1000}
-            autoRotate
-            autoRotateSpeed={0.2}
-          />
+          <ScrollRevealVideo src="/videos/indian-ruppee.mp4" className={styles.video} />
         </div>
       </div>
-    </div>
+    </section>
   );
 }

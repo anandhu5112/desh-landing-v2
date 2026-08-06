@@ -1,0 +1,79 @@
+/* ============================================================
+   MARQUEE DIVIDER — scroll-linked infinite banner between GrowSection
+   and UsSection (Figma node 321:7226).
+
+   Copied, not shared. Same house rule as every other section: this
+   file duplicates nothing and is duplicated by nothing.
+
+   Positioning/animation logic lives in MarqueeDivider.tsx; this file is
+   purely the strip's own look — full-bleed band, repeating text/dot
+   rhythm, clipped so the scroll-driven track can slide without ever
+   showing empty space past either edge.
+   ============================================================ */
+
+/* Breaks out of whatever centered/margined container it's rendered
+   inside (ServicesSection.tsx has none of its own, but this shouldn't
+   depend on that) to run truly edge-to-edge — "continuous banner filling
+   end-to-end" was explicit in the ask, not just visually wide. */
+.banner {
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  overflow: hidden;
+  background: #ffffff;
+  border-block: 1px solid #e5e5e5;
+  padding-block: var(--space-32);
+}
+
+/* width: max-content so the track is exactly as wide as its content
+   (GROUP_COUNT copies) and never wraps or gets clipped by a percentage
+   width — MarqueeDivider.tsx's gsap.set(track, { x }) is the only thing
+   that ever moves this. */
+.track {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  width: max-content;
+  will-change: transform;
+}
+
+/* One full phrase cycle. flex: none so GROUP_COUNT copies laid side by
+   side never shrink to fit — this always renders at its natural width,
+   which is exactly what MarqueeDivider.tsx measures for the scroll-wrap
+   math (see its TRACK_GAP comment). */
+.group {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  flex: none;
+}
+
+.pair {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+}
+
+.text {
+  font-family: var(--font-body), serif;
+  font-size: 16px;
+  line-height: 27px;
+  font-weight: 400;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: #ffc400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    transform: none !important;
+  }
+}

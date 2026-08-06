@@ -1,0 +1,24 @@
+/* ============================================================
+   SERVICES SECTION — wraps GrowSection + UsSection as one continuous
+   block. Owns the pair's shared scroll-snap and parallax rise; the two
+   sections themselves keep their own content/layout untouched.
+   ============================================================ */
+
+/* Background matches GrowSection/UsSection's own white — .riseWrap's
+   transform (see .riseWrap below) shifts its painted content without
+   affecting how much space it reserves here, so mid-rise there's a brief
+   gap above it within .snapWrap's own box. Without this, that gap would
+   reveal body's background instead (near-black in dark mode, see
+   globals.css --background), not the white the rest of this block uses. */
+.snapWrap {
+  position: relative;
+  background: #ffffff;
+}
+
+/* Transform-only wrapper — translateY doesn't affect document flow, so
+   this can't shift Hero, BloomSection, or Footer's own positions; it only
+   nudges where GrowSection/UsSection paint within their own reserved
+   space as .snapWrap scrolls into view (see ServicesSection.tsx). */
+.riseWrap {
+  will-change: transform;
+}

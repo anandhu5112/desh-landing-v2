@@ -1,0 +1,453 @@
+/* ============================================================
+   CONTACT MODAL — "Connect with us".
+
+   Backdrop is black + heavily blurred per the reference: the page behind
+   reads as dark, soft shapes, not a legible screenshot.
+   ============================================================ */
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes backdropFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes cardFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cardFadeOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-24);
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  animation: backdropFadeIn 0.3s ease;
+}
+
+/* Exit mirrors the entrance timing so the backdrop's own animationend —
+   the signal ContactModal.tsx waits on to actually unmount — lands no
+   earlier than the card's fade-out-down finishes. */
+.backdropClosing {
+  animation: backdropFadeOut 0.3s ease forwards;
+}
+
+.card {
+  position: relative;
+  width: 100%;
+  max-width: 1014px;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  display: flex;
+  gap: var(--space-24);
+  padding: var(--space-16);
+  background: #ffffff;
+  border-radius: 16px;
+  animation: cardFadeInUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cardClosing {
+  animation: cardFadeOutDown 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: var(--space-4);
+  border: none;
+  border-radius: 8px;
+  background: #f1f1f1;
+  color: #000000;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.close:hover,
+.close:focus-visible {
+  opacity: 0.7;
+}
+
+.photo {
+  position: relative;
+  flex: none;
+  width: 322px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.photoImage {
+  object-fit: cover;
+}
+
+.stat {
+  position: absolute;
+  left: 32px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: #ffffff;
+  text-align: left;
+}
+
+.statValue {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 40px;
+  line-height: 1.5;
+  font-weight: 400;
+  margin: 0;
+}
+
+.statLabel {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 20px;
+  line-height: 1.5;
+  font-weight: 400;
+  margin: 0;
+}
+
+.statCaption {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 1.5;
+  font-weight: 400;
+  margin: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+}
+
+.heading {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading-modal);
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: var(--ls-heading-modal);
+  color: #000000;
+  margin: 0;
+}
+
+.headerActions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+}
+
+.tabs {
+  flex: none;
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-4);
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+.tab {
+  padding-block: var(--space-8);
+  padding-inline: var(--space-16);
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-body);
+  color: #000000;
+  cursor: pointer;
+}
+
+.tabActive {
+  background: #ffffff;
+  box-shadow: 0 2px 2px rgba(101, 101, 101, 0.25);
+}
+
+.divider {
+  height: 1px;
+  margin-block: var(--space-24);
+  border: none;
+  background: #e5e5e5;
+}
+
+.form {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-32);
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--space-40);
+  row-gap: var(--space-32);
+}
+
+.optionFull {
+  grid-column: 1 / -1;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 24px;
+  color: #acacac;
+  cursor: pointer;
+}
+
+.option:has(.radioInput:checked) {
+  color: #000000;
+}
+
+.radioBox {
+  position: relative;
+  flex: none;
+  width: 24px;
+  height: 24px;
+}
+
+.radioInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.radioDot {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 2px solid #dedede;
+  pointer-events: none;
+  transition: border-color 0.2s ease;
+}
+
+.radioInput:checked ~ .radioDot {
+  border-color: #000000;
+}
+
+.radioInput:checked ~ .radioDot::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 999px;
+  background: #000000;
+}
+
+.radioInput:focus-visible ~ .radioDot {
+  outline: 2px solid #000000;
+  outline-offset: 2px;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 102px;
+  padding-block: var(--space-8);
+  padding-inline: 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 24px;
+  color: #000000;
+  resize: vertical;
+}
+
+.textarea::placeholder {
+  color: #acacac;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ---- Join us tab ---- */
+
+.joinBody {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-16);
+  /* Figma's gap between the divider and this row is taller than the
+     Contact-us form's — rather than branch .divider's own margin per tab,
+     this absorbs the difference locally so the divider stays shared. */
+  padding-top: var(--space-40);
+}
+
+.qrLarge {
+  flex: none;
+  width: 100%;
+  max-width: 380px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.joinTextCol {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-block: var(--space-32);
+}
+
+.avatarsRow {
+  display: flex;
+  align-items: center;
+}
+
+.avatarStack {
+  display: flex;
+  align-items: center;
+}
+
+.avatarImg {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  object-fit: cover;
+}
+
+.avatarStack > .avatarImg:not(:last-child) {
+  margin-right: -10px;
+}
+
+.plusBadge {
+  flex: none;
+  margin-left: 4px;
+  padding: 2px var(--space-4);
+  border: 2px solid #ffeab1;
+  border-radius: 999px;
+  background: #ffc220;
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  color: #000000;
+}
+
+.joinHeading {
+  margin: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: #000000;
+}
+
+.joinCta {
+  flex: none;
+  height: 40px;
+  padding-inline: var(--space-16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: #00b531;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.joinCta:hover,
+.joinCta:focus-visible {
+  opacity: 0.85;
+}
+
+@media (max-width: 900px) {
+  .joinBody {
+    flex-direction: column;
+    padding-top: var(--space-24);
+  }
+
+  .joinTextCol {
+    padding-block: 0;
+    gap: var(--space-24);
+  }
+}
+
+@media (max-width: 900px) {
+  .card {
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+  }
+
+  .photo {
+    width: 100%;
+    height: 200px;
+  }
+
+  .options {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .card {
+    animation: none;
+  }
+}

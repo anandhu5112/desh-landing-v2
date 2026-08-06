@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
+import { lenisRef } from "@/lib/lenis";
 
 /**
  * Renders nothing — purely wires Lenis's smoothed scroll into GSAP's ticker
@@ -16,6 +17,7 @@ export default function SmoothScroll() {
 
     const lenis = new Lenis({ anchors: true });
     lenis.on("scroll", ScrollTrigger.update);
+    lenisRef.current = lenis;
 
     // Driven off GSAP's own ticker rather than Lenis's `autoRaf`, so there is
     // exactly one frame loop driving both the scrub interpolation and the
@@ -28,6 +30,7 @@ export default function SmoothScroll() {
     return () => {
       gsap.ticker.remove(raf);
       lenis.destroy();
+      lenisRef.current = null;
     };
   }, []);
 

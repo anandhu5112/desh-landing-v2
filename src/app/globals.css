@@ -4,26 +4,81 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* Design system — 12-column grid (1440px reference frame) */
+  /* Design system — 12-column grid, full-bleed (Intercom's own grid:
+     16px gutter, flat 16px edge margin at every viewport, no max-width
+     cap). Previously a 1440px-capped frame with a 32px margin that stepped
+     to 48px/24px at breakpoints — that stepping is gone along with the cap. */
   --grid-columns: 12;
-  --grid-gutter: 20px;
-  --page-margin: 100px;
-  --page-max-width: 1440px;
+  --grid-gutter: 16px;
+  --page-margin: 16px;
+  --page-max-width: none;
 
   /* Ink stays dark regardless of colour scheme — content sits on light imagery */
   --color-ink: #000000;
 }
 
-@media (max-width: 1024px) {
-  :root {
-    --page-margin: 48px;
-  }
-}
+/*
+ * Fluid sizing tokens — every value here scales continuously between a
+ * 640px and a 1920px viewport (clamp(min, ramp, max)), rather than
+ * snapping at a breakpoint the way --page-margin above still does.
+ * MIN/MAX are the exact px pair each property used to jump between; only
+ * the transition between them changed, not the endpoints themselves —
+ * except above 1920px, where these keep growing past today's flat
+ * desktop cap (an explicit, confirmed tradeoff of matching Daylight's own
+ * 640–1920 range instead of stopping at this site's 1440px grid frame).
+ *
+ * --page-margin is deliberately NOT part of this system: it goes
+ * 32px → 48px → 24px as the viewport shrinks (up, then down), which
+ * clamp()'s two fixed endpoints cannot express.
+ */
+:root {
+  /* ---- font-size ---- */
+  /* House heading scale, shared by every section's <h1>/<h2>. */
+  --fs-heading: clamp(40px, calc(40px + (64px - 40px) * (100vw - 640px) / (1920px - 640px)), 64px);
+  /* ContactModal's heading — its own 32/40 pair, not the house scale above. */
+  --fs-heading-modal: clamp(32px, calc(32px + (40px - 32px) * (100vw - 640px) / (1920px - 640px)), 40px);
+  /* BloomSection's "Final Wealth" figure — shares the 40px floor with
+     --fs-heading but a smaller 48px ceiling, so it's its own token. */
+  --fs-final-value: clamp(40px, calc(40px + (48px - 40px) * (100vw - 640px) / (1920px - 640px)), 48px);
+  /* Flat sizes: tokenized for a single source of truth, not fluidized —
+     none of these have ever had a "mobile version" to interpolate from. */
+  --fs-body: 16px;
+  --fs-nav: 14px;
+  --fs-caption: 12px;
 
-@media (max-width: 640px) {
-  :root {
-    --page-margin: 24px;
-  }
+  /* ---- letter-spacing: Intercom's own heading tracking, ~-3% of
+     font-size, fluidized in lockstep with each size token above so the
+     ratio holds at every viewport instead of just at the clamp endpoints. ---- */
+  --ls-heading: clamp(-1.92px, calc(-1.2px + (-1.92px - -1.2px) * (100vw - 640px) / (1920px - 640px)), -1.2px);
+  --ls-heading-modal: clamp(-1.2px, calc(-0.96px + (-1.2px - -0.96px) * (100vw - 640px) / (1920px - 640px)), -0.96px);
+  --ls-final-value: clamp(-1.44px, calc(-1.2px + (-1.44px - -1.2px) * (100vw - 640px) / (1920px - 640px)), -1.2px);
+  /* Body copy's own tracking (~-1% of 16px) — flat, since --fs-body is flat. */
+  --ls-body: -0.16px;
+
+  /* ---- spacing: fluid (each already had a real mobile/desktop jump) ---- */
+  --space-card-padding-block: clamp(40px, calc(40px + (64px - 40px) * (100vw - 640px) / (1920px - 640px)), 64px);
+  --space-section-padding-block: clamp(64px, calc(64px + (96px - 64px) * (100vw - 640px) / (1920px - 640px)), 96px);
+  --space-content-gap: clamp(32px, calc(32px + (40px - 32px) * (100vw - 640px) / (1920px - 640px)), 40px);
+  --space-footer-divider-margin-top: clamp(48px, calc(48px + (64px - 48px) * (100vw - 640px) / (1920px - 640px)), 64px);
+  --space-footer-divider-margin-bottom: clamp(24px, calc(24px + (32px - 24px) * (100vw - 640px) / (1920px - 640px)), 32px);
+  --space-footer-top-gap: clamp(32px, calc(32px + (40px - 32px) * (100vw - 640px) / (1920px - 640px)), 40px);
+  --space-footer-bottom-gap: clamp(20px, calc(20px + (24px - 20px) * (100vw - 640px) / (1920px - 640px)), 24px);
+  --space-nav-links-gap: clamp(20px, calc(20px + (32px - 20px) * (100vw - 640px) / (1920px - 640px)), 32px);
+  --space-nav-padding-top: clamp(24px, calc(24px + (40px - 24px) * (100vw - 640px) / (1920px - 640px)), 40px);
+
+  /* ---- spacing: flat multiples-of-4 scale, tokenized for de-dup only ---- */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-28: 28px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+  --space-96: 96px;
 }
 
 .grid {
@@ -77,11 +132,27 @@ a {
 }
 
 /*
- * Utilities required by components/ui/text-reveal.
+ * Utilities required by components/ui/text-rotate.
  * Tailwind-equivalent definitions — this project uses CSS Modules, not Tailwind.
  */
-.block {
-  display: block;
+.flex {
+  display: flex;
+}
+
+.inline-flex {
+  display: inline-flex;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.w-full {
+  width: 100%;
 }
 
 .inline-block {
@@ -90,6 +161,10 @@ a {
 
 .whitespace-pre {
   white-space: pre;
+}
+
+.whitespace-pre-wrap {
+  white-space: pre-wrap;
 }
 
 .sr-only {

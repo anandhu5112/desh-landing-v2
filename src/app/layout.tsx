@@ -1,14 +1,29 @@
 import type { Metadata } from "next";
-import { DM_Sans, Inter } from "next/font/google";
+import { Inter, IBM_Plex_Serif } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
+// Swapped from GeneralSans-Regular.otf to Mona Sans (GitHub's open-source
+// typeface, SIL OFL) — kept on the same --font-heading variable so no
+// component CSS had to change its font-family reference.
+const monaSans = localFont({
+  src: "./fonts/MonaSans-Regular.woff2",
+  variable: "--font-heading",
+  weight: "400",
+  style: "normal",
 });
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+// Body-prose accent, matching Intercom's serif-for-copy pattern. Only used
+// on actual paragraph copy (see each section's .subtext/.tagline) — UI
+// chrome (nav, buttons, forms) stays on Inter.
+const ibmPlexSerif = IBM_Plex_Serif({
+  variable: "--font-body",
+  weight: "300",
   subsets: ["latin"],
 });
 
@@ -23,7 +38,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${inter.variable}`}>
+    <html
+      lang="en"
+      className={`${monaSans.variable} ${inter.variable} ${ibmPlexSerif.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

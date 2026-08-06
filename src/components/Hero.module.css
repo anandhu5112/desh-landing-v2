@@ -5,6 +5,14 @@
   min-height: 800px;
   overflow: hidden;
   background: #ffffff;
+  /* Initial white-margin framing along the top edge only — image is flush
+     to the bottom/left/right from the start. GSAP animates both down to 0
+     as the first beat of the pinned scroll timeline (see Hero.tsx), so
+     scrolling snaps the top edge from an inset rounded card to full-bleed. */
+  --hero-frame-inset: 32px;
+  --hero-frame-radius: 24px;
+  /* Locally scoped, not promoted to globals.css — used nowhere else. */
+  --hero-content-padding-top: clamp(160px, calc(160px + (200px - 160px) * (100vw - 640px) / (1920px - 640px)), 200px);
 }
 
 .heroBaseImg {
@@ -50,6 +58,14 @@
   inset: 0;
   transform-origin: center center;
   will-change: transform;
+  /* Pre-hydration guard: matches the GSAP tween's own "from" state (read
+     from these same custom properties in Hero.tsx), so there's no flash of
+     full-bleed before GSAP takes over on mount. Top edge only — right/
+     bottom/left sit flush against the viewport from the start. */
+  clip-path: inset(
+    var(--hero-frame-inset) 0 0 0
+    round var(--hero-frame-radius) var(--hero-frame-radius) 0 0
+  );
 }
 
 /* Rises from behind the hills during the outro. Sits inside .zoomWrap so it
@@ -90,94 +106,75 @@
      min-height floor (800px) once viewport width crosses into cover's
      width-driven scaling. 200px + 128px of content leaves real margin
      under that ceiling. */
-  padding-top: 200px;
+  padding-top: var(--hero-content-padding-top);
   pointer-events: none;
   will-change: opacity, transform;
 }
 
-.heroHeading {
-  grid-column: 1 / span 6;
-  font-family: var(--font-dm-sans), sans-serif;
-  font-size: 64px;
-  line-height: 1;
-  font-weight: 400;
-  color: var(--color-ink);
-  pointer-events: auto;
+/* Centred column: heading, subtext, CTA — one common 40px gap between all
+   three, not a tighter inner group. Wide enough that the heading (nowrap
+   below) fits on one line at its 64px desktop size (~851px) with room to
+   spare; narrows back down at the 1024px breakpoint where the heading
+   wraps again. */
+.heroInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-40);
+  max-width: 1100px;
+  padding-inline: var(--page-margin);
+  text-align: center;
 }
 
-.heroAside {
-  grid-column: 9 / span 4;
+.heroHeading {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading);
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: var(--ls-heading);
+  color: var(--color-ink);
+  white-space: nowrap;
+  pointer-events: auto;
 }
 
 .heroSubtext {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  font-weight: 400;
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 300;
+  letter-spacing: var(--ls-body);
   color: var(--color-ink);
   pointer-events: auto;
 }
 
+/* Hover micro-interaction — a re-triggerable echo of the text's own
+   scroll-in reveal (blur + lift + fade), not a one-shot. Plays once per
+   hover entry rather than a plain transition, since a transition alone
+   can't pass through the blurred "mid-reveal" state on the way back to
+   sharp. */
+@keyframes heroTextHover {
+  0% {
+    opacity: 0.45;
+    filter: blur(6px);
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.heroHeading:hover,
+.heroSubtext:hover {
+  animation: heroTextHover 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Visuals come from the shared Button component; this only opts back into
+   clicks inside heroContent's otherwise pointer-events:none layer —
+   spacing from the text above comes from .heroInner's own gap. */
 .heroCta {
-  margin-top: 40px;
-  height: 40px;
-  padding: 0 16px;
-  display: inline-flex;
-  align-items: center;
-  background: #000000;
-  color: #ffffff;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
-  font-weight: 400;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
   pointer-events: auto;
-}
-
-/* Third section — siblings of .zoomWrap so the 1.6x zoom never scales them */
-.growBg {
-  position: absolute;
-  inset: 0;
-  z-index: 12;
-  background: #ffffff;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.growCard {
-  position: absolute;
-  inset: 0;
-  z-index: 13;
-  display: flex;
-  align-items: center;
-  /* Pre-hydration guard only: GSAP sets opacity to 1 on mount and never
-     animates it, so the card slides in at full opacity. Do NOT hide this with
-     a transform — GSAP would parse it into `y` and stack it with yPercent. */
-  opacity: 0;
-  will-change: transform;
-  pointer-events: none;
-}
-
-/* Horizontal track holding the India and US panels side by side.
-   align-self overrides .growCard's align-items:center so the track fills
-   height; each panel then handles its own vertical centring. */
-.hTrack {
-  display: flex;
-  width: 200%;
-  height: 100%;
-  align-self: stretch;
-  /* The track is itself a flex item of .growCard, so without this it would
-     shrink straight back to 100% and both panels would render half-width. */
-  flex-shrink: 0;
-  will-change: transform;
-}
-
-.hPanel {
-  flex: 0 0 50%;
-  width: 50%;
-  display: flex;
-  align-items: center;
 }
 
 /* Second-section statement — also a sibling of .zoomWrap, so it is never scaled */
@@ -203,21 +200,38 @@
 }
 
 /* Each reveal renders as its own line, so the break is explicit rather
-   than left to text wrapping */
-.heroOutroLine {
+   than left to text wrapping. Selector scoped under .heroOutroText (not a
+   bare .heroOutroLine) so this reliably beats TextRotate's own "flex"
+   utility class regardless of globals.css vs. CSS-module cascade order. */
+.heroOutroText .heroOutroLine {
   display: block;
 }
 
+/* .heroOutroText's text-align: center only centers real inline content —
+   the words themselves are laid out by TextRotate's inner flex row
+   (justify-content: flex-start by default), which ignores text-align
+   entirely. Centering that flex row directly is what actually centers
+   the words. */
+.heroOutroText .heroOutroLine > div {
+  justify-content: center;
+}
+
 .heroOutroText {
-  font-family: var(--font-dm-sans), sans-serif;
-  font-size: 64px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading);
   line-height: 1;
   font-weight: 400;
+  letter-spacing: var(--ls-heading);
   color: var(--color-ink);
   text-align: center;
 }
 
 @media (max-width: 1024px) {
+  .hero {
+    --hero-frame-inset: 20px;
+    --hero-frame-radius: 16px;
+  }
+
   .sun {
     --sun-size: 60vw;
   }
@@ -226,21 +240,32 @@
     grid-column: 1 / span 12;
   }
 
-  .heroOutroText {
-    font-size: 40px;
+  /* Desktop centers this text over the sun (see .heroOutro's base rule) —
+     at mobile/tablet widths --sun-size grows to 60vw, so that same centered
+     position lands the text on top of the sun instead of beside it, and the
+     three stacked lines overflow past its edges. Pinned to the top instead,
+     in the clear sky above the sun, using the same clearance the primary
+     heading already uses (--hero-content-padding-top) so both sit at a
+     consistent depth. Desktop's centered/translateY(56px) treatment is
+     untouched — this only fires under this block's own breakpoint. */
+  .heroOutro {
+    align-items: flex-start;
+    padding-top: var(--hero-content-padding-top);
+    transform: none;
   }
 
-  .heroContent {
-    padding-top: 160px;
+  .heroInner {
+    max-width: 753px;
   }
 
   .heroHeading {
-    grid-column: 1 / span 12;
-    font-size: 40px;
+    white-space: normal;
   }
+}
 
-  .heroAside {
-    grid-column: 1 / span 12;
-    margin-top: 32px;
+@media (prefers-reduced-motion: reduce) {
+  .heroHeading:hover,
+  .heroSubtext:hover {
+    animation: none;
   }
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 
+import { useSnapIntoView } from "@/hooks/useSnapIntoView";
+import { useInView } from "@/hooks/useInView";
+import { TextRotate } from "@/components/ui/text-rotate";
 import styles from "./BloomSection.module.css";
 
 /**
@@ -17,13 +20,17 @@ import styles from "./BloomSection.module.css";
 /** Lives in /public. Static export serves it straight from the origin root. */
 const BLOOM_SRC = "/bloom.mp4";
 
+/** "with time" starts shortly after "Wealth grows" begins, not simultaneously. */
+const TITLE_LINE2_DELAY = 0.15;
+
 /**
  * Slider ranges. The corpus bounds below are derived from these, so widening
  * a slider automatically re-normalises the bloom — never hand-tune both.
  */
 const AMOUNT = { min: 1_000, max: 200_000, step: 1_000, initial: 25_000 } as const;
-const RATE = { min: 6, max: 15, step: 0.5, initial: 12 } as const;
 const YEARS = { min: 1, max: 30, step: 1, initial: 15 } as const;
+/** No longer a slider — a fixed assumption the projection is run at. */
+const ASSUMED_RATE = 12;
 
 /**
  * Future value of a SIP due — contributions at the start of each month.
@@ -36,8 +43,8 @@ function futureValue(monthly: number, annualRate: number, years: number): number
   return monthly * ((Math.pow(1 + i, n) - 1) / i) * (1 + i);
 }
 
-const CORPUS_MIN = futureValue(AMOUNT.min, RATE.min, YEARS.min);
-const CORPUS_MAX = futureValue(AMOUNT.max, RATE.max, YEARS.max);
+const CORPUS_MIN = futureValue(AMOUNT.min, ASSUMED_RATE, YEARS.min);
+const CORPUS_MAX = futureValue(AMOUNT.max, ASSUMED_RATE, YEARS.max);
 const LOG_MIN = Math.log(CORPUS_MIN);
 const LOG_SPAN = Math.log(CORPUS_MAX) - LOG_MIN;
 
@@ -96,10 +103,13 @@ function fillStyle(value: number, min: number, max: number): CSSProperties {
 
 export default function BloomSection() {
   const [monthly, setMonthly] = useState<number>(AMOUNT.initial);
-  const [rate, setRate] = useState<number>(RATE.initial);
   const [years, setYears] = useState<number>(YEARS.initial);
   const [bloomVisible, setBloomVisible] = useState(false);
 
+  const sectionRef = useSnapIntoView<HTMLElement>();
+  // Observes .textCol, not the heading itself — see GrowSection's identical
+  // comment for why a zero-area heading can't be the observed element.
+  const [textColRef, headingInView] = useInView<HTMLDivElement>();
   const videoRef = useRef<HTMLVideoElement>(null);
   const targetRef = useRef(0);
   /** null until the first corpus lands, so the section opens on the right stage. */
@@ -107,12 +117,10 @@ export default function BloomSection() {
 
   const ids = useId();
   const amountId = `${ids}-amount`;
-  const rateId = `${ids}-rate`;
   const yearsId = `${ids}-years`;
 
-  const corpus = futureValue(monthly, rate, years);
+  const corpus = futureValue(monthly, ASSUMED_RATE, years);
 
-  const rateText = `${rate % 1 === 0 ? rate.toFixed(0) : rate.toFixed(1)}%`;
   const yearsText = `${years} ${years === 1 ? "year" : "years"}`;
 
   // Wealth — and only wealth — moves the bloom.
@@ -183,26 +191,58 @@ export default function BloomSection() {
   }, []);
 
   return (
-    <section id="wealth-bloom" className={styles.section}>
-      {/* Outside the grid on purpose — the bloom is full-bleed, not a column. */}
-      <div className={styles.stage}>
-        <video
-          ref={videoRef}
-          className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
-          src={BLOOM_SRC}
-          muted
-          playsInline
-          preload="auto"
-          disablePictureInPicture
-          aria-hidden="true"
-          onLoadedData={() => setBloomVisible(true)}
-        />
-      </div>
+    <section id="wealth-bloom" ref={sectionRef} className={styles.section}>
+      <div className={`grid ${styles.panel}`}>
+        <div ref={textColRef} className={styles.textCol}>
+          <h2 className={styles.title}>
+            <TextRotate
+              mainClassName={styles.titleLine}
+              texts={["Wealth grows"]}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              trigger={headingInView}
+            />
+            <TextRotate
+              mainClassName={styles.titleLine}
+              texts={["with time"]}
+              splitBy="words"
+              auto={false}
+              loop={false}
+              delay={TITLE_LINE2_DELAY}
+              trigger={headingInView}
+            />
+          </h2>
+          {/* Explicit break, not left to natural wrap — .textCol is only
+              2 grid columns wide (~226px at a 1470px viewport), too narrow
+              for the section's original wording to hold at 2 lines at any
+              readable font size. Reworded shorter and split at a word
+              boundary measured to fit this column at --fs-body (16px). */}
+          <p className={styles.tagline}>
+            Adjust the sliders and watch
+            <br />
+            your wealth grow.
+          </p>
+        </div>
 
-      <div className="grid">
-        <div className={styles.content}>
-          <h2 className={styles.title}>Wealth grows with time</h2>
+        {/* Its own grid column now, not an absolutely positioned full-bleed
+            layer — the new layout seats the bloom between the two text
+            columns instead of stealing the right half of the section. */}
+        <div className={styles.media}>
+          <video
+            ref={videoRef}
+            className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
+            src={BLOOM_SRC}
+            muted
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+            aria-hidden="true"
+            onLoadedData={() => setBloomVisible(true)}
+          />
+        </div>
 
+        <div className={styles.controlsCol}>
           <div className={styles.controls}>
             <div className={styles.control}>
               <div className={styles.controlHead}>
@@ -223,28 +263,6 @@ export default function BloomSection() {
                 style={fillStyle(monthly, AMOUNT.min, AMOUNT.max)}
                 aria-label="Monthly investment amount in rupees"
                 aria-valuetext={`${inr(monthly)} per month`}
-              />
-            </div>
-
-            <div className={styles.control}>
-              <div className={styles.controlHead}>
-                <label className={styles.controlLabel} htmlFor={rateId}>
-                  Expected Annual Return
-                </label>
-                <span className={styles.controlValue}>{rateText}</span>
-              </div>
-              <input
-                id={rateId}
-                className={styles.slider}
-                type="range"
-                min={RATE.min}
-                max={RATE.max}
-                step={RATE.step}
-                value={rate}
-                onChange={(event) => setRate(Number(event.target.value))}
-                style={fillStyle(rate, RATE.min, RATE.max)}
-                aria-label="Expected annual return percentage"
-                aria-valuetext={`${rateText} per year`}
               />
             </div>
 
@@ -283,9 +301,12 @@ export default function BloomSection() {
             </div>
           </div>
 
+          {/* Not part of the reference design — kept as small print per the
+              call to preserve the disclaimer rather than drop it. */}
           <p className={styles.note}>
-            Illustrative projection at the assumed rate of return. Investments are
-            subject to market risk; past performance does not predict future results.
+            Illustrative projection assuming a {ASSUMED_RATE}% annual return.
+            Investments are subject to market risk; past performance does not predict
+            future results.
           </p>
         </div>
       </div>

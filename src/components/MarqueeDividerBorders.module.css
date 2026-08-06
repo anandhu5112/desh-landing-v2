@@ -1,0 +1,71 @@
+/* ============================================================
+   MARQUEE DIVIDER (BORDERS) — scroll-linked infinite banner right
+   before BloomSection, closing out UsSection ("Invest Beyond Borders").
+
+   Copied, not shared. Same house rule as every other section: this
+   file duplicates nothing and is duplicated by nothing. Same visual
+   treatment as MarqueeDivider.module.css (full-bleed band, repeating
+   text/dot rhythm) — kept as an independent copy since the two sit at
+   different page boundaries and carry their own content.
+   ============================================================ */
+
+/* Breaks out of whatever centered/margined container it's rendered
+   inside to run truly edge-to-edge, matching MarqueeDivider. No
+   margin-block at all (top or bottom) — rendered as a plain top-level
+   sibling directly before BloomSection in page.tsx, so with nothing
+   between them in the document flow, this sits flush against the SIP
+   calculator section with zero gap, as asked. */
+.banner {
+  position: relative;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
+  overflow: hidden;
+  background: #ffffff;
+  border-block: 1px solid #e5e5e5;
+  padding-block: var(--space-32);
+}
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  width: max-content;
+  will-change: transform;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+  flex: none;
+}
+
+.pair {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+}
+
+.text {
+  font-family: var(--font-body), serif;
+  font-size: 16px;
+  line-height: 27px;
+  font-weight: 400;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  background: #ffc400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    transform: none !important;
+  }
+}

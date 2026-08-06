@@ -1,0 +1,38 @@
+/*
+ * Recreation of Razorpay Blade's Button — Primary variant, Large size
+ * (blade.razorpay.com, Components/Button/Primary story), with the brand
+ * teal swapped for black. The bevel is the same 4-layer inset box-shadow
+ * trick Blade uses for its glossy look, just recoloured: a crisp edge that
+ * matches the fill, plus a light highlight along the top and bottom.
+ */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding-inline: var(--space-16);
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #3a3a3a 0%, #000000 100%);
+  color: #ffffff;
+  font-family: var(--font-inter), Arial, Helvetica, sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 24px;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    inset 0 0 0 0.5px #000000,
+    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.18),
+    inset 0 -2px 0 0 rgba(255, 255, 255, 0.14);
+  transition: opacity 0.2s ease;
+}
+
+.button:hover,
+.button:focus-visible {
+  opacity: 0.85;
+}
+
+.button:active {
+  opacity: 0.7;
+}
