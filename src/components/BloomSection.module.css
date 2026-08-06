@@ -21,9 +21,12 @@
 
   position: relative;
   width: 100%;
-  height: 100vh;
+  /* min-height rather than a fixed 100vh: house typography is considerably
+     larger than the transfer doc assumed, so the panel is allowed to grow
+     instead of clipping. This section scrolls normally — it is not pinned. */
+  min-height: 100vh;
   margin: 0;
-  padding-block: var(--space-section-padding-block);
+  padding-block: 96px;
   background: var(--bloom-surface);
   color: var(--bloom-ink);
   font-family: var(--font-inter), sans-serif;
@@ -35,113 +38,31 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* GrowSection/UsSection's cards sit a flat 16px from the true viewport
-   edge (see their .panel), not the page's usual centered/margined --grid.
-   Matches that here so the content lines up the same distance from the
-   edge across sections instead of jumping in from the wider --page-margin
-   inset as you scroll from one section to the next. align-items: stretch
-   (overriding the base .grid utility's start) makes every column as tall
-   as .controlsCol, the tallest — .textCol needs that full height to pin
-   its heading/tagline to the row's top/bottom edges (see .textCol below).
-   height: 100% gives that stretch something definite to resolve against —
-   .section centers .panel rather than stretching it, so without this,
-   .panel (and every "100%" height below it, down to .bloom) would have no
-   definite height to size against and .bloom would fall back to the
-   video's native intrinsic size instead, blowing far past the section. */
-.panel {
-  max-width: none;
-  padding-inline: var(--space-16);
-  align-items: stretch;
-  height: 100%;
-}
-
-/* space-between pins .title to the top of this box and .tagline to its
-   bottom, instead of the pair sitting together as one vertically-centered
-   block. height: 50% caps how far apart that pushes them, and align-self:
-   center (overriding .panel's stretch) centers this half-height box
-   against .media's full row height — i.e. against the bloom video itself.
-   Matches .controlsCol's identical height/align-self (see below) so
-   .tagline and .note land at the same row position on both sides. */
-.textCol {
-  /* Inset from the grid's own edges (was 1 / span 3) — content should sit
-     between grid tracks 2 and 11, not run flush to the full 12-column
-     grid. .media (the flower) keeps its original 4 / span 6 untouched, so
-     the only room left on this side without overlapping it is columns
-     2-3, one narrower than before. */
-  grid-column: 2 / span 2;
-  height: 50%;
-  align-self: center;
+/* Copy sits on the real 12-column grid, same as every other section. */
+.content {
+  grid-column: 1 / span 5;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  /* Floor so heading/tagline can never end up touching if this box is
-     ever shorter than expected. */
-  gap: var(--space-24);
-  align-items: flex-start;
+  /* House 40px rhythm between heading / controls / readout / note. */
+  gap: 40px;
+  align-items: stretch;
   min-width: 0;
 }
 
-/* House heading: DM Sans 64px / line-height 1 / weight 400.
-   position/z-index: .textCol is only 2 grid columns wide (~226px at a
-   1470px viewport, see its own comment) — nowhere near enough for "Wealth
-   grows" or "with time" at heading scale (up to 64px) to fit on one line.
-   Since the two lines must never wrap further regardless of width (see
-   .titleLine below), this is left free to overflow .textCol's box
-   horizontally rather than being squeezed into it — .section's own
-   overflow: hidden is the only thing that actually clips it, not
-   .textCol, so it renders at full natural width. That overflow reaches
-   into .media's column, so this needs to paint above the video (z-index)
-   or the video — later in DOM order — would cover part of the text. */
+/* House heading: DM Sans 64px / line-height 1 / weight 400. */
 .title {
-  position: relative;
-  z-index: 2;
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-heading);
+  font-size: 64px;
   line-height: 1;
   font-weight: 400;
-  letter-spacing: var(--ls-heading);
   color: var(--bloom-ink);
   margin: 0;
 }
 
-/* Each TextRotate line renders as its own row, so the break is explicit
-   rather than left to text wrapping. Scoped under .title (not a bare
-   .titleLine) so this reliably beats TextRotate's own "inline-flex"
-   utility class regardless of globals.css vs. CSS-module cascade order.
-   white-space: nowrap is what actually guarantees "Wealth grows"/"with
-   time" each render as a single line on every screen width — without it,
-   .textCol's narrow column would wrap either phrase into extra lines of
-   its own on top of the explicit two-line split. */
-.title .titleLine {
-  display: block;
-  white-space: nowrap;
-}
-
-/* white-space alone doesn't reach this: TextRotate's per-word spans sit
-   inside their own inner flex container (its AnimatePresence child,
-   className "flex flex-wrap") one level down from .titleLine itself, so
-   "Wealth" and "grows" wrap onto separate lines via flex-wrap, not text
-   wrapping — white-space: nowrap on .titleLine has no effect on that.
-   This reaches in and overrides it directly. */
-.title .titleLine > div {
-  flex-wrap: nowrap;
-}
-
-.tagline {
-  font-family: var(--font-body), serif;
-  font-size: var(--fs-body);
-  line-height: 1.4;
-  font-weight: 300;
-  letter-spacing: var(--ls-body);
-  color: var(--bloom-muted);
-  margin: 0;
-}
-
-/* Hover micro-interaction — a re-triggerable echo of the text's own
-   scroll-in reveal (blur + lift + fade), not a one-shot. Plays once per
-   hover entry rather than a plain transition, since a transition alone
-   can't pass through the blurred "mid-reveal" state on the way back to
-   sharp. */
+/* Hover micro-interaction — same treatment every other section's heading
+   gets (Hero/Footer/GrowSection/UsSection): a re-triggerable echo of a
+   scroll-in reveal (blur + lift + fade), not a one-shot. No .tagline here
+   to pair it with — this layout has no separate subtext paragraph. */
 @keyframes textHover {
   0% {
     opacity: 0.45;
@@ -155,48 +76,8 @@
   }
 }
 
-.title:hover,
-.tagline:hover {
+.title:hover {
   animation: textHover 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
-/* Its own grid column, seated between the two text columns instead of an
-   absolutely positioned full-bleed layer — the previous layout gave the
-   bloom the entire right half of the section; this one only needs a
-   single column's width. No aspect-ratio here (that's .bloom's job, see
-   below) — this box takes the full column width *and* the full row
-   height, so the flower can grow as large as either dimension allows. */
-.media {
-  grid-column: 4 / span 6;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  min-width: 0;
-}
-
-/* Same width as .textCol now (both 2 columns) — sliders don't need extra
-   room and stay perfectly usable at this width.
-   height: 50% caps how far .note's margin-top: auto (below) can push it
-   down, and align-self: center (overriding .panel's stretch) centers
-   this half-height box against .media's full row height — i.e. against
-   the bloom video itself. Same height/align-self as .textCol, so .note
-   ends up level with .tagline. */
-.controlsCol {
-  /* Inset from the grid's own edges (was 10 / span 3) — same 2/11 content
-     bound as .textCol (see its comment). Start line is unchanged; only
-     the span drops by one column, giving up the rightmost track (12)
-     rather than shifting off .media's edge at line 10. */
-  grid-column: 10 / span 2;
-  height: 50%;
-  align-self: center;
-  display: flex;
-  flex-direction: column;
-  /* House 40px rhythm between controls / readout / note. */
-  gap: var(--space-content-gap);
-  align-items: stretch;
-  min-width: 0;
 }
 
 /* ---------- SLIDERS ---------- */
@@ -204,7 +85,7 @@
 .controls {
   display: flex;
   flex-direction: column;
-  gap: var(--space-28);
+  gap: 28px;
 }
 
 .control {
@@ -215,14 +96,14 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: var(--space-16);
-  margin-bottom: var(--space-12);
+  gap: 16px;
+  margin-bottom: 12px;
 }
 
 /* House body size. */
 .controlLabel {
   font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-body);
+  font-size: 16px;
   line-height: 1.5;
   font-weight: 400;
   color: var(--bloom-muted);
@@ -230,7 +111,7 @@
 
 .controlValue {
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-body);
+  font-size: 16px;
   line-height: 1.5;
   font-weight: 400;
   color: var(--bloom-ink);
@@ -273,11 +154,7 @@
   background: #ffffff;
   border: 0;
   box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.16);
-  transition: box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.slider:hover::-webkit-slider-thumb {
-  box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
+  transition: box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .slider:active::-webkit-slider-thumb {
   box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.14);
@@ -304,14 +181,20 @@
   border-radius: 50%;
   background: #ffffff;
   border: 0;
-  transition: box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.slider:hover::-moz-range-thumb {
-  box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
+  transition: box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .slider:active::-moz-range-thumb {
   box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.14);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .slider:hover::-webkit-slider-thumb {
+    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
+  }
+
+  .slider:hover::-moz-range-thumb {
+    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
+  }
 }
 
 /* ---------- READOUT ---------- */
@@ -325,17 +208,17 @@
 
 
 .final {
-  padding-top: var(--space-32);
+  padding-top: 32px;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: var(--space-24);
+  gap: 24px;
   flex-wrap: wrap;
 }
 
 .finalLabel {
   font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-caption);
+  font-size: 12px;
   line-height: 1.5;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -347,10 +230,9 @@
    heading (64) so it reads as the answer without outshouting the title. */
 .finalValue {
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-final-value);
+  font-size: 48px;
   font-weight: 400;
   line-height: 1;
-  letter-spacing: var(--ls-final-value);
   color: #ffffff;
   font-variant-numeric: tabular-nums;
   margin: 0;
@@ -358,7 +240,7 @@
 
 .finalCompact {
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-body);
+  font-size: 16px;
   line-height: 1.5;
   font-weight: 400;
   color: #ffc400;
@@ -367,17 +249,11 @@
   white-space: nowrap;
 }
 
-/* Smaller than the house caption token (--fs-caption, 12px) — this is
-   small-print disclaimer text, not a real caption, so it deliberately
-   sits a size below the shared scale rather than sharing that token. */
-/* margin-top: auto pins .note to .controlsCol's bottom edge — level with
-   .tagline — without spreading .controls/.readout apart from each other;
-   they keep their normal gap-based rhythm and stay put at the top. */
+/* House caption size, matching GrowSection's logo caption. */
 .note {
   margin: 0;
-  margin-top: auto;
   font-family: var(--font-inter), sans-serif;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.24);
   max-width: 56ch;
@@ -385,10 +261,21 @@
 
 /* ---------- BLOOM ---------- */
 
-/* Fills .media's full box (the entire row height *and* its 6-column
-   width) — object-fit: contain picks whichever dimension is the binding
-   constraint and letterboxes the other, so the flower is as large as the
-   layout allows without ever overflowing it. */
+/* Deliberately outside the grid, per the brief: the flower is full-bleed to
+   the right edge rather than confined to a column. */
+.stage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 .bloom {
   height: 100%;
   width: 100%;
@@ -397,76 +284,58 @@
   display: block;
   opacity: 0;
   transition: opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
 }
 
 .bloomReady {
   opacity: 1;
 }
 
-/* The video frame is matte black but .media's edge is a hard cut; this
-   feathers it so the bloom sits in the field rather than in a box. */
-.media::after {
+/* The bloom frame is matte black but the panel edge is a hard cut; these
+   feather it so the bloom sits in the field rather than in a box. */
+.stage::after {
   content: "";
   position: absolute;
   inset: -2px;
   pointer-events: none;
   background:
-    linear-gradient(to right, #000 0%, rgba(0, 0, 0, 0) 18%),
-    linear-gradient(to left, #000 0%, rgba(0, 0, 0, 0) 18%),
-    linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 18%),
-    linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 18%);
+    linear-gradient(to right, #000 0%, rgba(0, 0, 0, 0) 14%),
+    linear-gradient(to left, #000 0%, rgba(0, 0, 0, 0) 10%),
+    linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 10%),
+    linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 10%);
 }
 
 /* ---------- RESPONSIVE ---------- */
 
 @media (max-width: 1024px) {
-  /* height: 100vh only holds at the reference design's desktop width —
-     stacking three columns into one at this breakpoint means the content
-     is routinely taller than the viewport, so this reverts to the
-     original min-height behaviour rather than clipping. Not pinned, so
-     the section is free to scroll past 100vh here. */
   .section {
+    padding-block: 64px;
     display: block;
-    height: auto;
-    min-height: 100vh;
   }
 
-  .textCol,
-  .media,
-  .controlsCol {
+  .content {
     grid-column: 1 / span 12;
+    gap: 32px;
   }
 
-  /* Desktop centers these as half-height boxes against .media's full row
-     height (see .textCol/.controlsCol above) — stacked into separate full-
-     width rows here, there's no shared row height left to center against,
-     so this reverts both to plain content-sized, top-of-their-own-row
-     boxes instead. */
-  .textCol,
-  .controlsCol {
-    height: auto;
-    align-self: auto;
+  .title {
+    font-size: 40px;
   }
 
-  .textCol {
-    justify-content: flex-start;
+  .finalValue {
+    font-size: 40px;
   }
 
-  .note {
-    margin-top: 0;
-  }
-
-  /* Stacked: the bloom becomes a banner between the two text columns
-     rather than a side-by-side column. */
-  .media {
-    aspect-ratio: auto;
+  /* Stacked: the bloom becomes a banner above the copy rather than a column. */
+  .stage {
+    position: relative;
     width: 100%;
     height: 46vh;
     min-height: 280px;
-    margin-block: var(--space-40);
+    margin-bottom: 40px;
   }
 
-  .media::after {
+  .stage::after {
     background:
       linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 12%),
       linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 12%);
@@ -478,8 +347,7 @@
     transition: none;
   }
 
-  .title:hover,
-  .tagline:hover {
+  .title:hover {
     animation: none;
   }
 }
