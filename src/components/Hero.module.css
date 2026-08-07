@@ -147,29 +147,6 @@
   pointer-events: auto;
 }
 
-/* Hover micro-interaction — a re-triggerable echo of the text's own
-   scroll-in reveal (blur + lift + fade), not a one-shot. Plays once per
-   hover entry rather than a plain transition, since a transition alone
-   can't pass through the blurred "mid-reveal" state on the way back to
-   sharp. */
-@keyframes heroTextHover {
-  0% {
-    opacity: 0.45;
-    filter: blur(6px);
-    transform: translateY(6px);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-    transform: translateY(0);
-  }
-}
-
-.heroHeading:hover,
-.heroSubtext:hover {
-  animation: heroTextHover 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-}
-
 /* Visuals come from the shared Button component; this only opts back into
    clicks inside heroContent's otherwise pointer-events:none layer —
    spacing from the text above comes from .heroInner's own gap. */
@@ -193,27 +170,16 @@
   transform: translateY(56px);
 }
 
-/* Positioned so AnimatePresence's popLayout exit resolves against this box */
 .heroOutroInner {
   position: relative;
   grid-column: 3 / span 8;
 }
 
-/* Each reveal renders as its own line, so the break is explicit rather
-   than left to text wrapping. Selector scoped under .heroOutroText (not a
-   bare .heroOutroLine) so this reliably beats TextRotate's own "flex"
-   utility class regardless of globals.css vs. CSS-module cascade order. */
+/* Each line is its own block, so the break is explicit rather than left
+   to text wrapping. .heroOutroText's own text-align: center (below)
+   centers each line's plain text content. */
 .heroOutroText .heroOutroLine {
   display: block;
-}
-
-/* .heroOutroText's text-align: center only centers real inline content —
-   the words themselves are laid out by TextRotate's inner flex row
-   (justify-content: flex-start by default), which ignores text-align
-   entirely. Centering that flex row directly is what actually centers
-   the words. */
-.heroOutroText .heroOutroLine > div {
-  justify-content: center;
 }
 
 .heroOutroText {

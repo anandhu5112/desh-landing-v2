@@ -3,8 +3,6 @@
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
-import { TextRotate } from "@/components/ui/text-rotate";
-import { useInView } from "@/hooks/useInView";
 import styles from "./UsSection.module.css";
 
 /** Mirrors GrowSection's own copy of the same constant — house rule: this
@@ -23,17 +21,13 @@ const AVATARS = [
  * of its own — see GrowSection's identical comment.
  */
 export default function UsSection() {
-  // Observes .text, not the heading itself — see GrowSection's identical
-  // comment for why a zero-area heading can't be the observed element.
-  const [textColRef, headingInView] = useInView<HTMLDivElement>();
-
   return (
     <section className={styles.section}>
       <div className={`grid ${styles.panel}`}>
         <div className={styles.media}>
           <ScrollRevealVideo src="/videos/us-dollar.mp4" className={styles.video} />
         </div>
-        <div ref={textColRef} className={styles.text}>
+        <div className={styles.text}>
           <div className={styles.avatarStack}>
             {AVATARS.map((src) => (
               <Image
@@ -46,22 +40,7 @@ export default function UsSection() {
               />
             ))}
           </div>
-          <h2 className={styles.heading}>
-            <TextRotate
-              texts={["Invest"]}
-              splitBy="words"
-              auto={false}
-              loop={false}
-              trigger={headingInView}
-            />{" "}
-            <TextRotate
-              texts={["beyond borders"]}
-              splitBy="words"
-              auto={false}
-              loop={false}
-              trigger={headingInView}
-            />
-          </h2>
+          <h2 className={styles.heading}>Invest beyond borders</h2>
           <p className={styles.subtext}>
             Own shares in the world&apos;s leading companies and build long
             term wealth through global diversification all from one seamless

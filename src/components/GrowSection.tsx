@@ -3,8 +3,6 @@
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
-import { TextRotate } from "@/components/ui/text-rotate";
-import { useInView } from "@/hooks/useInView";
 import styles from "./GrowSection.module.css";
 
 /** Figma node 317:7182 — four fund-partner badges, each its own bordered/
@@ -28,15 +26,10 @@ const BADGES = [
  * so the two read as a single continuous block, not two separate stops.
  */
 export default function GrowSection() {
-  // Observes .text, not the heading itself — see the identical comment on
-  // every other section's heading trigger for why a zero-area heading can't
-  // be the observed element.
-  const [textColRef, headingInView] = useInView<HTMLDivElement>();
-
   return (
     <section className={styles.section}>
       <div className={`grid ${styles.panel}`}>
-        <div ref={textColRef} className={styles.text}>
+        <div className={styles.text}>
           <div className={styles.badgeStack}>
             {BADGES.map((src) => (
               <Image
@@ -58,22 +51,7 @@ export default function GrowSection() {
               />
             </span>
           </div>
-          <h2 className={styles.heading}>
-            <TextRotate
-              texts={["Grow your"]}
-              splitBy="words"
-              auto={false}
-              loop={false}
-              trigger={headingInView}
-            />{" "}
-            <TextRotate
-              texts={["wealth in India."]}
-              splitBy="words"
-              auto={false}
-              loop={false}
-              trigger={headingInView}
-            />
-          </h2>
+          <h2 className={styles.heading}>Grow your wealth in India.</h2>
           <p className={styles.subtext}>
             Access professionally managed mutual funds that help NRIs
             participate in India&apos;s long term growth with confidence and

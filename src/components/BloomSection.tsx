@@ -184,21 +184,28 @@ export default function BloomSection() {
 
   return (
     <section id="wealth-bloom" className={styles.section}>
-      {/* Outside the grid on purpose — the bloom is full-bleed, not a column. */}
-      <div className={styles.stage}>
-        <canvas
-          ref={canvasRef}
-          className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
-          width={FRAME_WIDTH}
-          height={FRAME_HEIGHT}
-          aria-hidden="true"
-        />
-      </div>
+      <div className={`grid ${styles.panel}`}>
+        <div className={styles.textCol}>
+          <h2 className={styles.title}>
+            <span className={styles.titleLine}>Wealth grows</span>
+            <span className={styles.titleLine}>with time</span>
+          </h2>
+          <p className={styles.tagline}>Adjust the sliders and watch your wealth grow.</p>
+        </div>
 
-      <div className="grid">
-        <div className={styles.content}>
-          <h2 className={styles.title}>Wealth grows with time</h2>
+        {/* Its own grid column, seated between the two text columns —
+            centered, not full-bleed to the section's own edge. */}
+        <div className={styles.media}>
+          <canvas
+            ref={canvasRef}
+            className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
+            width={FRAME_WIDTH}
+            height={FRAME_HEIGHT}
+            aria-hidden="true"
+          />
+        </div>
 
+        <div className={styles.controlsCol}>
           <div className={styles.controls}>
             <div className={styles.control}>
               <div className={styles.controlHead}>

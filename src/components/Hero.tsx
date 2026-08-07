@@ -4,8 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import type { MotionProps } from "motion/react";
-import { TextRotate } from "@/components/ui/text-rotate";
 import Button from "@/components/ui/Button";
 import { heroFrameFilledRef } from "@/lib/heroProgress";
 import styles from "./Hero.module.css";
@@ -16,21 +14,6 @@ if (typeof window !== "undefined") {
 
 // Spotlight reveal — unchanged from original
 const SPOTLIGHT_R = 260;
-
-// On-load text reveal (motion/react)
-const REVEAL_HEADING_DELAY = 0.15;
-
-// The heading renders as two separate TextRotate spans ("Invest like a
-// true" and "global citizen") so each can be staggered independently.
-// TextRotate's word-splitting staggers one item per word (no separate items
-// for the spaces between them), so "Invest like a true" is 4 staggered
-// items at the heading's own per-word stagger — 0.05 / speedReveal-
-// equivalent(1.2) — and the second span's delay continues that same
-// cascade instead of restarting it. Same trick as OUTRO_LINE2_DELAY below.
-const HEADING_STAGGER = 0.05 / 1.2;
-const HEADING_LINE1_WORDS = 4;
-const REVEAL_HEADING_LINE2_DELAY =
-  REVEAL_HEADING_DELAY + HEADING_LINE1_WORDS * HEADING_STAGGER;
 
 // The pin covers exactly the spotlight-zoom/frame-fill/outro sequence — one
 // timeline unit per 150% of scroll. GrowSection/UsSection are regular
@@ -54,21 +37,6 @@ const OUTRO_REVEAL_AT = 0.85 * (ZOOM_SCROLL_PCT / TOTAL_SCROLL_PCT);
 // derived, not hand-copied, so it can't drift out of sync with the tween.
 const FRAME_FILL_DURATION = 0.2;
 const HERO_FRAME_FILL_PROGRESS = FRAME_FILL_DURATION / (TOTAL_SCROLL_PCT / ZOOM_SCROLL_PCT);
-
-// Line 1 is 2 words ("Distance" / "shouldn't,") at the same per-word
-// stagger as the heading, so line 2 starts at 2 * HEADING_STAGGER to keep
-// the word cascade continuous across the break.
-const OUTRO_LINE2_DELAY = 2 * HEADING_STAGGER;
-
-// Faster, non-staggered exit on scroll-back — TextRotate's exit is a single
-// flat target (unlike TextReveal's container/item variants), so the reverse
-// per-character cascade the old exit had is simplified to one quick fade.
-const OUTRO_EXIT: MotionProps["exit"] = {
-  opacity: 0,
-  y: 20,
-  filter: "blur(12px)",
-  transition: { duration: 0.15, ease: "easeIn" },
-};
 
 const ZOOM_SCALE = 1.6;
 const ZOOM_Y_PERCENT = 30;
@@ -301,31 +269,7 @@ export default function Hero() {
       </div>
       <div ref={heroContentRef} className={styles.heroContent}>
         <div className={styles.heroInner}>
-          <h1 className={styles.heroHeading}>
-            {/* animatePresenceInitial: trigger is never gated here (always
-                true from mount), so this content IS present at
-                AnimatePresence's own first render — without this, its
-                default (false) would skip the enter animation entirely
-                and the words would just pop in instead of staggering. */}
-            <TextRotate
-              texts={["Invest like a true"]}
-              delay={REVEAL_HEADING_DELAY}
-              staggerDuration={HEADING_STAGGER}
-              splitBy="words"
-              auto={false}
-              loop={false}
-              animatePresenceInitial
-            />{" "}
-            <TextRotate
-              texts={["global citizen"]}
-              delay={REVEAL_HEADING_LINE2_DELAY}
-              staggerDuration={HEADING_STAGGER}
-              splitBy="words"
-              auto={false}
-              loop={false}
-              animatePresenceInitial
-            />
-          </h1>
+          <h1 className={styles.heroHeading}>Invest like a true global citizen</h1>
           <p className={styles.heroSubtext}>
             Crafted specifically for NRIs to help them grow your wealth in top global
             asset classes.
@@ -335,35 +279,22 @@ export default function Hero() {
           </Button>
         </div>
       </div>
-      <div className={styles.heroOutro}>
-        <div className="grid">
-          <div className={styles.heroOutroInner}>
-            <h2 className={styles.heroOutroText}>
-              <TextRotate
-                mainClassName={styles.heroOutroLine}
-                texts={["Distance shouldn't,"]}
-                staggerDuration={HEADING_STAGGER}
-                splitBy="words"
-                auto={false}
-                loop={false}
-                trigger={showOutro}
-                exit={OUTRO_EXIT}
-              />
-              <TextRotate
-                mainClassName={styles.heroOutroLine}
-                texts={["slow your money down."]}
-                staggerDuration={HEADING_STAGGER}
-                splitBy="words"
-                auto={false}
-                loop={false}
-                delay={OUTRO_LINE2_DELAY}
-                trigger={showOutro}
-                exit={OUTRO_EXIT}
-              />
-            </h2>
+      {/* showOutro is driven by scroll progress (see the pinned timeline's
+          onUpdate above), not a decorative reveal — this plain conditional
+          render is what keeps the statement out of view for the rest of the
+          pin instead of showing the whole time. */}
+      {showOutro && (
+        <div className={styles.heroOutro}>
+          <div className="grid">
+            <div className={styles.heroOutroInner}>
+              <h2 className={styles.heroOutroText}>
+                <span className={styles.heroOutroLine}>Distance shouldn&apos;t,</span>
+                <span className={styles.heroOutroLine}>slow your money down.</span>
+              </h2>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }

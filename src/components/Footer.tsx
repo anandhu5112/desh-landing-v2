@@ -5,8 +5,6 @@ import Image from "next/image";
 import { IconBrandX, IconBrandWhatsapp, IconBrandFacebook } from "@tabler/icons-react";
 
 import { useSnapIntoView } from "@/hooks/useSnapIntoView";
-import { useInView } from "@/hooks/useInView";
-import { TextRotate } from "@/components/ui/text-rotate";
 import Button from "@/components/ui/Button";
 import styles from "./Footer.module.css";
 
@@ -23,9 +21,6 @@ const QR_BASE_SIZE = 166;
 
 export default function Footer() {
   const sectionRef = useSnapIntoView<HTMLElement>();
-  // Observes .heroText, not the heading itself — see GrowSection's identical
-  // comment for why a zero-area heading can't be the observed element.
-  const [heroTextRef, headingInView] = useInView<HTMLDivElement>();
 
   // Drives the QR's hover-grow target size (see .qrWrap) — how tall
   // .whatsappTextCol actually renders depends on fluid font-size tokens and
@@ -69,24 +64,10 @@ export default function Footer() {
         <div className={`grid ${styles.panel}`}>
           <div className={styles.hero}>
             <div className={styles.heroCard}>
-              <div ref={heroTextRef} className={styles.heroText}>
+              <div className={styles.heroText}>
                 <h2 className={styles.heading}>
-                  <TextRotate
-                    mainClassName={styles.headingLine}
-                    texts={["Let's build your"]}
-                    splitBy="words"
-                    auto={false}
-                    loop={false}
-                    trigger={headingInView}
-                  />
-                  <TextRotate
-                    mainClassName={styles.headingLine}
-                    texts={["portfolio together"]}
-                    splitBy="words"
-                    auto={false}
-                    loop={false}
-                    trigger={headingInView}
-                  />
+                  <span className={styles.headingLine}>Let&apos;s build your</span>
+                  <span className={styles.headingLine}>portfolio together</span>
                 </h2>
                 <p className={styles.subtext}>
                   Get expert advice when you need it, or connect with fellow investors

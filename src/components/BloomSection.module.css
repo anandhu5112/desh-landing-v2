@@ -21,10 +21,8 @@
 
   position: relative;
   width: 100%;
-  /* min-height rather than a fixed 100vh: house typography is considerably
-     larger than the transfer doc assumed, so the panel is allowed to grow
-     instead of clipping. This section scrolls normally — it is not pinned. */
-  min-height: 100vh;
+  height: 100vh;
+  min-height: 800px;
   margin: 0;
   padding-block: 96px;
   background: var(--bloom-surface);
@@ -38,19 +36,47 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Copy sits on the real 12-column grid, same as every other section. */
-.content {
-  grid-column: 1 / span 5;
+/* Text/media/controls sit a flat 16px from the true viewport edge (see
+   GrowSection/UsSection's own .panel), not the page's usual centered/
+   margined --grid. align-items: stretch makes every column as tall as the
+   row itself, so .textCol/.controlsCol have real height: 50% to resolve
+   against (see below) and .media can center the bloom against the row's
+   full height, not just its own content size. */
+.panel {
+  max-width: none;
+  padding-inline: 16px;
+  align-items: stretch;
+  height: 100%;
+}
+
+/* Text, bloom, and controls all live between grid tracks 2 and 11, not
+   flush to the full 12-column grid — three columns (2/6/2) summing to the
+   full 2-11 span, text left, bloom centered, sliders right. */
+.textCol {
+  grid-column: 2 / span 2;
+  height: 50%;
+  align-self: center;
   display: flex;
   flex-direction: column;
-  /* House 40px rhythm between heading / controls / readout / note. */
-  gap: 40px;
-  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
   min-width: 0;
 }
 
-/* House heading: DM Sans 64px / line-height 1 / weight 400. */
+/* House heading: DM Sans 64px / line-height 1 / weight 400.
+   position/z-index: .textCol is only 2 grid columns wide (~226px at a
+   1470px viewport) — nowhere near enough for "Wealth grows" or "with
+   time" at this scale to fit on one line. Rather than shrink the type
+   below the house scale, this is left free to overflow .textCol's box
+   horizontally — .section's own overflow: hidden is the only thing that
+   actually clips it, not .textCol, so it renders at full natural width.
+   That overflow reaches into .media's column, so this needs to paint
+   above the bloom canvas (z-index) or the canvas — later in DOM order —
+   would cover part of the text. */
 .title {
+  position: relative;
+  z-index: 2;
   font-family: var(--font-heading), sans-serif;
   font-size: 64px;
   line-height: 1;
@@ -59,25 +85,89 @@
   margin: 0;
 }
 
-/* Hover micro-interaction — same treatment every other section's heading
-   gets (Hero/Footer/GrowSection/UsSection): a re-triggerable echo of a
-   scroll-in reveal (blur + lift + fade), not a one-shot. No .tagline here
-   to pair it with — this layout has no separate subtext paragraph. */
-@keyframes textHover {
-  0% {
-    opacity: 0.45;
-    filter: blur(6px);
-    transform: translateY(6px);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-    transform: translateY(0);
-  }
+/* "Wealth grows" / "with time" as two explicit lines, not left to text
+   wrapping — at this column width, natural wrapping would break mid-word
+   rather than at the intended split. white-space: nowrap keeps each line
+   from wrapping further once it's already overflowing .textCol (see
+   .title above). */
+.titleLine {
+  display: block;
+  white-space: nowrap;
 }
 
-.title:hover {
-  animation: textHover 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+.tagline {
+  font-family: var(--font-body), serif;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 300;
+  color: var(--bloom-muted);
+  margin: 0;
+}
+
+/* ---------- BLOOM ---------- */
+
+/* Centered between .textCol and .controlsCol, not full-bleed to the
+   section's own edge — takes the full row height (no height: 50% of its
+   own, unlike its siblings) so the flower can grow as large as either
+   dimension allows within its column. */
+.media {
+  grid-column: 4 / span 6;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* width: 100% up to a sensible cap, height: auto off the atlas frame's own
+   3:4 aspect ratio (540x720) — object-fit: contain then picks whichever
+   dimension is the binding constraint, same as every other section's
+   media box. */
+.bloom {
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 540 / 720;
+  height: auto;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  opacity: 0;
+  transition: opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+
+.bloomReady {
+  opacity: 1;
+}
+
+/* The bloom frame is matte black but .media's edge is a hard cut; this
+   feathers it so the bloom sits in the field rather than in a box. */
+.media::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, #000 0%, rgba(0, 0, 0, 0) 18%),
+    linear-gradient(to left, #000 0%, rgba(0, 0, 0, 0) 18%),
+    linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 18%),
+    linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 18%);
+}
+
+/* Same width as .textCol (both 2 columns) — sliders don't need extra room
+   and stay perfectly usable at this width. height/align-self match
+   .textCol so .note (margin-top: auto, see below) ends up level with
+   .tagline. */
+.controlsCol {
+  grid-column: 10 / span 2;
+  height: 50%;
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  align-items: stretch;
+  min-width: 0;
 }
 
 /* ---------- SLIDERS ---------- */
@@ -249,9 +339,13 @@
   white-space: nowrap;
 }
 
-/* House caption size, matching GrowSection's logo caption. */
+/* House caption size, matching GrowSection's logo caption.
+   margin-top: auto pins .note to .controlsCol's bottom edge — level with
+   .tagline — without spreading .controls/.readout apart from each other;
+   they keep their normal gap-based rhythm and stay put at the top. */
 .note {
   margin: 0;
+  margin-top: auto;
   font-family: var(--font-inter), sans-serif;
   font-size: 12px;
   line-height: 1.5;
@@ -259,83 +353,59 @@
   max-width: 56ch;
 }
 
-/* ---------- BLOOM ---------- */
-
-/* Deliberately outside the grid, per the brief: the flower is full-bleed to
-   the right edge rather than confined to a column. */
-.stage {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.bloom {
-  height: 100%;
-  width: 100%;
-  object-fit: contain;
-  object-position: center;
-  display: block;
-  opacity: 0;
-  transition: opacity 1.4s cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-}
-
-.bloomReady {
-  opacity: 1;
-}
-
-/* The bloom frame is matte black but the panel edge is a hard cut; these
-   feather it so the bloom sits in the field rather than in a box. */
-.stage::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  pointer-events: none;
-  background:
-    linear-gradient(to right, #000 0%, rgba(0, 0, 0, 0) 14%),
-    linear-gradient(to left, #000 0%, rgba(0, 0, 0, 0) 10%),
-    linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 10%),
-    linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 10%);
-}
-
 /* ---------- RESPONSIVE ---------- */
 
 @media (max-width: 1024px) {
   .section {
+    height: auto;
+    min-height: 100vh;
     padding-block: 64px;
     display: block;
   }
 
-  .content {
+  .textCol,
+  .media,
+  .controlsCol {
     grid-column: 1 / span 12;
-    gap: 32px;
+  }
+
+  .textCol,
+  .controlsCol {
+    height: auto;
+    align-self: auto;
+  }
+
+  .textCol {
+    justify-content: flex-start;
+  }
+
+  .note {
+    margin-top: 0;
   }
 
   .title {
     font-size: 40px;
   }
 
+  .titleLine {
+    white-space: normal;
+  }
+
   .finalValue {
     font-size: 40px;
   }
 
-  /* Stacked: the bloom becomes a banner above the copy rather than a column. */
-  .stage {
-    position: relative;
+  /* Stacked: the bloom becomes a banner between the two text columns
+     rather than a side-by-side column. */
+  .media {
+    aspect-ratio: auto;
     width: 100%;
     height: 46vh;
     min-height: 280px;
-    margin-bottom: 40px;
+    margin-block: 40px;
   }
 
-  .stage::after {
+  .media::after {
     background:
       linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 12%),
       linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 12%);
@@ -345,9 +415,5 @@
 @media (prefers-reduced-motion: reduce) {
   .bloom {
     transition: none;
-  }
-
-  .title:hover {
-    animation: none;
   }
 }

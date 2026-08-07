@@ -181,7 +181,7 @@
      padding-bottom above) — same rim-light effect the reference shows,
      invisible once truly submerged under solid hill, defined everywhere
      else. */
-  border: 4px solid rgba(255, 255, 255, 0.24);
+  border: 8px solid rgba(255, 255, 255, 0.24);
 }
 
 .heroText {
@@ -204,26 +204,11 @@
   margin: 0;
 }
 
-/* "Let's build your" / "portfolio together" each render as their own
-   TextRotate, so the break is explicit rather than left to text wrapping —
-   same pattern as BloomSection's .title .titleLine. Scoped under .heading
-   (not a bare .headingLine) so this reliably beats TextRotate's own
-   "inline-flex" utility class regardless of globals.css vs. CSS-module
-   cascade order. */
+/* "Let's build your" / "portfolio together" render as two explicit lines,
+   so the break is explicit rather than left to text wrapping. .heroText's
+   own text-align: center (see below) centers each line's plain text. */
 .heading .headingLine {
   display: block;
-}
-
-/* .heroText's own text-align: center (see below) has no effect here —
-   each line's actual words sit inside TextRotate's inner flex container
-   (its AnimatePresence child, className "flex flex-wrap"), and text-align
-   doesn't control flex-item position, justify-content does. Without this,
-   both lines shared the same left edge instead of being centered as a
-   block — the shorter "portfolio together" line rides justify-content's
-   flex-start default rather than sitting under the middle of the line
-   above it. */
-.heading .headingLine > div {
-  justify-content: center;
 }
 
 .subtext {
@@ -234,33 +219,6 @@
   letter-spacing: var(--ls-body);
   color: #000000;
   margin: 0;
-}
-
-/* Hover micro-interaction — a re-triggerable echo of the text's own
-   scroll-in reveal (blur + lift + fade), not a one-shot. Plays once per
-   hover entry rather than a plain transition, since a transition alone
-   can't pass through the blurred "mid-reveal" state on the way back to
-   sharp. Shared by both headings in this file (.heading and
-   .whatsappHeading) and both bodies of copy (.subtext and
-   .whatsappSubtext), not just the hero block. */
-@keyframes textHover {
-  0% {
-    opacity: 0.45;
-    filter: blur(6px);
-    transform: translateY(6px);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-    transform: translateY(0);
-  }
-}
-
-.heading:hover,
-.subtext:hover,
-.whatsappHeading:hover,
-.whatsappSubtext:hover {
-  animation: textHover 0.6s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 /* Local override on the shared Button — same 40px/10px/14px pattern
@@ -516,12 +474,5 @@
   .qrWrap,
   .whatsappCard {
     transition: none;
-  }
-
-  .heading:hover,
-  .subtext:hover,
-  .whatsappHeading:hover,
-  .whatsappSubtext:hover {
-    animation: none;
   }
 }
