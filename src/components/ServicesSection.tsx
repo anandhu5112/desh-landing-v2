@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import AdvisorSection from "./AdvisorSection";
 import GrowSection from "./GrowSection";
 import MarqueeDivider from "./MarqueeDivider";
 import UsSection from "./UsSection";
@@ -18,12 +19,13 @@ if (typeof window !== "undefined") {
 const RISE_DISTANCE = 120;
 
 /**
- * Wraps GrowSection + UsSection as one continuous block (both keep their
- * own content/layout — this only owns how the pair behaves as a whole):
+ * Wraps UsSection + AdvisorSection + GrowSection as one continuous block
+ * (each keeps its own content/layout — this only owns how the group
+ * behaves as a whole):
  *
- * - One scroll-snap stop for the pair, not one per section — see
- *   useSnapIntoView on .snapWrap. Scrolling from India into US no longer
- *   pauses at a section boundary; it reads as a single section.
+ * - One scroll-snap stop for the group, not one per section — see
+ *   useSnapIntoView on .snapWrap. Scrolling from US through Advisor into
+ *   India no longer pauses at a section boundary; it reads as one section.
  * - A lightweight parallax rise as the block scrolls into view from below
  *   Hero, so it feels like it's moving up towards the sun rather than just
  *   appearing in place. Not pinned — the page keeps scrolling normally
@@ -58,9 +60,10 @@ export default function ServicesSection() {
   return (
     <div ref={snapRef} className={styles.snapWrap}>
       <div ref={riseRef} className={styles.riseWrap}>
-        <GrowSection />
-        <MarqueeDivider />
         <UsSection />
+        <MarqueeDivider />
+        <AdvisorSection />
+        <GrowSection />
       </div>
     </div>
   );

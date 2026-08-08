@@ -1,0 +1,83 @@
+/* ============================================================
+   ADVISOR SECTION — "Real Advisors. Real Conversations."
+
+   Copied, not shared. Same house rule as every other section: this
+   file duplicates nothing and is duplicated by nothing.
+
+   Full-bleed sky image, not cropped into a fixed-height box — the
+   section's own height is simply the image's natural aspect ratio at
+   the current viewport width (width: 100%, height: auto), so its own
+   baked-in fade from blue sky to solid white at the bottom shows in
+   full and blends straight into whatever white section follows.
+   ============================================================ */
+
+.section {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.bgImage {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Percentage-based top offset, not a fixed px value — matches Figma's own
+   90px-from-top box against its 837.52px-tall reference frame, expressed
+   as a fraction so the text stays pinned to the same relative spot on the
+   sky as .bgImage scales with viewport width. */
+.content {
+  position: absolute;
+  top: 10.75%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 706px;
+  padding-inline: var(--space-16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-40);
+  text-align: center;
+}
+
+/* House heading scale — same --fs-heading/--ls-heading every other section
+   uses, not Figma's literal 80px, so this stays consistent with the rest
+   of the page's type scale. */
+.heading {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading);
+  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: var(--ls-heading);
+  color: #ffffff;
+  margin: 0;
+}
+
+.subtext {
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 300;
+  letter-spacing: var(--ls-body);
+  color: #ffffff;
+  margin: 0;
+}
+
+/* Local override on the shared Button — same 40px/10px/14px pattern
+   GrowSection/UsSection/Hero/Footer already use. Button's own default
+   black gradient already matches Figma's CTA here. */
+.cta {
+  height: 40px;
+  padding-inline: var(--space-16);
+  border-radius: 10px;
+  font-size: var(--fs-nav);
+}
+
+@media (max-width: 640px) {
+  .content {
+    top: 8%;
+    gap: var(--space-24);
+  }
+}

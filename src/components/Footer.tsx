@@ -129,11 +129,14 @@ export default function Footer() {
               path into Indian mutual funds &amp; US stocks without getting buried in
               paperwork, confusion, or bad advice.
             </p>
+            {/* Same mark SiteNav uses (source 63x20.5, ~3.07:1) — .logo is
+                height-constrained/width auto, so it scales proportionally
+                regardless of the intrinsic width/height next/image needs. */}
             <Image
-              src="/images/desh-logo-white.png"
+              src="/images/desh-logo-mark.svg"
               alt="Desh"
-              width={166}
-              height={74}
+              width={63}
+              height={21}
               className={styles.logo}
             />
           </div>
