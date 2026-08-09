@@ -1,0 +1,201 @@
+/* ============================================================
+   FAQ SECTION — "Frequently Asked Questions".
+
+   Copied, not shared. Same house rule as every other section: this
+   file duplicates nothing and is duplicated by nothing.
+
+   Figma node 379:15514 — a 909px-wide content container centred on the
+   page, heading above a 6-item accordion of #F8F8F8 / 24px-radius cards.
+   ============================================================ */
+
+.section {
+  position: relative;
+  width: 100%;
+  background: #ffffff;
+  padding-top: var(--space-section-padding-block);
+  /* Flat, not the fluid top value — sized to match the gap above
+     .closingTagline exactly (see its own margin-top below), so the tagline
+     sits centred in equal whitespace rather than a bigger gap underneath
+     it than above. */
+  padding-bottom: 100px;
+}
+
+.panel {
+  max-width: none;
+  padding-inline: var(--page-margin);
+}
+
+/* Inset 3 columns from each edge (columns 4-9 of 12). */
+.container {
+  grid-column: 4 / span 6;
+  display: flex;
+  flex-direction: column;
+  gap: 72px;
+}
+
+/* Figma sets this heading at 40px — the site's existing 32→40 token, not a
+   new size introduced for this section. (Its "-modal" name predates this
+   use; it is simply the house 40px-ceiling heading step.) */
+.heading {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading-modal);
+  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: var(--ls-heading-modal);
+  color: var(--color-ink);
+  text-align: center;
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+/* Relocated from Footer's photo overlay (see Footer.tsx/.module.css) — same
+   copy and font, explicitly 20px per direction rather than an existing size
+   token, since the move to a legible white background is exactly the point
+   of relocating it here. */
+.closingTagline {
+  align-self: center;
+  width: min(620px, 100%);
+  margin: 0;
+  /* .container's own 72px gap already opens space above this; flexbox gap
+     and a child's own margin stack rather than collapse, so this adds the
+     remainder needed to reach a flat 100px — matching .section's own
+     padding-bottom exactly, so the tagline sits in equal space top/bottom. */
+  margin-top: 28px;
+  font-family: var(--font-body), serif;
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 300;
+  letter-spacing: var(--ls-body);
+  color: var(--color-ink);
+  text-align: center;
+}
+
+.item {
+  background: #f8f8f8;
+  border-radius: 24px;
+}
+
+/* The <h3> is structural only — all of the card's visual weight lives on
+   the button inside it. */
+.questionHeading {
+  margin: 0;
+  font: inherit;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-24);
+  width: 100%;
+  padding: var(--space-24);
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--color-ink);
+}
+
+.question {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* "+" that becomes "×": both bars are drawn, and the whole box rotates 45°
+   while the vertical bar fades, so the two states share one element rather
+   than swapping between separate icons. */
+.icon {
+  position: relative;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.iconBar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 1.5px;
+  background: var(--color-ink);
+  transform: translate(-50%, -50%);
+}
+
+.iconBar:last-child {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.iconOpen {
+  transform: rotate(45deg);
+}
+
+/* grid-template-rows 0fr -> 1fr, not display/height — this is what makes the
+   reveal an actual transition instead of a snap. The classic trick needs the
+   padding on the INNER element, not here: padding on this grid container
+   would keep contributing real height even at 0fr, so the collapsed state
+   would show as a sliver instead of nothing. Same duration/easing as the
+   icon rotation below, so both read as one movement. */
+.answerWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.answerWrapOpen {
+  grid-template-rows: 1fr;
+}
+
+/* The grid item. overflow: hidden is load-bearing: a grid item's default
+   min-height is auto (its content size), which would stop it from ever
+   shrinking below that as the row track collapses toward 0fr — this is what
+   lets it actually reach zero instead of clamping at its content height.
+   No vertical padding here, though: overflow: hidden only zeroes the
+   automatic minimum size of the element it's set on, not that element's own
+   padding, so padding-bottom here would still bottom the collapse out at
+   24px instead of 0 (confirmed live — that's exactly what it did). The
+   bottom padding moves to .answer below, which this element then clips away
+   like ordinary content. Horizontal padding stays here — it doesn't
+   contribute to the height calculation this animates, and keeping it here
+   keeps .answer's max-width computed against the same content width as
+   before this fix. */
+.answerInner {
+  padding-inline: var(--space-24);
+  overflow: hidden;
+}
+
+.answer {
+  margin: 0;
+  padding-bottom: var(--space-24);
+  /* Figma's answer column stops short of the icon rather than running the
+     card's full width. */
+  max-width: 95%;
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 300;
+  letter-spacing: var(--ls-body);
+  color: var(--color-ink);
+}
+
+@media (max-width: 1024px) {
+  .container {
+    grid-column: 1 / span 12;
+    gap: var(--space-48);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icon,
+  .answerWrap {
+    transition: none;
+  }
+}

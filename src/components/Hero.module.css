@@ -5,12 +5,14 @@
   min-height: 800px;
   overflow: hidden;
   background: #ffffff;
-  /* Initial white-margin framing along the top edge only — image is flush
-     to the bottom/left/right from the start. GSAP animates both down to 0
-     as the first beat of the pinned scroll timeline (see Hero.tsx), so
-     scrolling snaps the top edge from an inset rounded card to full-bleed. */
-  --hero-frame-inset: 32px;
-  --hero-frame-radius: 24px;
+  /* White margin framing the hero on three sides — left, right and bottom.
+     Tied to --page-margin so the frame lines up with every other section's
+     32px inset. The top stays flush (the hero runs to the page top, under
+     the fixed nav), so only the bottom two corners round, per Figma node
+     379:14563. This frame is STATIC: the whole pinned interaction — zoom,
+     sun rise, outro — plays inside it and never goes full-bleed. */
+  --hero-frame-inset: var(--page-margin);
+  --hero-frame-radius: 32px;
   /* Locally scoped, not promoted to globals.css — used nowhere else. */
   --hero-content-padding-top: clamp(160px, calc(160px + (200px - 160px) * (100vw - 640px) / (1920px - 640px)), 200px);
 }
@@ -53,19 +55,28 @@
   pointer-events: none;
 }
 
+/* The container the entire pinned interaction is confined to.
+   overflow: hidden here rather than a clip-path on .zoomWrap itself: a
+   clip-path lives in the clipped element's own coordinate space, so it
+   would scale right along with the 1.6x zoom and the "32px margin" would
+   visibly grow past the viewport edge mid-scroll. Clipping from an
+   untransformed parent keeps the frame fixed while the content moves
+   inside it. */
+.heroFrame {
+  position: absolute;
+  top: 0;
+  right: var(--hero-frame-inset);
+  bottom: var(--hero-frame-inset);
+  left: var(--hero-frame-inset);
+  border-radius: 0 0 var(--hero-frame-radius) var(--hero-frame-radius);
+  overflow: hidden;
+}
+
 .zoomWrap {
   position: absolute;
   inset: 0;
   transform-origin: center center;
   will-change: transform;
-  /* Pre-hydration guard: matches the GSAP tween's own "from" state (read
-     from these same custom properties in Hero.tsx), so there's no flash of
-     full-bleed before GSAP takes over on mount. Top edge only — right/
-     bottom/left sit flush against the viewport from the start. */
-  clip-path: inset(
-    var(--hero-frame-inset) 0 0 0
-    round var(--hero-frame-radius) var(--hero-frame-radius) 0 0
-  );
 }
 
 /* Rises from behind the hills during the outro. Sits inside .zoomWrap so it
@@ -154,7 +165,22 @@
   pointer-events: auto;
 }
 
-/* Second-section statement — also a sibling of .zoomWrap, so it is never scaled */
+/* Second-section statement — also a sibling of .zoomWrap, so it is never
+   scaled by the zoom (stays legible at 1x while the landscape behind it
+   scales to 1.6x).
+
+   .heroOutro centers on the full viewport by default, but the sun it sits
+   over does not — .sun's own position, plus .zoomWrap's scale/pan transform
+   at this point in the timeline, puts the sun's visual centre below
+   viewport centre by an amount that grows sharply as viewport width
+   shrinks (--sun-size is vw-based, so a narrower viewport means both a
+   smaller sun AND a higher sun.top). A flat px offset can only ever be
+   correct at one width; this formula is a linear fit against the sun's
+   actual on-screen (post-transform) position, measured across 1280–1920px
+   at the timeline's settled end-state — max(0px, …) so it doesn't
+   overshoot into a negative (upward) offset on ultra-wide screens, where
+   the sun's top clips against the frame's own top edge and the needed
+   offset plateaus at 0 rather than continuing to shrink. */
 .heroOutro {
   position: absolute;
   inset: 0;
@@ -162,17 +188,25 @@
   display: flex;
   align-items: center;
   pointer-events: none;
-  /* .heroOutro centers on the full viewport, but the sun it sits over does
-     not — .sun's own position plus the zoom's scale/yPercent at this point
-     in the timeline puts the sun's visual centre a bit below viewport
-     centre. Nudged down to land inside the sun instead. Tuned by
-     measurement against a ~2000px-wide desktop viewport. */
-  transform: translateY(56px);
+  transform: translateY(max(0px, calc(325px - 13.4vw)));
 }
 
 .heroOutroInner {
   position: relative;
   grid-column: 3 / span 8;
+  /* Appears on scroll rather than popping in: .heroOutro itself now stays
+     mounted at all times (see Hero.tsx) so this can transition instead of
+     snapping in with the rest of the element. */
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.heroOutroInnerVisible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Each line is its own block, so the break is explicit rather than left
@@ -184,20 +218,21 @@
 
 .heroOutroText {
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-heading);
+  /* A deliberate step up from the house heading scale used everywhere
+     else — a scoped multiplier on --fs-heading, not a change to the shared
+     token, so nothing else on the page is affected. */
+  font-size: calc(var(--fs-heading) * 1.15);
   line-height: 1;
   font-weight: 400;
-  letter-spacing: var(--ls-heading);
+  letter-spacing: calc(var(--ls-heading) * 1.15);
   color: var(--color-ink);
   text-align: center;
 }
 
 @media (max-width: 1024px) {
-  .hero {
-    --hero-frame-inset: 20px;
-    --hero-frame-radius: 16px;
-  }
-
+  /* No --hero-frame-inset override: the frame tracks --page-margin, which is
+     a flat 32px at every viewport, so the hero lines up with every other
+     section's inset rather than stepping to its own narrower one. */
   .sun {
     --sun-size: 60vw;
   }
@@ -212,8 +247,8 @@
      three stacked lines overflow past its edges. Pinned to the top instead,
      in the clear sky above the sun, using the same clearance the primary
      heading already uses (--hero-content-padding-top) so both sit at a
-     consistent depth. Desktop's centered/translateY(56px) treatment is
-     untouched — this only fires under this block's own breakpoint. */
+     consistent depth. Desktop's centered/translateY treatment is untouched
+     — this only fires under this block's own breakpoint. */
   .heroOutro {
     align-items: flex-start;
     padding-top: var(--hero-content-padding-top);
@@ -233,5 +268,9 @@
   .heroHeading:hover,
   .heroSubtext:hover {
     animation: none;
+  }
+
+  .heroOutroInner {
+    transition: none;
   }
 }

@@ -1,17 +1,21 @@
 "use client";
 
-import Image from "next/image";
 import Button from "@/components/ui/Button";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
+import LogoCarousel from "@/components/LogoCarousel";
 import styles from "./UsSection.module.css";
 
-/** Mirrors GrowSection's own copy of the same constant — house rule: this
-    file duplicates nothing and is duplicated by nothing. */
-const AVATARS = [
-  "/images/join-avatar-1.png",
-  "/images/join-avatar-2.png",
-  "/images/join-avatar-3.png",
-  "/images/join-avatar-4.png",
+/** "Trusted by" company marks, not NRI investor avatars — this row reads as
+    the platforms/employers members invest through, not as a face stack. */
+const COMPANY_LOGOS = [
+  "/images/logos/apple.svg",
+  "/images/logos/accenture.svg",
+  "/images/logos/amazon.svg",
+  "/images/logos/fedex.svg",
+  "/images/logos/google.svg",
+  "/images/logos/meta.svg",
+  "/images/logos/microsoft.svg",
+  "/images/logos/walmart.svg",
 ];
 
 /**
@@ -28,18 +32,7 @@ export default function UsSection() {
           <ScrollRevealVideo src="/videos/us-dollar.mp4" className={styles.video} />
         </div>
         <div className={styles.text}>
-          <div className={styles.avatarStack}>
-            {AVATARS.map((src) => (
-              <Image
-                key={src}
-                src={src}
-                alt=""
-                width={36}
-                height={36}
-                className={styles.avatarImg}
-              />
-            ))}
-          </div>
+          <LogoCarousel logos={COMPANY_LOGOS} className={styles.avatarStack} />
           <h2 className={styles.heading}>Invest beyond borders</h2>
           <p className={styles.subtext}>
             Own shares in the world&apos;s leading companies and build long

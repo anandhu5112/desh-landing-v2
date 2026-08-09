@@ -117,6 +117,9 @@
   object-fit: cover;
 }
 
+/* Dissolves rather than cuts, both between its own rotating items and
+   during a tab switch (see .statHidden, toggled by ContactModal.tsx's
+   StatCarousel and its forceHidden prop). */
 .stat {
   position: absolute;
   left: 32px;
@@ -127,6 +130,12 @@
   gap: var(--space-4);
   color: #ffffff;
   text-align: left;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.statHidden {
+  opacity: 0;
 }
 
 .statValue {
@@ -176,6 +185,12 @@
   letter-spacing: var(--ls-heading-modal);
   color: #000000;
   margin: 0;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.headingHidden {
+  opacity: 0;
 }
 
 .headerActions {
@@ -224,6 +239,12 @@
   flex-direction: column;
   justify-content: space-between;
   gap: var(--space-32);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.formHidden {
+  opacity: 0;
 }
 
 .options {
@@ -328,6 +349,12 @@
      Contact-us form's — rather than branch .divider's own margin per tab,
      this absorbs the difference locally so the divider stays shared. */
   padding-top: var(--space-40);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.joinBodyHidden {
+  opacity: 0;
 }
 
 .qrLarge {
@@ -449,5 +476,12 @@
   .backdrop,
   .card {
     animation: none;
+  }
+
+  .stat,
+  .heading,
+  .form,
+  .joinBody {
+    transition: none;
   }
 }

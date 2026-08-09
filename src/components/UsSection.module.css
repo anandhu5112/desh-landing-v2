@@ -21,7 +21,7 @@
 
 .panel {
   max-width: none;
-  padding-inline: var(--space-16);
+  padding-inline: var(--page-margin);
   align-items: center;
 }
 
@@ -51,22 +51,14 @@
   align-items: flex-start;
 }
 
+/* Mirrors GrowSection's identical .badgeStack comment — LogoCarousel's own
+   cards are position: absolute (no intrinsic size), and it fixes its
+   wrapper at height: 64px directly, so this class only needs to reserve
+   WIDTH, or .text's flex-column/align-items: flex-start would collapse it
+   to 0 and overlap the heading below it. Same 150px as GrowSection's badge
+   row — same LogoCarousel defaults (cardSize 48, sideOffset 41). */
 .avatarStack {
-  display: flex;
-  align-items: center;
-}
-
-.avatarImg {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  border: 3px solid rgba(255, 255, 255, 0.84);
-  object-fit: cover;
-}
-
-.avatarStack > .avatarImg:not(:last-child) {
-  margin-right: -3.75px;
+  width: 150px;
 }
 
 /* House heading scale — same --fs-heading/--ls-heading every other section

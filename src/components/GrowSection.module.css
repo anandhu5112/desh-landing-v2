@@ -20,7 +20,7 @@
 
 .panel {
   max-width: none;
-  padding-inline: var(--space-16);
+  padding-inline: var(--page-margin);
   align-items: center;
 }
 
@@ -35,65 +35,16 @@
   align-items: flex-start;
 }
 
-/* Figma node 317:7182 — four bordered/shadowed badges plus a yellow "+"
-   tile, each its own element (not one flattened raster, see GrowSection.tsx)
-   so every badge stays crisp regardless of display size. */
+/* Figma node 317:7182's badge row, now LogoCarousel's rotating three-card
+   stack (see GrowSection.tsx) instead of a static overlapping row. Its own
+   cards are position: absolute (no intrinsic size), and LogoCarousel fixes
+   its wrapper at height: 64px directly — so this class only needs to
+   reserve WIDTH, or a flex column with align-items: flex-start (this
+   layout) would collapse it to 0 and overlap the heading below it. ~130px
+   is the two side cards' actual span at the sizing passed in (cardSize 48,
+   sideOffset 41); 150px leaves room for their border ring/shadow too. */
 .badgeStack {
-  display: flex;
-  align-items: center;
-}
-
-.badge {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  border: 3px solid rgba(255, 255, 255, 0.84);
-  object-fit: cover;
-  box-shadow:
-    0px 32px 9px 0px rgba(0, 0, 0, 0),
-    0px 21px 8px 0px rgba(0, 0, 0, 0.01),
-    0px 12px 7px 0px rgba(0, 0, 0, 0.05),
-    0px 5px 5px 0px rgba(0, 0, 0, 0.09),
-    0px 1px 3px 0px rgba(0, 0, 0, 0.1);
-}
-
-/* -2px, not the join-avatar-stack's -3.75px elsewhere on the site — this
-   is Figma's own spec for this specific badge row, not the same component. */
-.badgeStack > .badge:not(:last-child) {
-  margin-right: -2px;
-}
-
-/* Descending stack order left to right, matching Figma's own z-index
-   (5/4/3/2/1) — each badge sits above the ones after it. */
-.badgeStack > .badge:nth-child(1) {
-  z-index: 5;
-}
-.badgeStack > .badge:nth-child(2) {
-  z-index: 4;
-}
-.badgeStack > .badge:nth-child(3) {
-  z-index: 3;
-}
-.badgeStack > .badge:nth-child(4) {
-  z-index: 2;
-}
-.badgeStack > .badge:nth-child(5) {
-  z-index: 1;
-}
-
-.badgePlus {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffc400;
-}
-
-.badgePlusIcon {
-  display: block;
-  width: 15px;
-  height: 15px;
+  width: 150px;
 }
 
 /* House heading scale — same --fs-heading/--ls-heading every other section

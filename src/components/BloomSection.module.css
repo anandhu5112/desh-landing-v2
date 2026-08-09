@@ -18,65 +18,73 @@
   --bloom-faint: rgba(255, 255, 255, 0.3);
   --bloom-hairline: rgba(255, 255, 255, 0.1);
   --bloom-track: rgba(255, 255, 255, 0.13);
+  /* WhatsApp card geometry, from Figma node 379:13583 ("end image" frame).
+     The card is 16px padding + a 285px QR + 16px padding tall, and hangs
+     134px past .darkBox's bottom edge (card 1608..1925.4 against the
+     panel's own 32..1791). Both are needed to place it: the row is pulled
+     up by height − overhang, and the panel reserves the remainder. */
+  --whatsapp-card-height: 317px;
+  --whatsapp-overhang: 134px;
+  /* Gap between the portfolio CTA and the card's top edge (1515 → 1576). */
+  --whatsapp-gap: 61px;
 
   position: relative;
   width: 100%;
-  height: 100vh;
-  min-height: 800px;
   margin: 0;
-  padding-block: 96px;
-  background: var(--bloom-surface);
+  /* Explicit white, not inherited from --background, which flips to #0a0a0a
+     under prefers-color-scheme: dark — the panel needs to read as a dark
+     card on white at every colour scheme, not merge into the page. */
+  background: #ffffff;
   color: var(--bloom-ink);
   font-family: var(--font-inter), sans-serif;
   line-height: 1.5;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Text/media/controls sit a flat 16px from the true viewport edge (see
-   GrowSection/UsSection's own .panel), not the page's usual centered/
-   margined --grid. align-items: stretch makes every column as tall as the
-   row itself, so .textCol/.controlsCol have real height: 50% to resolve
-   against (see below) and .media can center the bloom against the row's
-   full height, not just its own content size. */
+/* One continuous rounded dark panel carrying the calculator AND the
+   "Let's build your portfolio together" CTA — Figma node 379:15555
+   (x=32, w=1376, bg #000). Previously these were two components with a
+   white card breaking the surface between them; Figma has no such break.
+   Radius is 24px by direction, not Figma's sampled 32px. */
+.darkBox {
+  position: relative;
+  margin-inline: var(--page-margin);
+  border-radius: 24px;
+  background: var(--bloom-surface);
+  /* 80px top, per Figma's own 32 → 112 inset on this panel. */
+  padding-top: 80px;
+  /* Reserves the part of .whatsappCard that sits inside the panel, plus the
+     gap above it — so the portfolio CTA never collides with the card. */
+  padding-bottom: calc(
+    var(--whatsapp-card-height) - var(--whatsapp-overhang) + var(--whatsapp-gap)
+  );
+  overflow: hidden;
+}
+
 .panel {
   max-width: none;
-  padding-inline: 16px;
-  align-items: stretch;
-  height: 100%;
+  padding-inline: var(--page-margin);
 }
 
-/* Text, bloom, and controls all live between grid tracks 2 and 11, not
-   flush to the full 12-column grid — three columns (2/6/2) summing to the
-   full 2-11 span, text left, bloom centered, sliders right. */
-.textCol {
-  grid-column: 2 / span 2;
-  height: 50%;
-  align-self: center;
+/* ---------- HEADER ---------- */
+
+/* Centered at the top of the panel with the tagline centered under it —
+   Figma node 379:15557 (flex-col, items-center, text-center, gap 48px).
+   Was previously a left-hand side column beside the bloom. */
+.header {
+  grid-column: 2 / span 10;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 24px;
-  align-items: flex-start;
-  min-width: 0;
+  align-items: center;
+  gap: var(--space-48);
+  text-align: center;
 }
 
-/* House heading: DM Sans 64px / line-height 1 / weight 400.
-   position/z-index: .textCol is only 2 grid columns wide (~226px at a
-   1470px viewport) — nowhere near enough for "Wealth grows" or "with
-   time" at this scale to fit on one line. Rather than shrink the type
-   below the house scale, this is left free to overflow .textCol's box
-   horizontally — .section's own overflow: hidden is the only thing that
-   actually clips it, not .textCol, so it renders at full natural width.
-   That overflow reaches into .media's column, so this needs to paint
-   above the bloom canvas (z-index) or the canvas — later in DOM order —
-   would cover part of the text. */
+/* 64px flat, as this heading has always rendered here — not Figma's literal
+   80px, and deliberately not --fs-heading either (which resolves to 55px at
+   1440px and would shrink this heading). */
 .title {
-  position: relative;
-  z-index: 2;
   font-family: var(--font-heading), sans-serif;
   font-size: 64px;
   line-height: 1;
@@ -85,33 +93,30 @@
   margin: 0;
 }
 
-/* "Wealth grows" / "with time" as two explicit lines, not left to text
-   wrapping — at this column width, natural wrapping would break mid-word
-   rather than at the intended split. white-space: nowrap keeps each line
-   from wrapping further once it's already overflowing .textCol (see
-   .title above). */
-.titleLine {
-  display: block;
-  white-space: nowrap;
-}
-
 .tagline {
   font-family: var(--font-body), serif;
-  font-size: 16px;
+  font-size: var(--fs-body);
   line-height: 1.4;
   font-weight: 300;
   color: var(--bloom-muted);
   margin: 0;
 }
 
+/* ---------- CALCULATOR ROW ---------- */
+
+/* Bloom left, sliders right — the header above now carries the copy that
+   used to occupy a third left-hand column. */
+.calcPanel {
+  margin-top: var(--space-48);
+  align-items: center;
+}
+
 /* ---------- BLOOM ---------- */
 
-/* Centered between .textCol and .controlsCol, not full-bleed to the
-   section's own edge — takes the full row height (no height: 50% of its
-   own, unlike its siblings) so the flower can grow as large as either
-   dimension allows within its column. */
+/* Left half of the calculator row (Figma has the flower left, sliders
+   right). */
 .media {
-  grid-column: 4 / span 6;
+  grid-column: 2 / span 5;
   position: relative;
   display: flex;
   align-items: center;
@@ -126,7 +131,9 @@
    media box. */
 .bloom {
   width: 100%;
-  max-width: 480px;
+  /* The atlas frames are 540x720 — capping at 540 renders them 1:1 instead
+     of downsampling, and matches the flower's weight in Figma. */
+  max-width: 540px;
   aspect-ratio: 540 / 720;
   height: auto;
   object-fit: contain;
@@ -155,13 +162,9 @@
     linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 18%);
 }
 
-/* Same width as .textCol (both 2 columns) — sliders don't need extra room
-   and stay perfectly usable at this width. height/align-self match
-   .textCol so .note (margin-top: auto, see below) ends up level with
-   .tagline. */
+/* Right half of the calculator row, opposite .media. */
 .controlsCol {
-  grid-column: 10 / span 2;
-  height: 50%;
+  grid-column: 8 / span 4;
   align-self: center;
   display: flex;
   flex-direction: column;
@@ -353,30 +356,203 @@
   max-width: 56ch;
 }
 
+/* ---------- PORTFOLIO CTA ----------
+   Second heading inside the same dark panel — Figma node 379:15561.
+   White on black, centered, no card behind it. */
+
+/* Sits well clear of the calculator above it — 48px read as too tight for a
+   block that starts a new thought. */
+.portfolio {
+  grid-column: 2 / span 10;
+  margin-top: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-32);
+  text-align: center;
+}
+
+.portfolioHeading {
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading);
+  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: var(--ls-heading);
+  color: var(--bloom-ink);
+  margin: 0;
+}
+
+/* Two explicit lines, so the break is deliberate rather than left to
+   wrapping. */
+.headingLine {
+  display: block;
+}
+
+.portfolioSubtext {
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 300;
+  letter-spacing: var(--ls-body);
+  color: var(--bloom-ink);
+  margin: 0;
+}
+
+/* White pill on the dark panel — Figma node 379:15565 (bg white, black
+   label), the inverse of the black default the light sections use. */
+.portfolioCta {
+  height: 40px;
+  border-radius: 10px;
+  font-size: var(--fs-nav);
+  background: #ffffff;
+  color: #000000;
+  box-shadow: none;
+}
+
+/* ---------- WHATSAPP CARD ----------
+   Light card straddling .darkBox's bottom edge — Figma node 379:15567
+   (678x317, centered, #f8f8f8, 32px radius). */
+
+/* Pulled up by height − overhang, so exactly --whatsapp-overhang of the card
+   ends up below .darkBox's bottom edge. */
+.whatsappRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin-top: calc(var(--whatsapp-overhang) - var(--whatsapp-card-height));
+  /* Clears the FAQ section below. The card is the last thing in this section,
+     so its own bottom margin — not the panel's padding — is what opens that
+     gap, on top of FAQ's own top padding. */
+  margin-bottom: var(--space-96);
+  padding-inline: var(--page-margin);
+}
+
+.whatsappCard {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-32);
+  background: #f8f8f8;
+  border-radius: 32px;
+  padding: var(--space-16);
+  /* Multi-layered shadow exported from Figma's Beautiful Shadows plugin —
+     layer order and values are verbatim from the design. The final layer is
+     fully transparent and paints nothing; it is kept so this stack stays a
+     literal match for the source if it is ever re-exported or diffed. */
+  box-shadow:
+    0px 22px 49px rgba(22, 43, 59, 0.1),
+    0px 89px 89px rgba(22, 43, 59, 0.09),
+    0px 200px 120px rgba(22, 43, 59, 0.05),
+    0px 355px 142px rgba(22, 43, 59, 0.01),
+    0px 555px 155px rgba(22, 43, 59, 0);
+}
+
+/* 285px square — Figma node 379:13584. Sets the card's whole height
+   (16 + 285 + 16 = 317, matching Figma's 317.392). */
+.qrWrap {
+  flex: none;
+  width: 285px;
+  height: 285px;
+  overflow: hidden;
+}
+
+.qrImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Same height as the QR beside it, with the four rows spread across it —
+   Figma node 379:14362 (h=285.392, justify-between). */
+.whatsappTextCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 312px;
+  height: 285px;
+  flex-shrink: 0;
+}
+
+.avatarStack {
+  display: flex;
+  align-items: center;
+}
+
+.avatarImg {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  object-fit: cover;
+}
+
+.avatarStack > .avatarImg:not(:last-child) {
+  margin-right: -8px;
+}
+
+/* Type here is carried over from the footer card this moved out of, not
+   re-derived from Figma (which sets 24px/14px here) — the site's existing
+   sizes and families are held fixed by decision. */
+.whatsappHeading {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.whatsappSubtext {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  font-weight: 400;
+  color: #686868;
+  margin: 0;
+}
+
+/* Full-width green pill — Figma node 379:16354 (#00b531, 10px radius). */
+.ctaGreen {
+  width: 100%;
+  height: 40px;
+  border-radius: 10px;
+  font-size: var(--fs-nav);
+  background: #00b531;
+  box-shadow: none;
+}
+
 /* ---------- RESPONSIVE ---------- */
 
 @media (max-width: 1024px) {
-  .section {
-    height: auto;
-    min-height: 100vh;
-    padding-block: 64px;
-    display: block;
+  .darkBox {
+    padding-top: 64px;
+    /* Same straddle reserve as the base rule, on a tighter gap. */
+    padding-bottom: calc(
+      var(--whatsapp-card-height) - var(--whatsapp-overhang) + var(--space-32)
+    );
   }
 
-  .textCol,
+  .header,
   .media,
-  .controlsCol {
+  .controlsCol,
+  .portfolio {
     grid-column: 1 / span 12;
   }
 
-  .textCol,
   .controlsCol {
-    height: auto;
     align-self: auto;
   }
 
-  .textCol {
-    justify-content: flex-start;
+  .calcPanel {
+    margin-top: var(--space-40);
+  }
+
+  .portfolio {
+    margin-top: 100px;
   }
 
   .note {
@@ -385,10 +561,6 @@
 
   .title {
     font-size: 40px;
-  }
-
-  .titleLine {
-    white-space: normal;
   }
 
   .finalValue {
@@ -409,6 +581,42 @@
     background:
       linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0) 12%),
       linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0) 12%);
+  }
+}
+
+/* 768px, not 640px: side-by-side the card is a fixed 285 + 312 + padding =
+   661px wide and does not shrink, so below 768 it starts eating into the
+   page margin and then off the viewport entirely. */
+@media (max-width: 767px) {
+  .whatsappCard {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  /* Stacked under .qrWrap rather than beside it — the fixed design width
+     was sized to sit next to the 285px QR column. */
+  .whatsappTextCol {
+    width: 100%;
+    height: auto;
+    gap: var(--space-16);
+  }
+
+  .qrWrap {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Stacked, the card is far taller than --whatsapp-card-height, so the
+     straddle maths above would sling it hundreds of px past the panel.
+     It sits below the panel instead. */
+  .whatsappRow {
+    margin-top: var(--space-24);
+  }
+
+  .darkBox {
+    padding-bottom: var(--space-64);
   }
 }
 

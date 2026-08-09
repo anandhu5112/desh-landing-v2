@@ -1,161 +1,45 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import { IconBrandX, IconBrandWhatsapp, IconBrandFacebook } from "@tabler/icons-react";
 
 import { useSnapIntoView } from "@/hooks/useSnapIntoView";
-import Button from "@/components/ui/Button";
 import styles from "./Footer.module.css";
-
-/** Also used by ContactModal/GrowSection/UsSection — same four faces. */
-const AVATARS = [
-  "/images/join-avatar-1.png",
-  "/images/join-avatar-2.png",
-  "/images/join-avatar-3.png",
-  "/images/join-avatar-4.png",
-];
-
-/** Matches .qrWrap's base width/height in Footer.module.css. */
-const QR_BASE_SIZE = 166;
 
 export default function Footer() {
   const sectionRef = useSnapIntoView<HTMLElement>();
 
-  // Drives the QR's hover-grow target size (see .qrWrap) — how tall
-  // .whatsappTextCol actually renders depends on fluid font-size tokens and
-  // viewport width, so it's measured rather than hand-tuned, and kept in
-  // sync via ResizeObserver rather than a one-off mount measurement.
-  // .whatsappTextCol itself has flex-shrink: 0, so nothing about .qrWrap
-  // growing on hover can ever feed back into this measurement — without
-  // that, a transient squeeze mid-transition could change this value while
-  // animating, restarting the transition and producing exactly the jerky,
-  // oscillating growth this is written to avoid.
-  const textColMeasureRef = useRef<HTMLDivElement>(null);
-  const [qrHoverSize, setQrHoverSize] = useState(QR_BASE_SIZE);
-
-  useEffect(() => {
-    const el = textColMeasureRef.current;
-    if (!el) return;
-
-    const observer = new ResizeObserver(([entry]) => {
-      setQrHoverSize(Math.max(QR_BASE_SIZE, entry.contentRect.height));
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <footer ref={sectionRef} className={styles.section}>
+      {/* The large "Desh" wordmark is part of this artwork, not a separate
+          layer — the scene is supplied with it already composited in, and its
+          transparent upper third fades into the white page above. */}
       <Image
-        src="/images/footer-bg.png"
+        src="/images/footer-scene.webp"
         alt=""
-        width={4006}
-        height={1536}
+        width={2880}
+        height={1598}
         className={styles.bgImage}
       />
-      <div className={styles.fade} />
+
       <div className={styles.content}>
-        {/* Its own grid, separate from .barPanel below — .content spaces the
-            two apart (see .content's justify-content: space-between), so
-            the hero block can sit up near the top, clear of the tagline/
-            copyright bar at the bottom, revealing the chairs and hills
-            between them instead of the two sitting flush together. */}
-        <div className={`grid ${styles.panel}`}>
-          <div className={styles.hero}>
-            <div className={styles.heroCard}>
-              <div className={styles.heroText}>
-                <h2 className={styles.heading}>
-                  <span className={styles.headingLine}>Let&apos;s build your</span>
-                  <span className={styles.headingLine}>portfolio together</span>
-                </h2>
-                <p className={styles.subtext}>
-                  Get expert advice when you need it, or connect with fellow investors
-                  for ideas, updates, and learning.
-                </p>
-                <Button type="button" className={styles.cta}>
-                  Talk to an Advisor
-                </Button>
-              </div>
-
-              <hr className={styles.heroDivider} />
-
-              <div
-                className={styles.whatsappCard}
-                style={{ "--qr-hover-size": `${qrHoverSize}px` } as CSSProperties}
-              >
-                <div className={styles.qrWrap}>
-                  <Image
-                    src="/images/qr-code.png"
-                    alt="QR code to join the Desh WhatsApp community"
-                    width={166}
-                    height={166}
-                    className={styles.qrImage}
-                  />
-                </div>
-                <div ref={textColMeasureRef} className={styles.whatsappTextCol}>
-                  <div className={styles.avatarStack}>
-                    {AVATARS.map((src) => (
-                      <Image
-                        key={src}
-                        src={src}
-                        alt=""
-                        width={30}
-                        height={30}
-                        className={styles.avatarImg}
-                      />
-                    ))}
-                  </div>
-                  <p className={styles.whatsappHeading}>
-                    Join our exclusive NRI WhatsApp community.
-                  </p>
-                  <p className={styles.whatsappSubtext}>
-                    Get guided, get invested, and build wealth back home from wherever
-                    you are in the world.
-                  </p>
-                  <Button type="button" className={`${styles.cta} ${styles.ctaGreen}`}>
-                    Join Our Community
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className={`grid ${styles.panel} ${styles.barPanel}`}>
-          <div className={styles.top}>
-            <p className={styles.tagline}>
-              A modern investing experience built for NRIs who want a clean, credible
-              path into Indian mutual funds &amp; US stocks without getting buried in
-              paperwork, confusion, or bad advice.
-            </p>
-            {/* Same mark SiteNav uses (source 63x20.5, ~3.07:1) — .logo is
-                height-constrained/width auto, so it scales proportionally
-                regardless of the intrinsic width/height next/image needs. */}
-            <Image
-              src="/images/desh-logo-mark.svg"
-              alt="Desh"
-              width={63}
-              height={21}
-              className={styles.logo}
-            />
-          </div>
-
+        <div className={styles.bar}>
           <hr className={styles.divider} />
-
+          {/* Five items on one space-between row — icon, copyright, icon,
+              rights, icon — per Figma node 387:17283, rather than text on one
+              side and a social cluster on the other. */}
           <div className={styles.bottom}>
-            <p className={styles.copyright}>© 2026 Desh | All rights reserved</p>
-            <div className={styles.socials}>
-              <a href="#" aria-label="Desh on X" className={styles.social}>
-                <IconBrandX className={styles.socialIcon} stroke={1.75} />
-              </a>
-              <a href="#" aria-label="Desh on WhatsApp" className={styles.social}>
-                <IconBrandWhatsapp className={styles.socialIcon} stroke={1.75} />
-              </a>
-              <a href="#" aria-label="Desh on Facebook" className={styles.social}>
-                <IconBrandFacebook className={styles.socialIcon} stroke={1.75} />
-              </a>
-            </div>
+            <a href="#" aria-label="Desh on X" className={styles.social}>
+              <IconBrandX className={styles.socialIcon} stroke={1.5} />
+            </a>
+            <p className={styles.meta}>© 2026 Desh</p>
+            <a href="#" aria-label="Desh on WhatsApp" className={styles.social}>
+              <IconBrandWhatsapp className={styles.socialIcon} stroke={1.5} />
+            </a>
+            <p className={styles.meta}>All rights reserved</p>
+            <a href="#" aria-label="Desh on Facebook" className={styles.social}>
+              <IconBrandFacebook className={styles.socialIcon} stroke={1.5} />
+            </a>
           </div>
         </div>
       </div>

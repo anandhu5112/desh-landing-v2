@@ -1,7 +1,7 @@
 import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
-import MarqueeDividerBorders from "@/components/MarqueeDividerBorders";
 import BloomSection from "@/components/BloomSection";
+import FaqSection from "@/components/FaqSection";
 import Footer from "@/components/Footer";
 import SiteNav from "@/components/SiteNav";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -21,10 +21,11 @@ export default function Home() {
           pinned stages. Then plain full-viewport sections the rest of the
           way down. */}
       <ServicesSection />
-      {/* Zero margin/padding on either side (see its own .banner comment) —
-          sits flush against BloomSection below, no gap. */}
-      <MarqueeDividerBorders />
+      {/* One continuous dark panel: SIP calculator, the "build your
+          portfolio together" CTA, and the WhatsApp card straddling its
+          bottom edge (Figma node 379:15555). */}
       <BloomSection />
+      <FaqSection />
       <Footer />
     </>
   );

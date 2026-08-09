@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { List, X } from "@phosphor-icons/react/dist/ssr";
-import { heroFrameFilledRef } from "@/lib/heroProgress";
+import { heroIntroSettledRef } from "@/lib/heroProgress";
 import ContactModal from "./ContactModal";
 import styles from "./SiteNav.module.css";
 
@@ -24,10 +24,10 @@ const IDLE_REVEAL_MS = 150;
  * previous bare-logo-on-the-left layout — nothing here needs to track what
  * section is behind it; it's legible over anything.
  *
- * One exception: while Hero's white-margin frame is still filling the
- * viewport, hiding is suppressed entirely (see heroFrameFilledRef) so the
- * nav stays in place through that beat and only starts fading — together
- * with the hero heading/CTA, which are on the same gate — once it's done.
+ * One exception: through Hero's opening beat, hiding is suppressed entirely
+ * (see heroIntroSettledRef) so the nav stays in place and only starts fading
+ * — together with the hero heading/CTA, which are on the same gate — once
+ * that beat is done.
  */
 export default function SiteNav() {
   const [hidden, setHidden] = useState(false);
@@ -52,8 +52,8 @@ export default function SiteNav() {
       if (idleTimer !== null) window.clearTimeout(idleTimer);
       idleTimer = window.setTimeout(() => setHidden(false), IDLE_REVEAL_MS);
 
-      if (!heroFrameFilledRef.current) {
-        // Frame's still filling — stay put regardless of scroll delta.
+      if (!heroIntroSettledRef.current) {
+        // Hero's still in its opening beat — stay put regardless of delta.
         setHidden(false);
       } else if (Math.abs(delta) > DIRECTION_THRESHOLD) {
         setHidden(delta > 0);

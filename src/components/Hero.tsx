@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Button from "@/components/ui/Button";
-import { heroFrameFilledRef } from "@/lib/heroProgress";
+import { heroIntroSettledRef } from "@/lib/heroProgress";
 import styles from "./Hero.module.css";
 
 if (typeof window !== "undefined") {
@@ -15,7 +15,7 @@ if (typeof window !== "undefined") {
 // Spotlight reveal — unchanged from original
 const SPOTLIGHT_R = 260;
 
-// The pin covers exactly the spotlight-zoom/frame-fill/outro sequence — one
+// The pin covers exactly the spotlight/zoom/outro sequence — one
 // timeline unit per 150% of scroll. GrowSection/UsSection are regular
 // vertical sections below Hero now, not additional pinned stages, so the
 // pin is no longer extended past this single unit.
@@ -29,14 +29,17 @@ const ZOOM_END = `+=${TOTAL_SCROLL_PCT}%`;
 // 0.85 of the zoom's own 150% == the same absolute scroll pixel (~992px).
 const OUTRO_REVEAL_AT = 0.85 * (ZOOM_SCROLL_PCT / TOTAL_SCROLL_PCT);
 
-// How long the white-margin frame takes to fill the viewport, in the
-// timeline's absolute units (1.0 per 150%, see above). heroContent's own
-// fade-out starts right after, at this same position, so the two aren't
-// racing each other. HERO_FRAME_FILL_PROGRESS is the same point expressed
-// as ScrollTrigger's own 0..1 progress, for SiteNav (see heroProgress.ts) —
-// derived, not hand-copied, so it can't drift out of sync with the tween.
-const FRAME_FILL_DURATION = 0.2;
-const HERO_FRAME_FILL_PROGRESS = FRAME_FILL_DURATION / (TOTAL_SCROLL_PCT / ZOOM_SCROLL_PCT);
+// Opening beat of the pin, in the timeline's absolute units (1.0 per 150%,
+// see above): the hero holds still while the spotlight layer fades, before
+// heroContent starts leaving. The hero frame itself no longer animates —
+// it's a static 32px margin (see .heroFrame) that the whole interaction
+// plays inside — but this beat still paces what follows.
+// HERO_INTRO_SETTLED_PROGRESS is the same point expressed as ScrollTrigger's
+// own 0..1 progress, for SiteNav (see heroProgress.ts) — derived, not
+// hand-copied, so it can't drift out of sync.
+const INTRO_HOLD_DURATION = 0.2;
+const HERO_INTRO_SETTLED_PROGRESS =
+  INTRO_HOLD_DURATION / (TOTAL_SCROLL_PCT / ZOOM_SCROLL_PCT);
 
 const ZOOM_SCALE = 1.6;
 const ZOOM_Y_PERCENT = 30;
@@ -155,22 +158,6 @@ export default function Hero() {
       )
         return;
 
-      // Read the white-margin frame's starting size from CSS (see
-      // .hero's --hero-frame-inset/--hero-frame-radius) rather than
-      // hardcoding it here, so the responsive breakpoints stay the single
-      // source of truth. Captured as a plain object, not a ref, because
-      // clip-path's inset()/round syntax isn't one of GSAP's built-in
-      // animatable properties — it's tweened as two numbers and written to
-      // the element manually in onUpdate below. Top edge only — matches
-      // .zoomWrap's own pre-hydration clip-path (see Hero.module.css),
-      // which leaves right/bottom/left flush from the start.
-      const zoomWrapEl = zoomWrapRef.current;
-      const heroFrameStyle = getComputedStyle(heroRef.current);
-      const frame = {
-        topInset: parseFloat(heroFrameStyle.getPropertyValue("--hero-frame-inset")) || 0,
-        topRadius: parseFloat(heroFrameStyle.getPropertyValue("--hero-frame-radius")) || 0,
-      };
-
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: heroRef.current,
@@ -188,9 +175,9 @@ export default function Hero() {
             if (self.progress > 0.001) loopControlRef.current?.stop();
             else loopControlRef.current?.start();
 
-            // SiteNav reads this to hold off hiding until the white-margin
-            // frame has finished filling the viewport (see heroProgress.ts).
-            heroFrameFilledRef.current = self.progress >= HERO_FRAME_FILL_PROGRESS;
+            // SiteNav reads this to hold off hiding until the hero's
+            // opening beat is done (see heroProgress.ts).
+            heroIntroSettledRef.current = self.progress >= HERO_INTRO_SETTLED_PROGRESS;
 
             // Reveal the second-section statement as the zoom settles.
             // Guarded by a ref so we only re-render on an actual transition.
@@ -204,27 +191,13 @@ export default function Hero() {
       });
 
       tl.to(imgLayerRef.current, { opacity: 0, ease: "none", duration: 0.3 }, 0)
-        // White-margin frame snaps to full-bleed first. heroContent (and
-        // SiteNav, via heroFrameFilledRef) only start fading once this is
-        // done, so the frame settling and the copy leaving never fight for
-        // attention at the same time — they go out one after the other.
-        .to(
-          frame,
-          {
-            topInset: 0,
-            topRadius: 0,
-            ease: "none",
-            duration: FRAME_FILL_DURATION,
-            onUpdate: () => {
-              zoomWrapEl.style.clipPath = `inset(${frame.topInset}px 0 0 0 round ${frame.topRadius}px ${frame.topRadius}px 0 0)`;
-            },
-          },
-          0
-        )
+        // The copy leaves only after the opening hold, so the spotlight
+        // fading out and the copy leaving never compete for attention —
+        // they go one after the other.
         .to(
           heroContentRef.current,
           { opacity: 0, y: -40, ease: "none", duration: 0.25 },
-          FRAME_FILL_DURATION
+          INTRO_HOLD_DURATION
         )
         .to(
           zoomWrapRef.current,
@@ -254,39 +227,47 @@ export default function Hero() {
 
   return (
     <main ref={heroRef} className={styles.hero}>
-      <div ref={zoomWrapRef} className={styles.zoomWrap}>
-        <div ref={sunRef} className={styles.sun} />
-        <div
-          className={styles.heroBaseImg}
-          style={{ backgroundImage: "url('/images/top.png')" }}
-        />
-        <canvas ref={canvasRef} className={styles.revealCanvas} />
-        <div
-          ref={imgLayerRef}
-          className={styles.heroRevealImg}
-          style={{ backgroundImage: "url('/images/base.png')" }}
-        />
-      </div>
-      <div ref={heroContentRef} className={styles.heroContent}>
-        <div className={styles.heroInner}>
-          <h1 className={styles.heroHeading}>Invest like a true global citizen</h1>
-          <p className={styles.heroSubtext}>
-            Crafted specifically for NRIs to help them grow your wealth in top global
-            asset classes.
-          </p>
-          <Button type="button" className={styles.heroCta}>
-            Talk to an Advisor
-          </Button>
+      {/* Every layer of the interaction lives inside this frame, so the zoom,
+          the sun and the outro statement are all clipped to the same 32px
+          margin and share one coordinate space. */}
+      <div className={styles.heroFrame}>
+        <div ref={zoomWrapRef} className={styles.zoomWrap}>
+          <div ref={sunRef} className={styles.sun} />
+          <div
+            className={styles.heroBaseImg}
+            style={{ backgroundImage: "url('/images/top.png')" }}
+          />
+          <canvas ref={canvasRef} className={styles.revealCanvas} />
+          <div
+            ref={imgLayerRef}
+            className={styles.heroRevealImg}
+            style={{ backgroundImage: "url('/images/base.png')" }}
+          />
         </div>
-      </div>
-      {/* showOutro is driven by scroll progress (see the pinned timeline's
-          onUpdate above), not a decorative reveal — this plain conditional
-          render is what keeps the statement out of view for the rest of the
-          pin instead of showing the whole time. */}
-      {showOutro && (
-        <div className={styles.heroOutro}>
+        <div ref={heroContentRef} className={styles.heroContent}>
+          <div className={styles.heroInner}>
+            <h1 className={styles.heroHeading}>Invest like a true global citizen</h1>
+            <p className={styles.heroSubtext}>
+              Crafted specifically for NRIs to help them grow their wealth in top global
+              asset classes.
+            </p>
+            <Button type="button" className={styles.heroCta}>
+              Talk to an Advisor
+            </Button>
+          </div>
+        </div>
+        {/* Always mounted, not conditionally rendered — a fade/rise needs the
+            element present to transition; showOutro (driven by scroll
+            progress in the pinned timeline's onUpdate above) now toggles a
+            visibility class on .heroOutroInner instead of the element's own
+            presence. aria-hidden keeps it out of the accessibility tree for
+            the rest of the pin, matching what conditional mounting used to
+            do for free. */}
+        <div className={styles.heroOutro} aria-hidden={!showOutro}>
           <div className="grid">
-            <div className={styles.heroOutroInner}>
+            <div
+              className={`${styles.heroOutroInner} ${showOutro ? styles.heroOutroInnerVisible : ""}`}
+            >
               <h2 className={styles.heroOutroText}>
                 <span className={styles.heroOutroLine}>Distance shouldn&apos;t,</span>
                 <span className={styles.heroOutroLine}>slow your money down.</span>
@@ -294,7 +275,7 @@ export default function Hero() {
             </div>
           </div>
         </div>
-      )}
+      </div>
     </main>
   );
 }

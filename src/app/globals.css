@@ -4,13 +4,14 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* Design system — 12-column grid, full-bleed (Intercom's own grid:
-     16px gutter, flat 16px edge margin at every viewport, no max-width
-     cap). Previously a 1440px-capped frame with a 32px margin that stepped
-     to 48px/24px at breakpoints — that stepping is gone along with the cap. */
+  /* Design system — 12-column grid, full-bleed, no max-width cap.
+     Gutter is Figma's own 20px for this page (node 379:14560). The edge
+     margin is 24px by direction — Figma specifies 32px, which read as too
+     heavy in the build. At 1440px this yields 97.67px columns starting at
+     24 / 141.7 / 259.3 / … / 1318.3, content right edge 1416. */
   --grid-columns: 12;
-  --grid-gutter: 16px;
-  --page-margin: 16px;
+  --grid-gutter: 20px;
+  --page-margin: 24px;
   --page-max-width: none;
 
   /* Ink stays dark regardless of colour scheme — content sits on light imagery */
@@ -19,17 +20,15 @@
 
 /*
  * Fluid sizing tokens — every value here scales continuously between a
- * 640px and a 1920px viewport (clamp(min, ramp, max)), rather than
- * snapping at a breakpoint the way --page-margin above still does.
+ * 640px and a 1920px viewport (clamp(min, ramp, max)).
  * MIN/MAX are the exact px pair each property used to jump between; only
  * the transition between them changed, not the endpoints themselves —
  * except above 1920px, where these keep growing past today's flat
  * desktop cap (an explicit, confirmed tradeoff of matching Daylight's own
  * 640–1920 range instead of stopping at this site's 1440px grid frame).
  *
- * --page-margin is deliberately NOT part of this system: it goes
- * 32px → 48px → 24px as the viewport shrinks (up, then down), which
- * clamp()'s two fixed endpoints cannot express.
+ * --page-margin is deliberately NOT part of this system: it is a flat
+ * 24px at every viewport.
  */
 :root {
   /* ---- font-size ---- */

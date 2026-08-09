@@ -1,16 +1,13 @@
 "use client";
 
-import Image from "next/image";
 import Button from "@/components/ui/Button";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
+import LogoCarousel from "@/components/LogoCarousel";
 import styles from "./GrowSection.module.css";
 
-/** Figma node 317:7182 — four fund-partner badges, each its own bordered/
-    shadowed tile rendered from its real exported asset, not the single
-    flattened 194x73 raster this replaces (which pixelated badly once
-    scaled past its native size — these are 512x512/250x250 source, crisp
-    at any reasonable badge size). Replaces the generic avatar stack
-    UsSection still uses; this section's own assets, not shared with it. */
+/** Figma node 317:7182's four fund-partner badges — now cycled through
+    LogoCarousel's three-card rotation instead of a static overlapping
+    row. */
 const BADGES = [
   "/images/india-badge-1.png",
   "/images/india-badge-2.png",
@@ -30,27 +27,7 @@ export default function GrowSection() {
     <section className={styles.section}>
       <div className={`grid ${styles.panel}`}>
         <div className={styles.text}>
-          <div className={styles.badgeStack}>
-            {BADGES.map((src) => (
-              <Image
-                key={src}
-                src={src}
-                alt=""
-                width={72}
-                height={72}
-                className={styles.badge}
-              />
-            ))}
-            <span className={`${styles.badge} ${styles.badgePlus}`}>
-              <Image
-                src="/images/india-badge-plus.svg"
-                alt=""
-                width={17}
-                height={17}
-                className={styles.badgePlusIcon}
-              />
-            </span>
-          </div>
+          <LogoCarousel logos={BADGES} className={styles.badgeStack} />
           <h2 className={styles.heading}>Grow your wealth in India.</h2>
           <p className={styles.subtext}>
             Access professionally managed mutual funds that help NRIs

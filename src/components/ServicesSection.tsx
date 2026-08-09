@@ -6,7 +6,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import AdvisorSection from "./AdvisorSection";
 import GrowSection from "./GrowSection";
-import MarqueeDivider from "./MarqueeDivider";
 import UsSection from "./UsSection";
 import { useSnapIntoView } from "@/hooks/useSnapIntoView";
 import styles from "./ServicesSection.module.css";
@@ -61,7 +60,6 @@ export default function ServicesSection() {
     <div ref={snapRef} className={styles.snapWrap}>
       <div ref={riseRef} className={styles.riseWrap}>
         <UsSection />
-        <MarqueeDivider />
         <AdvisorSection />
         <GrowSection />
       </div>

@@ -1,8 +1,18 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
+import Image from "next/image";
 
+import Button from "@/components/ui/Button";
 import styles from "./BloomSection.module.css";
+
+/** Also used by ContactModal/GrowSection/UsSection — same four faces. */
+const AVATARS = [
+  "/images/join-avatar-1.png",
+  "/images/join-avatar-2.png",
+  "/images/join-avatar-3.png",
+  "/images/join-avatar-4.png",
+];
 
 /**
  * Wealth Bloom — SIP calculator.
@@ -138,7 +148,9 @@ export default function BloomSection() {
     };
 
     const loadAtlas = async (source: string) => {
-      const image = new Image();
+      // window.Image, not the bare global — next/image's `Image` is imported
+      // into this module and shadows the DOM constructor.
+      const image = new window.Image();
       image.decoding = "async";
       image.src = source;
       await image.decode();
@@ -184,28 +196,28 @@ export default function BloomSection() {
 
   return (
     <section id="wealth-bloom" className={styles.section}>
-      <div className={`grid ${styles.panel}`}>
-        <div className={styles.textCol}>
-          <h2 className={styles.title}>
-            <span className={styles.titleLine}>Wealth grows</span>
-            <span className={styles.titleLine}>with time</span>
-          </h2>
-          <p className={styles.tagline}>Adjust the sliders and watch your wealth grow.</p>
+      <div className={styles.darkBox}>
+        <div className={`grid ${styles.panel}`}>
+          <div className={styles.header}>
+            <h2 className={styles.title}>Wealth grows with time</h2>
+            <p className={styles.tagline}>
+              Adjust the sliders and watch your wealth grow.
+            </p>
+          </div>
         </div>
 
-        {/* Its own grid column, seated between the two text columns —
-            centered, not full-bleed to the section's own edge. */}
-        <div className={styles.media}>
-          <canvas
-            ref={canvasRef}
-            className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
-            width={FRAME_WIDTH}
-            height={FRAME_HEIGHT}
-            aria-hidden="true"
-          />
-        </div>
+        <div className={`grid ${styles.panel} ${styles.calcPanel}`}>
+          <div className={styles.media}>
+            <canvas
+              ref={canvasRef}
+              className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
+              width={FRAME_WIDTH}
+              height={FRAME_HEIGHT}
+              aria-hidden="true"
+            />
+          </div>
 
-        <div className={styles.controlsCol}>
+          <div className={styles.controlsCol}>
           <div className={styles.controls}>
             <div className={styles.control}>
               <div className={styles.controlHead}>
@@ -264,10 +276,67 @@ export default function BloomSection() {
             </div>
           </div>
 
-          <p className={styles.note}>
-            Illustrative projection at an assumed 12% annual return. Investments are
-            subject to market risk; past performance does not predict future results.
-          </p>
+            <p className={styles.note}>
+              Illustrative projection at an assumed 12% annual return. Investments are
+              subject to market risk; past performance does not predict future results.
+            </p>
+          </div>
+        </div>
+
+        <div className={`grid ${styles.panel}`}>
+          <div className={styles.portfolio}>
+            <h2 className={styles.portfolioHeading}>
+              <span className={styles.headingLine}>Let&apos;s build your</span>
+              <span className={styles.headingLine}>portfolio together</span>
+            </h2>
+            <p className={styles.portfolioSubtext}>
+              Get expert advice when you need it, or connect with fellow investors for
+              ideas, updates, and learning.
+            </p>
+            <Button type="button" className={styles.portfolioCta}>
+              Talk to an Advisor
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Straddles .darkBox's bottom edge — in Figma the card's lower third
+          hangs past the dark panel onto the page background below it. */}
+      <div className={styles.whatsappRow}>
+        <div className={styles.whatsappCard}>
+          <div className={styles.qrWrap}>
+            <Image
+              src="/images/qr-code.svg"
+              alt="QR code to join the Desh WhatsApp community"
+              width={286}
+              height={286}
+              className={styles.qrImage}
+            />
+          </div>
+          <div className={styles.whatsappTextCol}>
+            <div className={styles.avatarStack}>
+              {AVATARS.map((src) => (
+                <Image
+                  key={src}
+                  src={src}
+                  alt=""
+                  width={30}
+                  height={30}
+                  className={styles.avatarImg}
+                />
+              ))}
+            </div>
+            <p className={styles.whatsappHeading}>
+              Join our exclusive NRI WhatsApp community.
+            </p>
+            <p className={styles.whatsappSubtext}>
+              Get guided, get invested, and build wealth back home from wherever you
+              are in the world.
+            </p>
+            <Button type="button" className={styles.ctaGreen}>
+              Join Our Community
+            </Button>
+          </div>
         </div>
       </div>
     </section>
