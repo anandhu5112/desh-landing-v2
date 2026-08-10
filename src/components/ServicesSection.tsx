@@ -57,7 +57,10 @@ export default function ServicesSection() {
   }, []);
 
   return (
-    <div ref={snapRef} className={styles.snapWrap}>
+    // id target for SiteNav's "Services" link (#services) — Lenis is
+    // configured with anchors: true (see SmoothScroll.tsx), so this alone
+    // is enough for a smooth-scrolled jump, no click handler needed.
+    <div id="services" ref={snapRef} className={styles.snapWrap}>
       <div ref={riseRef} className={styles.riseWrap}>
         <UsSection />
         <AdvisorSection />

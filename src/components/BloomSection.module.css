@@ -529,7 +529,7 @@
 
 @media (max-width: 1024px) {
   .darkBox {
-    padding-top: 64px;
+    padding-top: 80px;
     /* Same straddle reserve as the base rule, on a tighter gap. */
     padding-bottom: calc(
       var(--whatsapp-card-height) - var(--whatsapp-overhang) + var(--space-32)
