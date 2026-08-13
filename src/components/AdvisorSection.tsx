@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
+import { useInView } from "@/hooks/useInView";
 import styles from "./AdvisorSection.module.css";
 
 /**
@@ -19,14 +20,11 @@ import styles from "./AdvisorSection.module.css";
  *
  * Bubbles pop in one at a time (staggered by `order`, top to bottom) once
  * the card is ~40% on screen, then settle into a slow vertical float that
- * loops until the card drops back below that threshold, at which point
- * they're hidden again — scrolling back down replays the same cascade
- * rather than leaving it played-out. (Unlike useInView, which fires once
- * and is meant to stay fired — see that hook's own doc comment — this
- * needs the reset, so it keeps its own toggling observer below.) `side` —
- * which half of the card a bubble sits in — drives the float's own
- * duration/delay (see .bubbleFloatLeft/Right in the stylesheet) so the two
- * sides drift out of phase rather than bobbing in lockstep.
+ * loops forever — once played, they stay up even if the card scrolls back
+ * out of view, same fire-once behavior as useInView's other consumers.
+ * `side` — which half of the card a bubble sits in — drives the float's
+ * own duration/delay (see .bubbleFloatLeft/Right in the stylesheet) so the
+ * two sides drift out of phase rather than bobbing in lockstep.
  */
 type BubbleVariant = "white" | "blue";
 type BubbleAlign = "left" | "right";
@@ -153,26 +151,11 @@ const BUBBLES: Bubble[] = [
     dragging past the ~4–5s the entrance is meant to take. */
 const POP_STAGGER = 0.4;
 
-const BUBBLES_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0.4 };
-
 export default function AdvisorSection() {
-  // Toggles both ways (no observer.disconnect() on the way in) — crossing
-  // the 40% threshold going down starts the cascade, crossing back going up
-  // hides the bubbles so the next scroll-down replays it from the top.
-  const bubblesRef = useRef<HTMLDivElement>(null);
-  const [bubblesInView, setBubblesInView] = useState(false);
-
-  useEffect(() => {
-    const el = bubblesRef.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(([entry]) => {
-      setBubblesInView(entry.isIntersecting);
-    }, BUBBLES_OBSERVER_OPTIONS);
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  // Fires once the card is ~40% on screen and stays fired — the cascade
+  // plays once and the bubbles (and their float loop) stay up regardless
+  // of scrolling back afterward.
+  const [bubblesRef, bubblesInView] = useInView<HTMLDivElement>();
 
   return (
     <section className={styles.section}>
