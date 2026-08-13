@@ -1,5 +1,5 @@
 /* ============================================================
-   ADVISOR SECTION — "Real Advisors. Real Conversations."
+   ADVISOR SECTION — "Got questions about your money?"
 
    Copied, not shared. Same house rule as every other section: this
    file duplicates nothing and is duplicated by nothing.
@@ -14,13 +14,13 @@
   width: 100%;
 }
 
-/* Figma node 390:17306: 1376x642 at a 1440px frame, 24px radius on all four
+/* Figma node 469:1890: 1376x569 at a 1440px frame, 24px radius on all four
    corners. Held as a ratio rather than a fixed height so the card keeps its
    proportions as the page margin and viewport change. */
 .frame {
   position: relative;
   margin-inline: var(--page-margin);
-  aspect-ratio: 1376 / 642;
+  aspect-ratio: 1376 / 569;
   border-radius: 24px;
   overflow: hidden;
 }
@@ -37,262 +37,139 @@
   object-position: center top;
 }
 
-/* ---------- ORBIT DECORATION ----------
-   Two rings per side, BOTH centred exactly on the card's own left/right
-   edge (left: 0% / 100%, not offset past it) — this is what guarantees
-   exactly half of each circle, inner ring included, sits inside the frame,
-   rather than the inner ring's small radius leaving only a sliver visible
-   the way an off-canvas centre did. Only the avatars travel; the stroke
-   circles themselves are static.
-
-   The mask is what makes an avatar (or the stroke under it) fade instead
-   of hard-clip as it crosses the card's edge — .frame's own overflow:
-   hidden still catches anything the mask doesn't fully zero out first. */
-.orbitLayer {
+/* ---------- CHAT BUBBLE FIELD ----------
+   Ten static bubbles (Figma frames 473:1915–473:1956), each positioned by
+   its own top-left corner as a percentage of the card so the whole field
+   re-scales with the card's width. Fixed pixel padding/radius/font — like
+   the rest of the site's decorative chrome — rather than scaling with the
+   card. */
+.bubbleLayer {
   position: absolute;
   inset: 0;
-  /* Narrow band, not a wide vignette — several avatars sit legitimately
-     close to the frame's edge even at rest (matching Figma's corner-
-     hugging layout); a wider fade dimmed those along with the ones
-     actually mid-transit across the boundary. This only smooths the last
-     couple of percent right at the edge itself. */
-  mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    #000 2.5%,
-    #000 97.5%,
-    transparent 100%
-  );
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent 0%,
-    #000 2.5%,
-    #000 97.5%,
-    transparent 100%
-  );
 }
 
-.ring {
+.bubble {
   position: absolute;
-  top: 50%;
-  aspect-ratio: 1 / 1;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
+  display: inline-flex;
+  flex-direction: column;
+  padding: 10px;
+  border-radius: 12px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  line-height: 21px;
+  font-weight: 400;
+  letter-spacing: -0.28px;
+  white-space: nowrap;
+  /* Hidden until .bubbleLayerRunning starts the pop-in — see below. */
+  opacity: 0;
 }
 
-.ringLeftOuter {
-  left: 0%;
-  width: 30vw;
+.bubbleLeft {
+  align-items: flex-start;
+  text-align: left;
 }
 
-.ringLeftInner {
-  left: 0%;
-  width: 16vw;
+.bubbleRight {
+  align-items: flex-end;
+  text-align: right;
 }
 
-.ringRightOuter {
-  left: 100%;
-  width: 30vw;
+/* Verbatim multi-layer shadow exported from Figma — layer order and values
+   are kept literal so this stays a match for the source if it's ever
+   re-exported. */
+.bubbleWhite {
+  background: #ffffff;
+  color: #003b66;
+  box-shadow:
+    0 166px 23.5px rgba(0, 88, 143, 0),
+    0 106px 21.5px rgba(0, 88, 143, 0.01),
+    0 60px 18px rgba(0, 88, 143, 0.05),
+    0 27px 13.5px rgba(0, 88, 143, 0.09),
+    0 7px 7.5px rgba(0, 88, 143, 0.1);
 }
 
-.ringRightInner {
-  left: 100%;
-  width: 16vw;
+.bubbleBlue {
+  background: #0181ef;
+  color: #ffffff;
+  box-shadow:
+    0 108px 15px rgba(0, 38, 61, 0),
+    0 69px 14px rgba(0, 38, 61, 0.01),
+    0 39px 11.5px rgba(0, 38, 61, 0.05),
+    0 17px 8.5px rgba(0, 38, 61, 0.09),
+    0 4px 4.5px rgba(0, 38, 61, 0.1);
 }
 
-/* Same centre point as its ring (left matches; top is corrected below) —
-   rotating this swings whatever sits at its far end around that point at a
-   fixed radius. width: 0 needs no horizontal centering trick of its own;
-   transform-origin: bottom centre makes the centre point the pivot —
-   PROVIDED the arm's own bottom edge actually sits at that point. */
-.orbitArm {
-  position: absolute;
-  width: 0;
-  transform-origin: bottom center;
-  transform: rotate(var(--start-angle));
-}
-
-/* top: 50% alone would put the arm's TOP at the ring's centre, leaving it
-   extending downward from there (ordinary block flow) — its BOTTOM, the
-   actual rotation pivot, would then land a full arm-length (= the ring's
-   radius) below the intended centre. Confirmed live: avatars meant to
-   bulge symmetrically above/below centre instead rendered 200-400px too
-   low, several past the frame's own bottom edge and clipped by its
-   overflow: hidden. Subtracting the arm's own full height — not half of
-   it, an arithmetic slip caught by re-measuring after the first fix still
-   didn't line up — is what puts the bottom edge, not the top, at 50%. */
-.armLeftOuter {
-  left: 0%;
-  top: calc(50% - 15vw);
-  height: 15vw;
-}
-
-.armLeftInner {
-  left: 0%;
-  top: calc(50% - 8vw);
-  height: 8vw;
-}
-
-.armRightOuter {
-  left: 100%;
-  top: calc(50% - 15vw);
-  height: 15vw;
-}
-
-.armRightInner {
-  left: 100%;
-  top: calc(50% - 8vw);
-  height: 8vw;
-}
-
-/* --start-angle / --counter-offset are set inline per avatar (see
-   AdvisorSection.tsx) — each chip's position on its ring and the exact
-   negation needed to keep it upright are unique per instance, so neither
-   can live in a static class. */
-@keyframes orbitCw {
+/* Both the pop-in's scale and the float's translateY animate the same
+   `transform` property, but never at the same visible moment: the pop-in
+   ends at scale(1)/no offset and the float begins at translateY(0) — both
+   are the identity transform, so when the float (listed second, and so
+   higher-priority once both are running) takes over there's nothing to
+   jump from. --pop-delay is set per bubble inline (order * stagger, see
+   AdvisorSection.tsx) so they appear one at a time rather than all at
+   once. */
+@keyframes bubblePopIn {
   from {
-    transform: rotate(var(--start-angle));
+    opacity: 0;
+    transform: scale(0.8);
   }
   to {
-    transform: rotate(calc(var(--start-angle) + 360deg));
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
-@keyframes orbitCcw {
-  from {
-    transform: rotate(var(--start-angle));
+@keyframes bubbleFloat {
+  0%,
+  100% {
+    transform: translateY(0);
   }
-  to {
-    transform: rotate(calc(var(--start-angle) - 360deg));
-  }
-}
-
-@keyframes counterCw {
-  from {
-    transform: rotate(var(--counter-offset, 0deg));
-  }
-  to {
-    transform: rotate(calc(var(--counter-offset, 0deg) - 360deg));
+  50% {
+    transform: translateY(-10px);
   }
 }
 
-@keyframes counterCcw {
-  from {
-    transform: rotate(var(--counter-offset, 0deg));
-  }
-  to {
-    transform: rotate(calc(var(--counter-offset, 0deg) + 360deg));
-  }
+.bubbleLayerRunning .bubble {
+  animation:
+    bubblePopIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both,
+    bubbleFloat 2.6s ease-in-out infinite;
+  animation-delay: var(--pop-delay), calc(var(--pop-delay) + 0.9s);
 }
 
-.orbitCw,
-.orbitCcw,
-.counterCw,
-.counterCcw {
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  /* Paused until the section scrolls into view (see .orbitLayerRunning) —
-     "loop while scroll enters this page" means the loop starts there, not
-     from page load. */
-  animation-play-state: paused;
+/* Left and right halves float on their own duration, not a shared one, so
+   they drift in and out of phase with each other instead of bobbing in
+   lockstep. The right side also starts its loop a little later than its
+   own pop-in finishes, on top of already using a different period. */
+.bubbleLayerRunning .bubbleFloatLeft {
+  animation-duration: 0.9s, 2.6s;
 }
 
-.orbitCw {
-  animation-name: orbitCw;
-}
-.orbitCcw {
-  animation-name: orbitCcw;
-}
-.counterCw {
-  animation-name: counterCw;
-}
-.counterCcw {
-  animation-name: counterCcw;
-}
-
-/* Slow, per the brief — a full lap takes the better part of a minute, so
-   it reads as gentle ambient motion, not a spinner. Inner rings run a
-   little faster than outer, which have further to travel at the same
-   angular speed — small enough to feel deliberate, not mismatched. .chip's
-   own counter-rotation is a separate animation on a separate element (not
-   inherited timing), so it needs the same duration set explicitly via its
-   arm ancestor, or the two fall out of sync and the photo visibly drifts
-   instead of staying upright. */
-.armLeftOuter,
-.armRightOuter,
-.armLeftOuter .chip,
-.armRightOuter .chip {
-  animation-duration: 46s;
-}
-
-.armLeftInner,
-.armRightInner,
-.armLeftInner .chip,
-.armRightInner .chip {
-  animation-duration: 34s;
-}
-
-.chip {
-  position: relative;
-  z-index: 1;
-  top: 0;
-  left: 50%;
-  width: 36px;
-  height: 36px;
-  margin-top: -18px;
-  margin-left: -18px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
-  /* Static fallback matching the keyframes' own "from" value — .orbitArm
-     has the equivalent static rotate(var(--start-angle)) outside its
-     animation too. Without this, prefers-reduced-motion's animation: none
-     (below) would drop the counter-rotation entirely while the arm's own
-     static rotation stayed in place, leaving every photo tilted to its
-     arm's angle instead of upright. */
-  transform: rotate(var(--counter-offset, 0deg));
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-play-state: paused;
-}
-
-.orbitLayerRunning .orbitCw,
-.orbitLayerRunning .orbitCcw,
-.orbitLayerRunning .counterCw,
-.orbitLayerRunning .counterCcw {
-  animation-play-state: running;
-}
-
-.chipImg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.bubbleLayerRunning .bubbleFloatRight {
+  animation-duration: 0.9s, 3.1s;
+  animation-delay: var(--pop-delay), calc(var(--pop-delay) + 1.3s);
 }
 
 @media (max-width: 1024px) {
-  .orbitLayer {
+  .bubbleLayer {
     display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .orbitCw,
-  .orbitCcw,
-  .counterCw,
-  .counterCcw {
+  .bubble {
+    opacity: 1;
+  }
+
+  .bubbleLayerRunning .bubble {
     animation: none;
   }
 }
 
 /* Percentage-based top offset, not a fixed px value — Figma seats the copy
-   124px into a 642px-tall card (19.3%), expressed as a fraction so the text
+   91px into a 569px-tall card (16%), expressed as a fraction so the text
    stays pinned to the same relative spot on the sky at any width. */
 .content {
   position: absolute;
-  top: 19.3%;
+  top: 16%;
   left: 50%;
   transform: translateX(-50%);
   width: 100%;
@@ -301,12 +178,117 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-40);
+  gap: var(--space-32);
   text-align: center;
 }
 
+/* Unstyled positioning context for .avatar + .avatarBadge — separate from
+   .avatar itself because .avatar's own overflow: hidden (needed to clip the
+   photo to a circle) would also clip the badge where it overhangs the
+   edge. */
+.avatarWrap {
+  position: relative;
+  flex: none;
+  width: 69.5px;
+  height: 69.5px;
+}
+
+/* Figma node 473:1995: 69.5px circle, 5px border at 42% white. */
+.avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 5px solid rgba(255, 255, 255, 0.42);
+  overflow: hidden;
+}
+
+.avatarImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+/* Status-style badge overhanging the avatar's bottom-right edge, matching
+   the old orbit chips' white-ring-on-photo treatment (border + soft
+   shadow) rather than the bubbles' navy/blue palette. */
+.avatarBadge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Both icons occupy the same spot and crossfade — one is always fading out
+   exactly as the other fades in, rather than a hard cut. 4s loop, 2s per
+   icon (see the 45%/55% pairs below): held, cross-dissolve, held, held. */
+.avatarBadgeIcon {
+  position: absolute;
+  display: block;
+}
+
+@keyframes avatarBadgeIconVideo {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  95% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes avatarBadgeIconPhone {
+  0%,
+  45% {
+    opacity: 0;
+  }
+  55%,
+  95% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.avatarBadgeIconVideo {
+  animation: avatarBadgeIconVideo 4s ease-in-out infinite;
+}
+
+.avatarBadgeIconPhone {
+  animation: avatarBadgeIconPhone 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatarBadgeIconVideo,
+  .avatarBadgeIconPhone {
+    animation: none;
+  }
+
+  .avatarBadgeIconVideo {
+    opacity: 1;
+  }
+
+  .avatarBadgeIconPhone {
+    opacity: 0;
+  }
+}
+
 /* House heading scale — same --fs-heading/--ls-heading every other section
-   uses, not Figma's literal 80px, so this stays consistent with the rest
+   uses, not Figma's literal 56px, so this stays consistent with the rest
    of the page's type scale. */
 .heading {
   font-family: var(--font-heading), sans-serif;
@@ -324,7 +306,7 @@
   line-height: 1.4;
   font-weight: 300;
   letter-spacing: var(--ls-body);
-  color: #ffffff;
+  color: #003b66;
   margin: 0;
 }
 
@@ -338,9 +320,8 @@
   font-size: var(--fs-nav);
 }
 
-/* Below this the card's own ratio makes it far too short to hold the copy
-   (342px wide would be a 160px-tall box against ~250px of text), so the
-   ratio gives way to a height floor and the image just crops wider. */
+/* Below this the card's own ratio makes it far too short to hold the copy,
+   so the ratio gives way to a height floor and the image just crops wider. */
 @media (max-width: 767px) {
   .frame {
     aspect-ratio: auto;
