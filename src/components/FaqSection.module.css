@@ -47,6 +47,19 @@
   margin: 0;
 }
 
+/* Decorative opening letter, sized in em off the heading's own font-size
+   so it scales with it. line-height: 0 + inline-block keeps the oversized
+   glyph from stretching the heading's line box — line-height would
+   otherwise grow with it, opening a gap above/below the whole heading. */
+.dropCap {
+  display: inline-block;
+  font-family: var(--font-script), cursive;
+  font-size: 1.4em;
+  font-weight: 400;
+  line-height: 0;
+  vertical-align: -0.06em;
+}
+
 .list {
   display: flex;
   flex-direction: column;

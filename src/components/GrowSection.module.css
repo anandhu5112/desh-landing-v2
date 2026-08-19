@@ -60,6 +60,19 @@
   margin: 0;
 }
 
+/* Decorative opening letter, sized in em off the heading's own font-size
+   so it scales with it. line-height: 0 + inline-block keeps the oversized
+   glyph from stretching the heading's line box — line-height would
+   otherwise grow with it, opening a gap above/below the whole heading. */
+.dropCap {
+  display: inline-block;
+  font-family: var(--font-script), cursive;
+  font-size: 1.4em;
+  font-weight: 400;
+  line-height: 0;
+  vertical-align: -0.06em;
+}
+
 .subtext {
   font-family: var(--font-body), serif;
   font-size: var(--fs-body);
@@ -108,8 +121,15 @@
     grid-column: 1 / span 12;
   }
 
+  /* Desktop keeps .text left-anchored (align-items: flex-start, see the
+     base rule) since the video sits beside it — once the layout stacks to
+     one column here, there's no video to visually balance against
+     anymore, so the badge row/heading/subtext/CTA center instead. Mirrors
+     UsSection's identical mobile treatment. */
   .text {
     gap: var(--space-16);
+    align-items: center;
+    text-align: center;
   }
 
   .media {

@@ -17,10 +17,12 @@ const AVATARS = [
 /**
  * Wealth Bloom — SIP calculator.
  *
- * The flower follows investment duration alone. Monthly investment still
- * changes the projected corpus, but it never moves the bloom. Predecoded frame
- * atlases keep slider feedback synchronous: no video seeking, buffering, or
- * decoder work occurs while the user drags.
+ * Both controls drive the bloom now — monthly investment (a slider) and
+ * investment duration (a fixed set of preset buttons, Figma node 501:7690,
+ * not a slider) each contribute half of the bloom's progress, so moving
+ * either one visibly moves the flower. Predecoded frame atlases keep
+ * slider feedback synchronous: no video seeking, buffering, or decoder
+ * work occurs while the user drags.
  */
 
 /** Lives in /public. Static export serves these straight from the origin root. */
@@ -33,11 +35,16 @@ const FRAME_HEIGHT = 720;
 const TOTAL_FRAMES = BLOOM_ATLASES.length * FRAMES_PER_ATLAS;
 
 /**
- * Slider ranges. Duration also defines the ends of the bloom timeline, so
- * widening it automatically re-normalises the animation.
+ * Slider range. Also defines the ends of the bloom timeline, so widening it
+ * automatically re-normalises the animation.
  */
 const AMOUNT = { min: 1_000, max: 200_000, step: 1_000, initial: 25_000 } as const;
-const YEARS = { min: 1, max: 30, step: 1, initial: 15 } as const;
+
+/** Investment Duration is a fixed set of preset buttons, not a slider (Figma
+    node 501:7690) — the last one reads "30+ yrs" rather than "30 yrs". */
+const YEARS_PRESETS = [5, 10, 15, 20, 25, 30] as const;
+const YEARS_INITIAL: (typeof YEARS_PRESETS)[number] = 15;
+
 const ASSUMED_ANNUAL_RATE = 12;
 
 /**
@@ -51,9 +58,23 @@ function futureValue(monthly: number, annualRate: number, years: number): number
   return monthly * ((Math.pow(1 + i, n) - 1) / i) * (1 + i);
 }
 
-/** Duration → position on the bloom timeline, 0..1. */
-function bloomProgress(years: number): number {
-  return Math.min(1, Math.max(0, (years - YEARS.min) / (YEARS.max - YEARS.min)));
+/** Monthly investment → 0..1. */
+function monthlyFraction(monthly: number): number {
+  return Math.min(1, Math.max(0, (monthly - AMOUNT.min) / (AMOUNT.max - AMOUNT.min)));
+}
+
+/** Selected duration preset → 0..1, by its index among YEARS_PRESETS rather
+    than its raw year value — an evenly-spaced step per button regardless of
+    how the preset values themselves are spaced. */
+function yearsFraction(years: number): number {
+  const index = YEARS_PRESETS.indexOf(years as (typeof YEARS_PRESETS)[number]);
+  return Math.max(0, index) / (YEARS_PRESETS.length - 1);
+}
+
+/** Both controls drive the bloom, half each — moving either one visibly
+    moves the flower. */
+function bloomProgress(monthly: number, years: number): number {
+  return (monthlyFraction(monthly) + yearsFraction(years)) / 2;
 }
 
 /** Responsive follow with a one-frame cap so large jumps still show every stage. */
@@ -91,27 +112,25 @@ function fillStyle(value: number, min: number, max: number): CSSProperties {
 
 export default function BloomSection() {
   const [monthly, setMonthly] = useState<number>(AMOUNT.initial);
-  const [years, setYears] = useState<number>(YEARS.initial);
+  const [years, setYears] = useState<number>(YEARS_INITIAL);
   const [bloomVisible, setBloomVisible] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const initialFrame = bloomProgress(YEARS.initial) * (TOTAL_FRAMES - 1);
+  const initialFrame = bloomProgress(AMOUNT.initial, YEARS_INITIAL) * (TOTAL_FRAMES - 1);
   const targetRef = useRef(initialFrame);
   const headRef = useRef(initialFrame);
   const drawnFrameRef = useRef(-1);
 
   const ids = useId();
   const amountId = `${ids}-amount`;
-  const yearsId = `${ids}-years`;
+  const yearsLabelId = `${ids}-years-label`;
 
   const corpus = futureValue(monthly, ASSUMED_ANNUAL_RATE, years);
 
-  const yearsText = `${years} ${years === 1 ? "year" : "years"}`;
-
-  // Duration — and only duration — moves the bloom.
+  // Both monthly investment and investment duration move the bloom.
   useEffect(() => {
-    targetRef.current = bloomProgress(years) * (TOTAL_FRAMES - 1);
-  }, [years]);
+    targetRef.current = bloomProgress(monthly, years) * (TOTAL_FRAMES - 1);
+  }, [monthly, years]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -199,7 +218,9 @@ export default function BloomSection() {
       <div className={styles.darkBox}>
         <div className={`grid ${styles.panel}`}>
           <div className={styles.header}>
-            <h2 className={styles.title}>Wealth grows with time</h2>
+            <h2 className={styles.title}>
+              <span className={styles.dropCap}>W</span>ealth grows with time
+            </h2>
             <p className={styles.tagline}>
               Adjust the sliders and watch your wealth grow.
             </p>
@@ -241,26 +262,29 @@ export default function BloomSection() {
               />
             </div>
 
-            <div className={styles.control}>
-              <div className={styles.controlHead}>
-                <label className={styles.controlLabel} htmlFor={yearsId}>
-                  Investment Duration
-                </label>
-                <span className={styles.controlValue}>{yearsText}</span>
+            <div className={styles.durationControl}>
+              <p id={yearsLabelId} className={styles.controlLabel}>
+                Select Investment Duration
+              </p>
+              <div className={styles.durationGroup} role="radiogroup" aria-labelledby={yearsLabelId}>
+                {YEARS_PRESETS.map((preset, index) => {
+                  const isLast = index === YEARS_PRESETS.length - 1;
+                  const label = isLast ? `${preset}+ yrs` : `${preset} yrs`;
+                  const isActive = years === preset;
+                  return (
+                    <button
+                      key={preset}
+                      type="button"
+                      role="radio"
+                      aria-checked={isActive}
+                      className={`${styles.durationButton} ${isActive ? styles.durationButtonActive : ""}`}
+                      onClick={() => setYears(preset)}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
-              <input
-                id={yearsId}
-                className={styles.slider}
-                type="range"
-                min={YEARS.min}
-                max={YEARS.max}
-                step={YEARS.step}
-                value={years}
-                onChange={(event) => setYears(Number(event.target.value))}
-                style={fillStyle(years, YEARS.min, YEARS.max)}
-                aria-label="Investment duration in years"
-                aria-valuetext={yearsText}
-              />
             </div>
           </div>
 
@@ -286,7 +310,9 @@ export default function BloomSection() {
         <div className={`grid ${styles.panel}`}>
           <div className={styles.portfolio}>
             <h2 className={styles.portfolioHeading}>
-              <span className={styles.headingLine}>Let&apos;s build your</span>
+              <span className={styles.headingLine}>
+                <span className={styles.dropCap}>L</span>et&apos;s build your
+              </span>
               <span className={styles.headingLine}>portfolio together</span>
             </h2>
             <p className={styles.portfolioSubtext}>

@@ -28,7 +28,9 @@ export default function GrowSection() {
       <div className={`grid ${styles.panel}`}>
         <div className={styles.text}>
           <LogoCarousel logos={BADGES} className={styles.badgeStack} />
-          <h2 className={styles.heading}>Grow your wealth in India.</h2>
+          <h2 className={styles.heading}>
+            <span className={styles.dropCap}>G</span>row your wealth in India.
+          </h2>
           <p className={styles.subtext}>
             Access professionally managed mutual funds that help NRIs
             participate in India&apos;s long term growth with confidence and

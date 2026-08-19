@@ -52,7 +52,9 @@ export default function FaqSection() {
     <section className={styles.section}>
       <div className={`grid ${styles.panel}`}>
         <div className={styles.container}>
-          <h2 className={styles.heading}>Frequently Asked Questions</h2>
+          <h2 className={styles.heading}>
+            <span className={styles.dropCap}>F</span>requently Asked Questions
+          </h2>
 
           <div className={styles.list}>
             {FAQS.map((faq, index) => {

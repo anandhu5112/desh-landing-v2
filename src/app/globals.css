@@ -19,38 +19,48 @@
 }
 
 /*
- * Fluid sizing tokens — every value here scales continuously between a
- * 640px and a 1920px viewport (clamp(min, ramp, max)).
- * MIN/MAX are the exact px pair each property used to jump between; only
- * the transition between them changed, not the endpoints themselves —
- * except above 1920px, where these keep growing past today's flat
- * desktop cap (an explicit, confirmed tradeoff of matching Daylight's own
- * 640–1920 range instead of stopping at this site's 1440px grid frame).
+ * Heading sizes are FLAT, not fluid — deliberately reversed from an
+ * earlier version of this file that scaled them continuously with 100vw
+ * between a 640px and 1920px viewport. That approach put a real,
+ * user-reported size mismatch between a MacBook Air (~55px, mid-ramp) and
+ * a 32" monitor (64px, past the ramp's ceiling) — the same heading
+ * reading meaningfully bigger purely because the monitor was wider, with
+ * nothing to do with an intentional design choice. Every screen size down
+ * to the 767px mobile breakpoint now gets the identical flat 64px/-1.2px
+ * pair (the ramp's own former ceiling — already what every explicit flat
+ * override elsewhere on the site, e.g. BloomSection's .title, converged
+ * on independently); the 767px breakpoint below drops to a flat
+ * 40px/-1.92px pair, matching the ramp's former floor — which is what
+ * every real phone (all well under the ramp's 640px starting point) was
+ * already rendering, so mobile's actual size is unchanged, just now
+ * literal instead of incidental.
  *
- * --page-margin is deliberately NOT part of this system: it is a flat
- * 24px at every viewport.
+ * --page-margin is deliberately NOT part of this: it holds a flat 24px
+ * down to the 767px mobile breakpoint, where it drops to a flat 8px (see
+ * the media query below) — 24px reads as too wide a gutter once the
+ * viewport itself is only a few hundred px, so mobile gets its own fixed
+ * value rather than a second flat point.
  */
 :root {
   /* ---- font-size ---- */
   /* House heading scale, shared by every section's <h1>/<h2>. */
-  --fs-heading: clamp(40px, calc(40px + (64px - 40px) * (100vw - 640px) / (1920px - 640px)), 64px);
+  --fs-heading: 64px;
   /* ContactModal's heading — its own 32/40 pair, not the house scale above. */
-  --fs-heading-modal: clamp(32px, calc(32px + (40px - 32px) * (100vw - 640px) / (1920px - 640px)), 40px);
-  /* BloomSection's "Final Wealth" figure — shares the 40px floor with
-     --fs-heading but a smaller 48px ceiling, so it's its own token. */
-  --fs-final-value: clamp(40px, calc(40px + (48px - 40px) * (100vw - 640px) / (1920px - 640px)), 48px);
-  /* Flat sizes: tokenized for a single source of truth, not fluidized —
-     none of these have ever had a "mobile version" to interpolate from. */
+  --fs-heading-modal: 40px;
+  /* BloomSection's "Final Wealth" figure — shares the 40px mobile floor
+     with --fs-heading but a smaller 48px flat size, so it's its own token. */
+  --fs-final-value: 48px;
+  /* Flat sizes: tokenized for a single source of truth — none of these
+     have ever had a "mobile version" to differ from. */
   --fs-body: 16px;
   --fs-nav: 14px;
   --fs-caption: 12px;
 
-  /* ---- letter-spacing: Intercom's own heading tracking, ~-3% of
-     font-size, fluidized in lockstep with each size token above so the
-     ratio holds at every viewport instead of just at the clamp endpoints. ---- */
-  --ls-heading: clamp(-1.92px, calc(-1.2px + (-1.92px - -1.2px) * (100vw - 640px) / (1920px - 640px)), -1.2px);
-  --ls-heading-modal: clamp(-1.2px, calc(-0.96px + (-1.2px - -0.96px) * (100vw - 640px) / (1920px - 640px)), -0.96px);
-  --ls-final-value: clamp(-1.44px, calc(-1.2px + (-1.44px - -1.2px) * (100vw - 640px) / (1920px - 640px)), -1.2px);
+  /* ---- letter-spacing: Intercom's own heading tracking, ~-3% of each
+     size token above — flat in lockstep with those now being flat. ---- */
+  --ls-heading: -1.2px;
+  --ls-heading-modal: -0.96px;
+  --ls-final-value: -1.2px;
   /* Body copy's own tracking (~-1% of 16px) — flat, since --fs-body is flat. */
   --ls-body: -0.16px;
 
@@ -78,6 +88,28 @@
   --space-48: 48px;
   --space-64: 64px;
   --space-96: 96px;
+}
+
+/* Mobile-only page margin AND the mobile heading sizes — every section
+   reads these tokens for its own edge inset/padding or heading text, so
+   overriding them here at :root is a single change that narrows/shrinks
+   all of them at once, without touching a single component file or the
+   desktop (>767px) values above. Same 767px breakpoint the rest of the
+   site already uses for its own phone-specific tweaks. The heading
+   figures are literal copies of the old fluid clamp()'s own floor values
+   (see the flat desktop tokens' own comment above) — real phones are all
+   well under the clamp's former 640px ramp start, so this is exactly what
+   mobile already rendered, not a new size. */
+@media (max-width: 767px) {
+  :root {
+    --page-margin: 8px;
+    --fs-heading: 40px;
+    --fs-heading-modal: 32px;
+    --fs-final-value: 40px;
+    --ls-heading: -1.92px;
+    --ls-heading-modal: -1.2px;
+    --ls-final-value: -1.44px;
+  }
 }
 
 .grid {

@@ -1,21 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Button from "@/components/ui/Button";
 import { heroIntroSettledRef } from "@/lib/heroProgress";
+import { lenisRef } from "@/lib/lenis";
 import styles from "./Hero.module.css";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP, ScrollTrigger);
 }
 
-// Spotlight reveal — unchanged from original
-const SPOTLIGHT_R = 260;
-
-// The pin covers exactly the spotlight/zoom/outro sequence — one
+// The pin covers exactly the zoom/outro sequence — one
 // timeline unit per 150% of scroll. GrowSection/UsSection are regular
 // vertical sections below Hero now, not additional pinned stages, so the
 // pin is no longer extended past this single unit.
@@ -30,8 +28,8 @@ const ZOOM_END = `+=${TOTAL_SCROLL_PCT}%`;
 const OUTRO_REVEAL_AT = 0.85 * (ZOOM_SCROLL_PCT / TOTAL_SCROLL_PCT);
 
 // Opening beat of the pin, in the timeline's absolute units (1.0 per 150%,
-// see above): the hero holds still while the spotlight layer fades, before
-// heroContent starts leaving. The hero frame itself no longer animates —
+// see above): the hero holds still before heroContent starts leaving. The
+// hero frame itself no longer animates —
 // it's a static 32px margin (see .heroFrame) that the whole interaction
 // plays inside — but this beat still paces what follows.
 // HERO_INTRO_SETTLED_PROGRESS is the same point expressed as ScrollTrigger's
@@ -41,122 +39,59 @@ const INTRO_HOLD_DURATION = 0.2;
 const HERO_INTRO_SETTLED_PROGRESS =
   INTRO_HOLD_DURATION / (TOTAL_SCROLL_PCT / ZOOM_SCROLL_PCT);
 
-const ZOOM_SCALE = 1.6;
-const ZOOM_Y_PERCENT = 30;
+// Third round of tuning this pair: 1.6/30 (original) zoomed in too
+// aggressively by the time the sun/outro settled; 1.05/5 (round two)
+// corrected that but was then overridden to 1.45/22 (round three) against
+// a different, more-zoomed reference. A later, more specific reference
+// confirmed near-1x — essentially the hero's own starting framing — is
+// actually the intended stop point, so this reverts to round two's
+// values. Also no longer needs to double as "the framing while the sun
+// is still rising": the sun tween below now only starts once this one
+// has fully finished (see the duration on the zoom .to() call), so
+// there's no overlap state to account for.
+const ZOOM_SCALE = 1.05;
+const ZOOM_Y_PERCENT = 5;
+
+// Same breakpoint the site's CSS already treats as "true phone", not the
+// 1024px tablet one. Read once at tween-setup time (not reactively on
+// resize, same tradeoff every other viewport-width check in this codebase
+// makes) — only gates the two values below, so nothing else in the timeline
+// changes shape between mobile and desktop.
+const MOBILE_QUERY = "(max-width: 767px)";
+// This dampened pair existed only because the old desktop target (1.45/22)
+// pushed the hills at the bottom of the grassland image below the frame's
+// own bottom edge on tall/narrow viewports (overflow: hidden clips it
+// there, see .heroFrame). Desktop's own new target (see ZOOM_SCALE above)
+// is now gentler than this pair ever was, so mobile just reuses it
+// outright rather than keeping a second, now-backwards-dampened set of
+// numbers — re-split these if a live check on a real tall viewport shows
+// the hills clipping again.
+const ZOOM_SCALE_MOBILE = ZOOM_SCALE;
+const ZOOM_Y_PERCENT_MOBILE = ZOOM_Y_PERCENT;
+
+// Once the pinned sequence finishes and the user scrolls past it, the
+// finished outro (sun + copy, see the screenshot this was specced from)
+// holds the viewport for this long before GrowSection/UsSection are
+// allowed to scroll in underneath.
+const OUTRO_HOLD_MS = 1500;
 
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const zoomWrapRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imgLayerRef = useRef<HTMLDivElement>(null);
   const sunRef = useRef<HTMLDivElement>(null);
-  const loopControlRef = useRef<{ start: () => void; stop: () => void } | null>(null);
   const outroShownRef = useRef(false);
   const [showOutro, setShowOutro] = useState(false);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const imgLayer = imgLayerRef.current;
-    if (!canvas || !imgLayer) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    function resizeCanvas() {
-      canvas!.width = window.innerWidth;
-      canvas!.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-
-    const mouse = { x: -999, y: -999 };
-    const smooth = { x: -999, y: -999 };
-
-    function handleMouseMove(e: MouseEvent) {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-    }
-    window.addEventListener("mousemove", handleMouseMove);
-
-    function handleMouseOut(e: MouseEvent) {
-      if (!e.relatedTarget) {
-        mouse.x = -999;
-        mouse.y = -999;
-      }
-    }
-    document.addEventListener("mouseout", handleMouseOut);
-
-    let rafId: number | null = null;
-
-    function loop() {
-      smooth.x += (mouse.x - smooth.x) * 0.1;
-      smooth.y += (mouse.y - smooth.y) * 0.1;
-
-      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
-
-      const grad = ctx!.createRadialGradient(
-        smooth.x,
-        smooth.y,
-        0,
-        smooth.x,
-        smooth.y,
-        SPOTLIGHT_R
-      );
-      grad.addColorStop(0, "rgba(255,255,255,1)");
-      grad.addColorStop(0.4, "rgba(255,255,255,1)");
-      grad.addColorStop(0.6, "rgba(255,255,255,0.75)");
-      grad.addColorStop(0.75, "rgba(255,255,255,0.4)");
-      grad.addColorStop(0.88, "rgba(255,255,255,0.12)");
-      grad.addColorStop(1, "rgba(255,255,255,0)");
-
-      ctx!.beginPath();
-      ctx!.arc(smooth.x, smooth.y, SPOTLIGHT_R, 0, Math.PI * 2);
-      ctx!.fillStyle = grad;
-      ctx!.fill();
-
-      const dataUrl = canvas!.toDataURL();
-      imgLayer!.style.setProperty("-webkit-mask-image", `url(${dataUrl})`);
-      imgLayer!.style.setProperty("mask-image", `url(${dataUrl})`);
-      imgLayer!.style.setProperty("-webkit-mask-size", "100% 100%");
-      imgLayer!.style.setProperty("mask-size", "100% 100%");
-
-      rafId = requestAnimationFrame(loop);
-    }
-
-    function startLoop() {
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(loop);
-    }
-
-    function stopLoop() {
-      if (rafId !== null) {
-        cancelAnimationFrame(rafId);
-        rafId = null;
-      }
-    }
-
-    loopControlRef.current = { start: startLoop, stop: stopLoop };
-    startLoop();
-
-    return () => {
-      window.removeEventListener("resize", resizeCanvas);
-      window.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseout", handleMouseOut);
-      stopLoop();
-    };
-  }, []);
+  const holdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useGSAP(
     () => {
-      if (
-        !heroRef.current ||
-        !zoomWrapRef.current ||
-        !imgLayerRef.current ||
-        !heroContentRef.current ||
-        !sunRef.current
-      )
+      if (!heroRef.current || !zoomWrapRef.current || !heroContentRef.current || !sunRef.current)
         return;
+
+      const isMobile = window.matchMedia(MOBILE_QUERY).matches;
+      const zoomScale = isMobile ? ZOOM_SCALE_MOBILE : ZOOM_SCALE;
+      const zoomYPercent = isMobile ? ZOOM_Y_PERCENT_MOBILE : ZOOM_Y_PERCENT;
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -168,13 +103,7 @@ export default function Hero() {
           // body is display:flex, which makes ScrollTrigger skip pin-spacing by default
           pinSpacing: true,
           anticipatePin: 1,
-          // Drive the spotlight loop off actual scroll progress. onEnter/onLeaveBack
-          // are unreliable here: pinning resolves `start` to -0.001, so the trigger is
-          // already active at scroll 0 and onEnter re-fires on every refresh.
           onUpdate: (self) => {
-            if (self.progress > 0.001) loopControlRef.current?.stop();
-            else loopControlRef.current?.start();
-
             // SiteNav reads this to hold off hiding until the hero's
             // opening beat is done (see heroProgress.ts).
             heroIntroSettledRef.current = self.progress >= HERO_INTRO_SETTLED_PROGRESS;
@@ -187,31 +116,48 @@ export default function Hero() {
               setShowOutro(shouldShow);
             }
           },
+          // Fires exactly once per forward crossing of the pin's end — right
+          // as the finished outro state would otherwise start scrolling away.
+          // Freezes Lenis there for OUTRO_HOLD_MS before releasing it, so the
+          // hold re-triggers correctly too if the user scrolls back up into
+          // the hero and forward past it again later.
+          onLeave: () => {
+            const lenis = lenisRef.current;
+            // No Lenis instance under prefers-reduced-motion (see
+            // SmoothScroll) — nothing to hold scroll with, so skip the hold
+            // rather than leaving native scroll running unlocked.
+            if (!lenis || holdTimeoutRef.current) return;
+
+            lenis.stop();
+            holdTimeoutRef.current = setTimeout(() => {
+              lenis.start();
+              holdTimeoutRef.current = null;
+            }, OUTRO_HOLD_MS);
+          },
         },
       });
 
-      tl.to(imgLayerRef.current, { opacity: 0, ease: "none", duration: 0.3 }, 0)
-        // The copy leaves only after the opening hold, so the spotlight
-        // fading out and the copy leaving never compete for attention —
-        // they go one after the other.
-        .to(
-          heroContentRef.current,
-          { opacity: 0, y: -40, ease: "none", duration: 0.25 },
-          INTRO_HOLD_DURATION
-        )
+      tl.to(
+        heroContentRef.current,
+        { opacity: 0, y: -40, ease: "none", duration: 0.25 },
+        INTRO_HOLD_DURATION
+      )
         .to(
           zoomWrapRef.current,
-          { scale: ZOOM_SCALE, yPercent: ZOOM_Y_PERCENT, ease: "none", duration: 0.9 },
+          { scale: zoomScale, yPercent: zoomYPercent, ease: "none", duration: 0.4 },
           0.1
         )
-        // Sun rises from behind the hills as the outro statement lands.
-        // top.png's horizon isn't a hard edge — it's a feathered alpha
+        // Sun rises only once the zoom above has fully finished (it runs
+        // [0.1, 0.5]; this starts at 0.5) rather than overlapping it —
+        // the zoom reaches its exact final scale/pan the instant before
+        // the sun's first frame, so "the sun rises from behind the hills"
+        // now means from a settled frame, not one still mid-zoom.
+        // The hero bg's horizon isn't a hard edge — it's a feathered alpha
         // gradient (~43%-53% down), so yPercent: 50 (half the sun's own
-        // height) isn't enough clearance; the top.png stayed only partly
+        // height) isn't enough clearance; the image stayed only partly
         // opaque right where the sun's edge sat, letting it bleed through.
         // 120 clears the whole feather band with margin. Settles at 0.85,
-        // matching OUTRO_REVEAL_AT — never on screen at the same time as
-        // the spotlight layer, which has already faded out by 0.3.
+        // matching OUTRO_REVEAL_AT.
         // Sun rise is the timeline's last beat — GrowSection/UsSection pick
         // up as regular vertical sections once the pin releases, not as
         // further stages of this timeline.
@@ -221,6 +167,16 @@ export default function Hero() {
           { yPercent: 0, ease: "none", duration: 0.35 },
           0.5
         );
+
+      // Guards against a hold outliving the component it was scheduled by —
+      // without this, an unmount mid-hold would call .start() on whatever
+      // Lenis instance (or none) exists by the time the timer fires.
+      return () => {
+        if (holdTimeoutRef.current) {
+          clearTimeout(holdTimeoutRef.current);
+          holdTimeoutRef.current = null;
+        }
+      };
     },
     { scope: heroRef }
   );
@@ -231,22 +187,26 @@ export default function Hero() {
           the sun and the outro statement are all clipped to the same 32px
           margin and share one coordinate space. */}
       <div className={styles.heroFrame}>
+        {/* Sits behind .zoomWrap, not inside it — static for the whole pin
+            (no scale/pan, no scroll-driven tween) so it reads as a fixed
+            sky backdrop the grassland's transparent areas and the rising
+            sun both sit in front of. */}
+        <div
+          className={styles.heroSky}
+          style={{ backgroundImage: "url('/images/hero-sky.png')" }}
+        />
         <div ref={zoomWrapRef} className={styles.zoomWrap}>
           <div ref={sunRef} className={styles.sun} />
           <div
             className={styles.heroBaseImg}
-            style={{ backgroundImage: "url('/images/top.png')" }}
-          />
-          <canvas ref={canvasRef} className={styles.revealCanvas} />
-          <div
-            ref={imgLayerRef}
-            className={styles.heroRevealImg}
-            style={{ backgroundImage: "url('/images/base.png')" }}
+            style={{ backgroundImage: "url('/images/hero-bg.png')" }}
           />
         </div>
         <div ref={heroContentRef} className={styles.heroContent}>
           <div className={styles.heroInner}>
-            <h1 className={styles.heroHeading}>Invest like a true global citizen</h1>
+            <h1 className={styles.heroHeading}>
+              <span className={styles.dropCap}>I</span>nvest like a true global citizen
+            </h1>
             <p className={styles.heroSubtext}>
               Crafted specifically for NRIs to help them grow their wealth in top global
               asset classes.
@@ -269,7 +229,9 @@ export default function Hero() {
               className={`${styles.heroOutroInner} ${showOutro ? styles.heroOutroInnerVisible : ""}`}
             >
               <h2 className={styles.heroOutroText}>
-                <span className={styles.heroOutroLine}>Distance shouldn&apos;t,</span>
+                <span className={styles.heroOutroLine}>
+                  <span className={styles.dropCap}>D</span>istance shouldn&apos;t,
+                </span>
                 <span className={styles.heroOutroLine}>slow your money down.</span>
               </h2>
             </div>

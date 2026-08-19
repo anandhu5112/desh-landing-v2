@@ -4,9 +4,10 @@
    Copied, not shared. Same house rule as every other section: this
    file duplicates nothing and is duplicated by nothing.
 
-   The sky is a rounded card inset within the page margins, shorter than
-   the artwork's own aspect ratio — the box crops the bottom of the image
-   rather than letting its baked-in fade to white run to completion.
+   Figma node 510:8616. Left-aligned copy, vertically centered in the card,
+   beside a video-call photo (fixed 32px inset from the card's own top and
+   right edges) with an overlapping "insight card" anchored to the photo's
+   own box — see .mediaCluster/.photo/.insightCard below.
    ============================================================ */
 
 .section {
@@ -14,21 +15,30 @@
   width: 100%;
 }
 
-/* Figma node 469:1890: 1376x569 at a 1440px frame, 24px radius on all four
+/* Figma node 510:8617: 1376x657 at a 1440px frame, 24px radius on all four
    corners. Held as a ratio rather than a fixed height so the card keeps its
-   proportions as the page margin and viewport change. */
+   proportions as the page margin and viewport change.
+   min-height is a floor, not a redesign — .insightCard's "Total value"
+   face settles at a fixed ~320px tall, positioned starting 32px (media
+   cluster) + 84.6% of the 459px photo ≈ 420px down from the frame's own
+   top (see .insightCard's own comment for that math). At narrower desktop
+   widths the aspect-ratio above yields a shorter frame than that ~740px
+   requirement, and since this frame clips (overflow: hidden, needed for
+   the sky-image crop), the card's bottom — including part of the graph —
+   was getting cut off. This only overrides the ratio where it would
+   otherwise fall short; wide viewports are unaffected. */
 .frame {
   position: relative;
   margin-inline: var(--page-margin);
-  aspect-ratio: 1376 / 569;
+  aspect-ratio: 1376 / 657;
+  min-height: 780px;
   border-radius: 24px;
   overflow: hidden;
 }
 
-/* Top-anchored cover: the box is wider than the artwork's own ratio, so the
-   crop comes off the bottom (where the sky fades out) and the horizon stays
-   put — matching Figma, which scales the image to 130% of the box height
-   and pins it to the top. */
+/* Top-anchored cover, same treatment as before: the box is wider than the
+   artwork's own ratio, so the crop comes off the bottom (where the sky
+   fades out) and the horizon stays put. */
 .bgImage {
   display: block;
   width: 100%;
@@ -37,254 +47,27 @@
   object-position: center top;
 }
 
-/* ---------- CHAT BUBBLE FIELD ----------
-   Ten static bubbles (Figma frames 473:1915–473:1956), each positioned by
-   its own top-left corner as a percentage of the card so the whole field
-   re-scales with the card's width. Fixed pixel padding/radius/font — like
-   the rest of the site's decorative chrome — rather than scaling with the
-   card. */
-.bubbleLayer {
-  position: absolute;
-  inset: 0;
-}
-
-.bubble {
-  position: absolute;
-  display: inline-flex;
-  flex-direction: column;
-  padding: 10px;
-  border-radius: 12px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 14px;
-  line-height: 21px;
-  font-weight: 400;
-  letter-spacing: -0.28px;
-  white-space: nowrap;
-  /* Hidden until .bubbleLayerRunning starts the pop-in — see below. */
-  opacity: 0;
-}
-
-.bubbleLeft {
-  align-items: flex-start;
-  text-align: left;
-}
-
-.bubbleRight {
-  align-items: flex-end;
-  text-align: right;
-}
-
-/* Verbatim multi-layer shadow exported from Figma — layer order and values
-   are kept literal so this stays a match for the source if it's ever
-   re-exported. */
-.bubbleWhite {
-  background: #ffffff;
-  color: #003b66;
-  box-shadow:
-    0 166px 23.5px rgba(0, 88, 143, 0),
-    0 106px 21.5px rgba(0, 88, 143, 0.01),
-    0 60px 18px rgba(0, 88, 143, 0.05),
-    0 27px 13.5px rgba(0, 88, 143, 0.09),
-    0 7px 7.5px rgba(0, 88, 143, 0.1);
-}
-
-.bubbleBlue {
-  background: #0181ef;
-  color: #ffffff;
-  box-shadow:
-    0 108px 15px rgba(0, 38, 61, 0),
-    0 69px 14px rgba(0, 38, 61, 0.01),
-    0 39px 11.5px rgba(0, 38, 61, 0.05),
-    0 17px 8.5px rgba(0, 38, 61, 0.09),
-    0 4px 4.5px rgba(0, 38, 61, 0.1);
-}
-
-/* Both the pop-in's scale and the float's translateY animate the same
-   `transform` property, but never at the same visible moment: the pop-in
-   ends at scale(1)/no offset and the float begins at translateY(0) — both
-   are the identity transform, so when the float (listed second, and so
-   higher-priority once both are running) takes over there's nothing to
-   jump from. --pop-delay is set per bubble inline (order * stagger, see
-   AdvisorSection.tsx) so they appear one at a time rather than all at
-   once. */
-@keyframes bubblePopIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes bubbleFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.bubbleLayerRunning .bubble {
-  animation:
-    bubblePopIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) both,
-    bubbleFloat 2.6s ease-in-out infinite;
-  animation-delay: var(--pop-delay), calc(var(--pop-delay) + 0.9s);
-}
-
-/* Left and right halves float on their own duration, not a shared one, so
-   they drift in and out of phase with each other instead of bobbing in
-   lockstep. The right side also starts its loop a little later than its
-   own pop-in finishes, on top of already using a different period. */
-.bubbleLayerRunning .bubbleFloatLeft {
-  animation-duration: 0.9s, 2.6s;
-}
-
-.bubbleLayerRunning .bubbleFloatRight {
-  animation-duration: 0.9s, 3.1s;
-  animation-delay: var(--pop-delay), calc(var(--pop-delay) + 1.3s);
-}
-
-@media (max-width: 1024px) {
-  .bubbleLayer {
-    display: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .bubble {
-    opacity: 1;
-  }
-
-  .bubbleLayerRunning .bubble {
-    animation: none;
-  }
-}
-
-/* Percentage-based top offset, not a fixed px value — Figma seats the copy
-   91px into a 569px-tall card (16%), expressed as a fraction so the text
-   stays pinned to the same relative spot on the sky at any width. */
+/* 32px left inset — same fixed value as .mediaCluster's own top/right
+   inset, so the card reads as evenly padded on every edge. Vertically
+   centered (top/bottom: 0 + justify-content: center) in the full card
+   height, rather than pinned to Figma's own y=48 with a big hand-tuned
+   gap before the CTA — a normal `gap` between all three children instead.
+   right: 752px stops the column exactly where .mediaCluster begins (its
+   32px right inset + 688px fixed photo width + a 32px gap before the
+   text) — update this if .photo's own width below ever changes. */
 .content {
   position: absolute;
-  top: 16%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
+  left: 32px;
+  top: 0;
+  bottom: 0;
+  right: 752px;
   max-width: 706px;
-  padding-inline: var(--space-16);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-32);
-  text-align: center;
-}
-
-/* Unstyled positioning context for .avatar + .avatarBadge — separate from
-   .avatar itself because .avatar's own overflow: hidden (needed to clip the
-   photo to a circle) would also clip the badge where it overhangs the
-   edge. */
-.avatarWrap {
-  position: relative;
-  flex: none;
-  width: 69.5px;
-  height: 69.5px;
-}
-
-/* Figma node 473:1995: 69.5px circle, 5px border at 42% white. */
-.avatar {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 5px solid rgba(255, 255, 255, 0.42);
-  overflow: hidden;
-}
-
-.avatarImg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-}
-
-/* Status-style badge overhanging the avatar's bottom-right edge, matching
-   the old orbit chips' white-ring-on-photo treatment (border + soft
-   shadow) rather than the bubbles' navy/blue palette. */
-.avatarBadge {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-  display: flex;
-  align-items: center;
   justify-content: center;
-}
-
-/* Both icons occupy the same spot and crossfade — one is always fading out
-   exactly as the other fades in, rather than a hard cut. 4s loop, 2s per
-   icon (see the 45%/55% pairs below): held, cross-dissolve, held, held. */
-.avatarBadgeIcon {
-  position: absolute;
-  display: block;
-}
-
-@keyframes avatarBadgeIconVideo {
-  0%,
-  45% {
-    opacity: 1;
-  }
-  55%,
-  95% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-
-@keyframes avatarBadgeIconPhone {
-  0%,
-  45% {
-    opacity: 0;
-  }
-  55%,
-  95% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-.avatarBadgeIconVideo {
-  animation: avatarBadgeIconVideo 4s ease-in-out infinite;
-}
-
-.avatarBadgeIconPhone {
-  animation: avatarBadgeIconPhone 4s ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .avatarBadgeIconVideo,
-  .avatarBadgeIconPhone {
-    animation: none;
-  }
-
-  .avatarBadgeIconVideo {
-    opacity: 1;
-  }
-
-  .avatarBadgeIconPhone {
-    opacity: 0;
-  }
+  align-items: flex-start;
+  text-align: left;
+  gap: var(--space-32);
 }
 
 /* House heading scale — same --fs-heading/--ls-heading every other section
@@ -300,6 +83,19 @@
   margin: 0;
 }
 
+/* Decorative opening letter, sized in em off the heading's own font-size
+   so it scales with it. line-height: 0 + inline-block keeps the oversized
+   glyph from stretching the heading's line box — line-height would
+   otherwise grow with it, opening a gap above/below the whole heading. */
+.dropCap {
+  display: inline-block;
+  font-family: var(--font-script), cursive;
+  font-size: 1.4em;
+  font-weight: 400;
+  line-height: 0;
+  vertical-align: -0.06em;
+}
+
 .subtext {
   font-family: var(--font-body), serif;
   font-size: var(--fs-body);
@@ -312,7 +108,9 @@
 
 /* Local override on the shared Button — same 40px/10px/14px pattern
    GrowSection/UsSection/Hero/Footer already use. Button's own default
-   black gradient already matches Figma's CTA here. */
+   black gradient already matches Figma's CTA here. Reused verbatim for
+   the insight card's "Approve" button below — both are visually identical
+   in Figma. */
 .cta {
   height: 40px;
   padding-inline: var(--space-16);
@@ -320,16 +118,374 @@
   font-size: var(--fs-nav);
 }
 
-/* Below this the card's own ratio makes it far too short to hold the copy,
-   so the ratio gives way to a height floor and the image just crops wider. */
-@media (max-width: 767px) {
+/* Fixed 32px inset from the card's own top and right edges (not a
+   percentage — kept literal so it stays exactly 32px at any viewport
+   width, same as .content's own left inset). Only `right` is set (no
+   `left`), so the box's width resolves via shrink-to-fit — i.e. exactly
+   .photo's own fixed width below — rather than needing a duplicate width
+   number here too. */
+.mediaCluster {
+  position: absolute;
+  right: 32px;
+  top: 32px;
+}
+
+/* Sole normal-flow child of .mediaCluster, so its rendered box is what
+   gives the cluster its own size — which .insightCard below then
+   positions itself against (as a fraction of *this* box), so the two
+   move together if these numbers ever change again. Fixed pixel size per
+   explicit design direction, not derived from Figma's own 500x333.25. */
+.photo {
+  position: relative;
+  width: 688px;
+  height: 459px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.photoImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Position kept as a fraction of .photo's own box (-42.6% / 84.6%,
+   originally derived from Figma's 510:8739-relative-to-510:8630 offset)
+   so the overlap holds at any rendered size, even though the photo itself
+   is now a fixed 688x459 rather than Figma's 500x333.25. Width is a fixed
+   540px per explicit design direction; height is intentionally NOT also
+   fixed — a literal 208px clipped the last line of real (non-Figma)
+   browser font metrics, so the card hugs its content instead via padding
+   + gap, sized however tall that content actually renders (AdvisorSection
+   .tsx sets this height explicitly via GSAP once .cardFaceA has laid out,
+   then tweens it to .cardFaceB's own height on click — see there).
+   overflow: hidden clips that height tween, and the two faces crossfading
+   underneath it, to a clean-edged box throughout. No padding/gap here
+   anymore — both live on .cardFaceA/.cardFaceB instead, since this box no
+   longer has a single, fixed set of children to lay out directly. */
+.insightCard {
+  position: absolute;
+  left: -42.6%;
+  top: 84.6%;
+  width: 540px;
+  z-index: 1;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #ffffff;
+  /* Navy-tinted, same palette as the old bubble field's .bubbleBlue shadow
+     (rgba(0, 38, 61, ...)) — kept for this file's own visual consistency,
+     scaled up for a larger, more-elevated card. */
+  box-shadow:
+    0 24px 48px rgba(0, 38, 61, 0.16),
+    0 8px 16px rgba(0, 38, 61, 0.08);
+}
+
+/* "Portfolio Calibration Recommended" — Figma node 510:8616. The sole
+   normal-flow child of .insightCard, so its own natural height is what
+   AdvisorSection.tsx reads as the card's starting height. */
+.cardFaceA {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+}
+
+/* "Total value" — Figma node 510:8615, what .cardFaceA turns into once the
+   cursor clicks Approve. top/left/right (no bottom) pulls it out of normal
+   flow — so it never affects .insightCard's own auto-height — while still
+   letting it size to its own natural content height, which
+   AdvisorSection.tsx reads as the card's target height. Starts hidden
+   (opacity/pointer-events) as a CSS default so it's already invisible on
+   first paint, before the GSAP setup in AdvisorSection.tsx even runs. */
+.cardFaceB {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 23px;
+  padding: 16px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.insightHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.insightTitle {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 27px;
+  letter-spacing: -0.36px;
+  color: #000000;
+  margin: 0;
+}
+
+.insightStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: -0.28px;
+  color: #676767;
+  white-space: nowrap;
+}
+
+.insightBody {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 30px;
+  letter-spacing: -0.4px;
+  color: #bababa;
+  margin: 0;
+}
+
+.insightFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.advisorRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Figma node 510:8756: 41.5px circle, 2px border at 20% gray. */
+.advisorAvatar {
+  flex: none;
+  width: 41.5px;
+  height: 41.5px;
+  border-radius: 50%;
+  border: 2px solid rgba(190, 190, 190, 0.2);
+  overflow: hidden;
+}
+
+.advisorAvatarImg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.advisorInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.advisorReviewed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 21px;
+  letter-spacing: -0.24px;
+  color: #737373;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.advisorName {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 21px;
+  letter-spacing: -0.32px;
+  color: #000000;
+  margin: 0;
+}
+
+/* Inline-flex, not a bare span, purely so AdvisorSection.tsx has a real
+   box to measure/scale for the click animation — Button itself doesn't
+   forward a ref. Sizes identically to the Button it wraps either way. */
+.approveWrap {
+  display: inline-flex;
+}
+
+/* ---------- CARD FACE B: "Total value" (Figma node 510:8615) ---------- */
+
+.totalValueLabel {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 27px;
+  letter-spacing: -0.32px;
+  color: #000000;
+  margin: 0;
+}
+
+/* IBM Plex Serif is only loaded at weight 300 (see layout.tsx) — Figma's
+   own "Medium" isn't an available static weight, so this stays 300 rather
+   than requesting a weight the font can't render, same substitution
+   .subtext already makes. */
+.totalValueAmount {
+  font-family: var(--font-body), serif;
+  font-size: 40px;
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: -1.2px;
+  color: #000000;
+  margin: 0;
+}
+
+.totalValueMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.totalValueChange {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  letter-spacing: -0.32px;
+  color: #00a82d;
+}
+
+.totalValueUpdated {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: -0.24px;
+  color: #c9c9c9;
+  margin: 0;
+}
+
+.graphWrap {
+  width: 100%;
+}
+
+.graphImg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Decorative click cue — AdvisorSection.tsx animates x/y/opacity/scale via
+   GSAP transform, so position: absolute + top/left: 0 is just the (0, 0)
+   reference point those transforms are measured from. transform-origin
+   sits at the glyph's own tip (see the SVG path in the .tsx), so the
+   "press" scale pinches from the tip rather than the shape's center.
+   pointer-events: none — it's a visual overlay, never an input target. */
+.cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transform-origin: 4px 3px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+/* No Figma spec exists below 1024px — this follows the same stacked
+   fallback GrowSection/UsSection use at this breakpoint: the card drops
+   its fixed ratio and becomes a plain top-to-bottom flex column (content,
+   then photo, then insight card — the overlap doesn't carry over here,
+   since .insightCard's -42.6% offset is sized for sitting beside a fixed-
+   width photo, not a full-width stacked one), with the sky pulled out
+   from normal flow into a full-bleed backdrop behind them instead.
+   .photo and .insightCard's fixed pixel widths (688 / 540, .insightCard's
+   own height is already intrinsic at every breakpoint) are both reset to
+   fluid here too — full width, and .photo's height following from that
+   via aspect-ratio — since either would overflow a narrow viewport left
+   at their desktop pixel widths. The click/crossfade animation still
+   plays at this breakpoint; only the layout around it changes. */
+@media (max-width: 1024px) {
   .frame {
     aspect-ratio: auto;
-    min-height: 440px;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 32px 24px;
+  }
+
+  .bgImage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
   }
 
   .content {
-    top: 12%;
-    gap: var(--space-24);
+    position: relative;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    right: auto;
+    z-index: 1;
+    width: 100%;
+    max-width: none;
+  }
+
+  .mediaCluster {
+    position: relative;
+    right: auto;
+    top: auto;
+    z-index: 1;
+    width: 100%;
+  }
+
+  .photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 688 / 459;
+  }
+
+  .insightCard {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: 100%;
+    height: auto;
+    margin-top: 24px;
+  }
+}
+
+@media (max-width: 767px) {
+  .frame {
+    padding: 24px 16px;
+    gap: 16px;
+  }
+
+  .cardFaceA,
+  .cardFaceB {
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .insightBody {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .insightFooter {
+    flex-wrap: wrap;
+    gap: 12px;
   }
 }

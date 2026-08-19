@@ -93,6 +93,19 @@
   margin: 0;
 }
 
+/* Decorative opening letter — shared by .title and .portfolioHeading below
+   (own em-relative size, so it scales with whichever heading it's in).
+   line-height: 0 + inline-block keeps the oversized glyph from stretching
+   its parent's line box. */
+.dropCap {
+  display: inline-block;
+  font-family: var(--font-script), cursive;
+  font-size: 1.4em;
+  font-weight: 400;
+  line-height: 0;
+  vertical-align: -0.06em;
+}
+
 .tagline {
   font-family: var(--font-body), serif;
   font-size: var(--fs-body);
@@ -185,6 +198,15 @@
   position: relative;
 }
 
+/* Figma node 501:8569: label, then the preset row, 32px apart — a looser
+   rhythm than .controlHead's 12px, since there's no value to sit flush
+   against the label here (the buttons carry their own value as text). */
+.durationControl {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
 .controlHead {
   display: flex;
   align-items: baseline;
@@ -226,67 +248,121 @@
   outline: none;
 }
 
-/* --fill is written per-slider as an inline custom property from the component. */
+/* --fill is written per-slider as an inline custom property from the
+   component. Figma node 501:8564 (Group 1000011170): a #212121 track with
+   a white fill and a black-on-white "target" thumb — inverted from the
+   old all-white treatment. */
 .slider::-webkit-slider-runnable-track {
-  height: 2px;
+  height: 4px;
   border-radius: 2px;
   background: linear-gradient(
     to right,
-    rgba(255, 255, 255, 0.92) 0 var(--fill, 0%),
-    var(--bloom-track) var(--fill, 0%) 100%
+    #ffffff 0 var(--fill, 0%),
+    #212121 var(--fill, 0%) 100%
   );
 }
 
+/* Figma's thumb is an SVG circle, r 7.5 with a centered 3px stroke — the
+   stroke straddles the path, so the black fill disk is really 12px across
+   (r − half the stroke) inside an 18px outer ring (r + half the stroke).
+   content-box (the default) reproduces that exactly: a 15px black box plus
+   a 3px border each side is 21px overall — sized up a bit from Figma's
+   literal 12px/18px per design feedback (the exported ring read as too
+   small next to the track).
+   margin-top centers the thumb ring on the 4px track: not the naive
+   -(total − track)/2 (that measured visibly high in-browser — Chrome
+   doesn't vertically center a webkit-slider-thumb on the track the way
+   that formula assumes), but that value plus an empirically-measured +4px
+   correction, confirmed by zooming into a live render. Re-verify visually
+   if either the thumb or track size changes again. */
 .slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 15px;
   height: 15px;
-  margin-top: -6.5px;
+  margin-top: -4.5px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 0;
-  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.16);
-  transition: box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  background: #000000;
+  border: 3px solid #ffffff;
+  outline: 0 solid rgba(255, 255, 255, 0.6);
+  outline-offset: 3px;
+  transition: outline-width 120ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-.slider:active::-webkit-slider-thumb {
-  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.14);
-}
+/* Keyboard focus only — a plain outline the exact thumb size, not the old
+   0→10px box-shadow bloom. That bloom was tuned for the previous 15px
+   solid-white thumb; against the new small black/white-ring one (Figma
+   node 501:8564) it rendered as a large, muddy gray halo baked permanently
+   onto the resting thumb after any drag (WebKit keeps :focus-visible set
+   post-drag on a range input) — this is the bug the fix targets. */
 .slider:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.18);
+  outline-width: 2px;
 }
 
 .slider::-moz-range-track {
-  height: 2px;
+  height: 4px;
   border-radius: 2px;
-  background: var(--bloom-track);
+  background: #212121;
 }
 
 .slider::-moz-range-progress {
-  height: 2px;
+  height: 4px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.92);
+  background: #ffffff;
 }
 
 .slider::-moz-range-thumb {
   width: 15px;
   height: 15px;
   border-radius: 50%;
-  background: #ffffff;
-  border: 0;
-  transition: box-shadow 160ms cubic-bezier(0.23, 1, 0.32, 1);
+  background: #000000;
+  border: 3px solid #ffffff;
+  outline: 0 solid rgba(255, 255, 255, 0.6);
+  outline-offset: 3px;
+  transition: outline-width 120ms cubic-bezier(0.23, 1, 0.32, 1);
 }
-.slider:active::-moz-range-thumb {
-  box-shadow: 0 0 0 10px rgba(255, 255, 255, 0.14);
+.slider:focus-visible::-moz-range-thumb {
+  outline-width: 2px;
+}
+
+/* ---------- INVESTMENT DURATION PRESETS ----------
+   Figma node 501:8571: six equal-width pills, active one inverted to a
+   white fill/black text. flex: 1 0 0 (not shorthand "1") so a longer label
+   like "30+ yrs" can't grow its own pill wider than its neighbours. */
+.durationGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.durationButton {
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #212121;
+  background: var(--bloom-surface);
+  color: var(--bloom-ink);
+  font-family: var(--font-heading), sans-serif;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.48px;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 160ms cubic-bezier(0.23, 1, 0.32, 1),
+    color 160ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.durationButtonActive {
+  background: #ffffff;
+  color: #000000;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .slider:hover::-webkit-slider-thumb {
-    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
-  }
-
-  .slider:hover::-moz-range-thumb {
-    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.1);
+  .durationButton:not(.durationButtonActive):hover {
+    border-color: #ffffff;
   }
 }
 
@@ -563,8 +639,33 @@
     font-size: 40px;
   }
 
+  /* .dropCap's line-height: 0 (see its base rule) only stays safe on a
+     single, never-wrapping line — the glyph paints taller than its own
+     zeroed line-box contribution, and at this heading's own line-height:
+     1 (zero natural leading) that overflow lands directly on a second
+     line with nothing to absorb it. .title fits on one line at its base
+     64px, but wraps at this breakpoint's 40px, and the drop cap's tail
+     was bleeding into "with time" below it. Scoped to this breakpoint
+     only — above it, .title never wraps, so the tight line-height: 0
+     rhythm every other single-line heading uses stays untouched. */
+  .dropCap {
+    line-height: 1;
+  }
+
   .finalValue {
     font-size: 40px;
+  }
+
+  /* Six equal pills in one row get too narrow once .controlsCol goes
+     full-width on a phone-size viewport — wraps to two rows of three
+     instead of squeezing "30+ yrs" down to nothing. */
+  .durationGroup {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+
+  .durationButton {
+    flex: 1 1 calc(33.333% - 8px);
   }
 
   /* Stacked: the bloom becomes a banner between the two text columns

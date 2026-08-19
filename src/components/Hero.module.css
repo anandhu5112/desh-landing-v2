@@ -5,16 +5,38 @@
   min-height: 800px;
   overflow: hidden;
   background: #ffffff;
-  /* White margin framing the hero on three sides — left, right and bottom.
-     Tied to --page-margin so the frame lines up with every other section's
-     32px inset. The top stays flush (the hero runs to the page top, under
-     the fixed nav), so only the bottom two corners round, per Figma node
-     379:14563. This frame is STATIC: the whole pinned interaction — zoom,
-     sun rise, outro — plays inside it and never goes full-bleed. */
+  /* White margin framing the hero on all four sides. Tied to --page-margin
+     so the frame lines up with every other section's 32px inset. SiteNav is
+     position: fixed, so it overlays this margin rather than pushing it down.
+     This frame is STATIC: the whole pinned interaction — zoom, sun rise,
+     outro — plays inside it and never goes full-bleed. */
   --hero-frame-inset: var(--page-margin);
   --hero-frame-radius: 32px;
   /* Locally scoped, not promoted to globals.css — used nowhere else. */
   --hero-content-padding-top: clamp(160px, calc(160px + (200px - 160px) * (100vw - 640px) / (1920px - 640px)), 200px);
+  /* Lives here, not on .sun, so .heroOutroText (a sibling tree — .sun sits
+     inside .zoomWrap, .heroOutro doesn't) can also read it via inheritance
+     to size itself off the same value instead of a second, easily-
+     desynced copy. Overridden at both mobile breakpoints below alongside
+     .sun's other mobile rules. */
+  --sun-size: 34vw;
+}
+
+/* Backdrop behind .zoomWrap (grassland + sun) — a sibling, not a child, so
+   the 1.6x zoom/pan tween never touches it: it holds still for the whole
+   pin, same as the frame itself, while the grassland's transparent sky and
+   the rising sun both sit in front of it. */
+.heroSky {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center top;
+  opacity: 0.7;
+  /* No explicit z-index — auto, so it stacks purely by DOM order (it's
+     .heroFrame's first child). A positive z-index here would paint it
+     above .zoomWrap regardless of DOM order, since .zoomWrap itself has
+     no explicit z-index of its own to out-rank it with. */
 }
 
 .heroBaseImg {
@@ -24,35 +46,12 @@
   background-repeat: no-repeat;
   /* Top-anchored, not center: on wide/short viewports `cover` overflows
      vertically and crops from both edges when centered, eating into the
-     transparent sky (top.png's sky is real alpha now, not baked-in white)
+     transparent sky (hero-bg.png's sky is real alpha, not baked-in white)
      and pushing the hills up under the hero copy. Anchoring to the top
      means any vertical overflow is cropped from the bottom only, so the
      sky-to-horizon position stays consistent regardless of aspect ratio. */
   background-position: center top;
   z-index: 5;
-}
-
-.heroRevealImg {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-repeat: no-repeat;
-  /* Top-anchored, not center: on wide/short viewports `cover` overflows
-     vertically and crops from both edges when centered, eating into the
-     transparent sky (top.png's sky is real alpha now, not baked-in white)
-     and pushing the hills up under the hero copy. Anchoring to the top
-     means any vertical overflow is cropped from the bottom only, so the
-     sky-to-horizon position stays consistent regardless of aspect ratio. */
-  background-position: center top;
-  z-index: 7;
-  pointer-events: none;
-}
-
-.revealCanvas {
-  display: none;
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
 }
 
 /* The container the entire pinned interaction is confined to.
@@ -64,11 +63,8 @@
    inside it. */
 .heroFrame {
   position: absolute;
-  top: 0;
-  right: var(--hero-frame-inset);
-  bottom: var(--hero-frame-inset);
-  left: var(--hero-frame-inset);
-  border-radius: 0 0 var(--hero-frame-radius) var(--hero-frame-radius);
+  inset: var(--hero-frame-inset);
+  border-radius: var(--hero-frame-radius);
   overflow: hidden;
 }
 
@@ -83,7 +79,8 @@
    scales and travels with the landscape instead of drifting off the horizon.
    Hidden purely by GSAP's yPercent (see Hero.tsx) — no opacity/fade here. */
 .sun {
-  --sun-size: 34vw;
+  /* --sun-size itself now lives on .hero (see its own rule) — inherited
+     from there, not redeclared here. */
   position: absolute;
   z-index: 4;
   top: 47%;
@@ -108,7 +105,7 @@
      (not the full viewport — the nav visually consumes the top, so the
      remaining canvas is what should feel centered).
 
-     Also has a hard ceiling now that top.png's sky is real transparency
+     Also has a hard ceiling now that hero-bg.png's sky is real transparency
      rather than baked-in white: the whole two-line heading block (128px)
      must clear wherever the landscape's alpha stops being fully transparent,
      or the copy sits on top of the hills instead of the sky. With
@@ -146,6 +143,19 @@
   color: var(--color-ink);
   white-space: nowrap;
   pointer-events: auto;
+}
+
+/* Decorative opening letter — shared by .heroHeading and .heroOutroText
+   below (own em-relative size, so it scales with whichever heading it's
+   in). line-height: 0 + inline-block keeps the oversized glyph from
+   stretching its parent's line box. */
+.dropCap {
+  display: inline-block;
+  font-family: var(--font-script), cursive;
+  font-size: 1.4em;
+  font-weight: 400;
+  line-height: 0;
+  vertical-align: -0.06em;
 }
 
 .heroSubtext {
@@ -194,6 +204,18 @@
 .heroOutroInner {
   position: relative;
   grid-column: 3 / span 8;
+  /* Column 3/span 8 is far wider than the sun at most viewport widths — the
+     copy was wrapping at the grid track's own width instead of the sun's,
+     so both lines ran well past its edges. Capping width to a share of
+     --sun-size (inherited from .hero — see that rule) keeps it wrapping to
+     fit the circle instead, at every breakpoint that changes --sun-size.
+     0.85, not 1: a hair of clearance inside the circle's curve, since a
+     multi-line block's top/bottom lines sit off-center where the circle is
+     narrower than its full diameter. margin-inline: auto re-centers the
+     now-narrower box within its (already centered) grid track. */
+  width: 100%;
+  max-width: calc(var(--sun-size) * 0.85);
+  margin-inline: auto;
   /* Appears on scroll rather than popping in: .heroOutro itself now stays
      mounted at all times (see Hero.tsx) so this can transition instead of
      snapping in with the rest of the element. */
@@ -209,31 +231,44 @@
   transform: translateY(0);
 }
 
-/* Each line is its own block, so the break is explicit rather than left
-   to text wrapping. .heroOutroText's own text-align: center (below)
-   centers each line's plain text content. */
+/* Each line is its own block, so the break is explicit rather than left to
+   text wrapping — and white-space: nowrap keeps it that way: exactly 2
+   lines always, never a 3rd from a long line reflowing inside a narrower
+   box. .heroOutroText's own text-align: center (below) centers each
+   line's plain text content. */
 .heroOutroText .heroOutroLine {
   display: block;
+  white-space: nowrap;
 }
 
 .heroOutroText {
   font-family: var(--font-heading), sans-serif;
-  /* A deliberate step up from the house heading scale used everywhere
-     else — a scoped multiplier on --fs-heading, not a change to the shared
-     token, so nothing else on the page is affected. */
-  font-size: calc(var(--fs-heading) * 1.15);
+  /* Flat 64px on web (any width above the 767px mobile breakpoint, which
+     overrides this to a flat 32px — see that breakpoint), by explicit
+     request — not fitted to the sun's own diameter the way the previous
+     value here was. At most web widths this is wider than the circle
+     (confirmed by measuring rendered text against a live render: e.g. the
+     longer line, "slow your money down.", runs to ~112% of the sun's
+     diameter at 1710px), so with .heroOutroLine's white-space: nowrap
+     above it will overflow past the circle's edges symmetrically rather
+     than wrap to a 3rd line or shrink to fit. */
+  font-size: 64px;
   line-height: 1;
   font-weight: 400;
-  letter-spacing: calc(var(--ls-heading) * 1.15);
+  /* em, not a calc() off --ls-heading: keeps the same -3% tracking ratio
+     this codebase's headings all use, but self-coupled to whatever
+     font-size this rule resolves to (including the mobile override)
+     instead of a second value that could drift out of sync with it. */
+  letter-spacing: -0.03em;
   color: var(--color-ink);
   text-align: center;
 }
 
 @media (max-width: 1024px) {
-  /* No --hero-frame-inset override: the frame tracks --page-margin, which is
-     a flat 32px at every viewport, so the hero lines up with every other
-     section's inset rather than stepping to its own narrower one. */
-  .sun {
+  /* No --hero-frame-inset override: the frame tracks --page-margin (24px
+     down to 767px, 8px below it — see globals.css), so the hero lines up
+     with every other section's inset rather than stepping to its own. */
+  .hero {
     --sun-size: 60vw;
   }
 
@@ -242,13 +277,15 @@
   }
 
   /* Desktop centers this text over the sun (see .heroOutro's base rule) —
-     at mobile/tablet widths --sun-size grows to 60vw, so that same centered
+     at tablet widths --sun-size grows to 60vw, so that same centered
      position lands the text on top of the sun instead of beside it, and the
      three stacked lines overflow past its edges. Pinned to the top instead,
      in the clear sky above the sun, using the same clearance the primary
      heading already uses (--hero-content-padding-top) so both sit at a
      consistent depth. Desktop's centered/translateY treatment is untouched
-     — this only fires under this block's own breakpoint. */
+     — this only fires under this block's own breakpoint. (True phone widths
+     get their own, different override below — the sun grows even bigger
+     there and the copy goes back to centering over it.) */
   .heroOutro {
     align-items: flex-start;
     padding-top: var(--hero-content-padding-top);
@@ -261,6 +298,51 @@
 
   .heroHeading {
     white-space: normal;
+  }
+
+  /* .dropCap's line-height: 0 (see its base rule) only stays safe on a
+     single, never-wrapping line — the glyph paints taller than its own
+     zeroed line-box contribution, and desktop's heading never wraps so
+     there's no second line for it to paint over. Here, white-space:
+     normal above means the heading CAN wrap, and with line-height still
+     0 the oversized "I" bled down into whatever line followed it —
+     reported as the heading looking broken/overlapping on phone, and
+     reading as uncentered since an overlapping line doesn't look like a
+     clean centered block. line-height: 1 makes the drop cap's own line
+     grow to fit it for real, so a wrapped second line starts clear of it
+     — this is scoped to this breakpoint precisely because desktop's
+     tight, unwrapped rhythm (verified everywhere else on the site) must
+     stay exactly as-is. */
+  .dropCap {
+    line-height: 1;
+  }
+}
+
+/* True phone widths only — narrower than the 1024px tablet block above,
+   whose rules still apply here too (source order lets these two
+   properties win over its .sun/.heroOutro values; everything else it sets,
+   e.g. .heroOutroInner's full-width column, is untouched). Per design
+   feedback: the sun should read as the dominant shape (roughly half the
+   screen) with the outro copy sitting over it, not pinned in the clear sky
+   above it like the 1024px block does — that treatment reads as too
+   disconnected from the sun at true phone widths, per a screenshot review. */
+@media (max-width: 767px) {
+  .hero {
+    --sun-size: 95vw;
+  }
+
+  .heroOutro {
+    align-items: center;
+    padding-top: 0;
+  }
+
+  /* Flat, not the base rule's calc(var(--sun-size) * 0.079) — --sun-size
+     jumps from 60vw (tablet) to 95vw here, and that same ratio would size
+     mobile's text larger than tablet's despite the smaller viewport. 32px
+     is a fixed value confirmed to keep both lines on one row each (no 3rd
+     line) within the bigger mobile sun. */
+  .heroOutroText {
+    font-size: 32px;
   }
 }
 
