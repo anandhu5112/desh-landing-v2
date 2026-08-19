@@ -26,20 +26,43 @@
    requirement, and since this frame clips (overflow: hidden, needed for
    the sky-image crop), the card's bottom — including part of the graph —
    was getting cut off. This only overrides the ratio where it would
-   otherwise fall short; wide viewports are unaffected. */
+   otherwise fall short; wide viewports are unaffected.
+   --advisor-photo-w scales the photo (and everything anchored to it)
+   down on narrower desktop frames so text and media stop overlapping
+   before the 1024px stacked fallback kicks in. */
 .frame {
   position: relative;
   margin-inline: var(--page-margin);
+  container-type: inline-size;
+  --advisor-inset: 32px;
+  --advisor-gap: 32px;
+  --advisor-photo-w: min(688px, 50cqi);
+  --advisor-photo-h: calc(var(--advisor-photo-w) * 459 / 688);
+  /* Face B's settled height — sizes the frame floor and the padding that
+     reserves room for the card overhang below the photo. */
+  --advisor-card-h: 320px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--advisor-gap);
+  padding: var(--advisor-inset);
   aspect-ratio: 1376 / 657;
-  min-height: 780px;
+  min-height: max(
+    780px,
+    calc(
+      var(--advisor-inset) * 2 + var(--advisor-photo-h) * 0.846 + var(--advisor-card-h)
+    )
+  );
   border-radius: 24px;
   overflow: hidden;
 }
 
-/* Top-anchored cover, same treatment as before: the box is wider than the
-   artwork's own ratio, so the crop comes off the bottom (where the sky
-   fades out) and the horizon stays put. */
+/* Full-bleed behind the grid columns — pulled out of flow so it doesn't
+   participate in centering math. */
 .bgImage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -47,21 +70,13 @@
   object-position: center top;
 }
 
-/* 32px left inset — same fixed value as .mediaCluster's own top/right
-   inset, so the card reads as evenly padded on every edge. Vertically
-   centered (top/bottom: 0 + justify-content: center) in the full card
-   height, rather than pinned to Figma's own y=48 with a big hand-tuned
-   gap before the CTA — a normal `gap` between all three children instead.
-   right: 752px stops the column exactly where .mediaCluster begins (its
-   32px right inset + 688px fixed photo width + a 32px gap before the
-   text) — update this if .photo's own width below ever changes. */
+/* Left column — grid cell, vertically centered via the frame's own
+   align-items: center (same treatment as .mediaCluster on the right). */
 .content {
-  position: absolute;
-  left: 32px;
-  top: 0;
-  bottom: 0;
-  right: 752px;
+  position: relative;
+  z-index: 1;
   max-width: 706px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -118,29 +133,33 @@
   font-size: var(--fs-nav);
 }
 
-/* Fixed 32px inset from the card's own top and right edges (not a
-   percentage — kept literal so it stays exactly 32px at any viewport
-   width, same as .content's own left inset). Only `right` is set (no
-   `left`), so the box's width resolves via shrink-to-fit — i.e. exactly
-   .photo's own fixed width below — rather than needing a duplicate width
-   number here too. */
+/* Right column — grid cell. padding-bottom reserves the insight card's
+   overhang below the photo so align-items: center centers the full visual
+   (photo + card), not just the image box. The card itself sits inside
+   .photo and keeps its Figma %-based overlap (-42.6% / 84.6%). */
 .mediaCluster {
-  position: absolute;
-  right: 32px;
-  top: 32px;
+  position: relative;
+  z-index: 1;
+  width: var(--advisor-photo-w);
+  max-width: 100%;
+  padding-bottom: max(
+    0px,
+    calc(var(--advisor-card-h) - var(--advisor-photo-h) * 0.154)
+  );
 }
 
-/* Sole normal-flow child of .mediaCluster, so its rendered box is what
-   gives the cluster its own size — which .insightCard below then
-   positions itself against (as a fraction of *this* box), so the two
-   move together if these numbers ever change again. Fixed pixel size per
-   explicit design direction, not derived from Figma's own 500x333.25. */
 .photo {
   position: relative;
-  width: 688px;
-  height: 459px;
+  width: 100%;
+}
+
+/* Rounded crop for the video-call image only — overflow stays here so
+   .photo itself can stay overflow: visible for the overlapping card. */
+.photoClip {
   border-radius: 20px;
   overflow: hidden;
+  width: 100%;
+  aspect-ratio: 688 / 459;
 }
 
 .photoImg {
@@ -168,7 +187,8 @@
   position: absolute;
   left: -42.6%;
   top: 84.6%;
-  width: 540px;
+  width: min(540px, 78.5%);
+  max-width: calc(100vw - var(--page-margin) * 2 - var(--advisor-inset) * 2);
   z-index: 1;
   overflow: hidden;
   border-radius: 20px;
@@ -416,10 +436,21 @@
    via aspect-ratio — since either would overflow a narrow viewport left
    at their desktop pixel widths. The click/crossfade animation still
    plays at this breakpoint; only the layout around it changes. */
+@media (max-width: 1200px) {
+  .frame {
+    --advisor-inset: 24px;
+    --advisor-gap: 24px;
+  }
+
+  .content {
+    gap: var(--space-24);
+  }
+}
+
 @media (max-width: 1024px) {
   .frame {
     aspect-ratio: auto;
-    min-height: 0;
+    min-height: min(640px, 85vh);
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -430,30 +461,37 @@
     position: absolute;
     inset: 0;
     z-index: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    object-fit: cover;
+    object-position: center top;
   }
 
   .content {
-    position: relative;
-    left: auto;
-    top: auto;
-    bottom: auto;
-    right: auto;
     z-index: 1;
     width: 100%;
     max-width: none;
+    min-width: 0;
+    align-items: center;
+    text-align: center;
   }
 
   .mediaCluster {
-    position: relative;
-    right: auto;
-    top: auto;
     z-index: 1;
     width: 100%;
+    max-width: none;
+    padding-bottom: 0;
   }
 
   .photo {
     width: 100%;
-    height: auto;
+    max-width: 560px;
+    margin-inline: auto;
+  }
+
+  .photoClip {
+    width: 100%;
     aspect-ratio: 688 / 459;
   }
 
@@ -462,6 +500,7 @@
     left: auto;
     top: auto;
     width: 100%;
+    max-width: none;
     height: auto;
     margin-top: 24px;
   }
@@ -469,8 +508,14 @@
 
 @media (max-width: 767px) {
   .frame {
+    min-height: 0;
     padding: 24px 16px;
     gap: 16px;
+    border-radius: 16px;
+  }
+
+  .content {
+    gap: var(--space-16);
   }
 
   .cardFaceA,
@@ -479,13 +524,36 @@
     gap: 16px;
   }
 
+  .insightTitle {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
   .insightBody {
     font-size: 16px;
     line-height: 24px;
   }
 
+  .totalValueAmount {
+    font-size: clamp(28px, 8vw, 40px);
+    letter-spacing: -0.84px;
+  }
+
+  .totalValueMetaRow {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
   .insightFooter {
     flex-wrap: wrap;
     gap: 12px;
+  }
+
+  .advisorReviewed {
+    white-space: normal;
+  }
+
+  .insightStatus {
+    font-size: 12px;
   }
 }

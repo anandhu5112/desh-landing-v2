@@ -235,11 +235,15 @@ export default function AdvisorSection() {
         onEnter: playSequence,
       });
 
+      const onResize = () => ScrollTrigger.refresh();
+      window.addEventListener("resize", onResize);
+
       // Stops (rather than lets run orphaned) if the component unmounts
       // mid-sequence — useGSAP's own automatic cleanup only knows about
       // GSAP-created things (the ScrollTrigger above), not this separate
       // motion animation.
       return () => {
+        window.removeEventListener("resize", onResize);
         activeSequence?.stop();
       };
     },
@@ -277,22 +281,25 @@ export default function AdvisorSection() {
 
         <div className={styles.mediaCluster} ref={mediaClusterRef}>
           {/* Fixed background, per design direction — only the card below
-              animates. */}
+              animates. Insight card lives inside .photo so its %-based
+              overlap tracks the image box; .mediaCluster's padding-bottom
+              (see CSS) reserves the card's overhang for vertical centering. */}
           <div className={styles.photo}>
-            <Image
-              src="/images/advisor-video-call.png"
-              alt="An investor on a video call with their Desh advisor"
-              width={2000}
-              height={1333}
-              className={styles.photoImg}
-            />
-          </div>
+            <div className={styles.photoClip}>
+              <Image
+                src="/images/advisor-video-call.png"
+                alt="An investor on a video call with their Desh advisor"
+                width={2000}
+                height={1333}
+                className={styles.photoImg}
+              />
+            </div>
 
-          {/* A live-looking product moment, not a real alert — decorative,
-              so it's hidden from assistive tech rather than announced as an
-              actual notification needing action. overflow: hidden (see CSS)
-              clips the crossfading faces during the height tween. */}
-          <div className={styles.insightCard} ref={cardWrapRef} aria-hidden="true">
+            {/* A live-looking product moment, not a real alert — decorative,
+                so it's hidden from assistive tech rather than announced as an
+                actual notification needing action. overflow: hidden (see CSS)
+                clips the crossfading faces during the height tween. */}
+            <div className={styles.insightCard} ref={cardWrapRef} aria-hidden="true">
             <div className={styles.cardFaceA} ref={faceARef}>
               <Image
                 src="/images/icon-portfolio-alert.svg"
@@ -403,22 +410,23 @@ export default function AdvisorSection() {
                 </svg>
               </div>
             </div>
-
-            {/* Decorative interaction cue, not a real cursor — hidden from
-                assistive tech same as the rest of this card. Starts
-                invisible (opacity set via motion's animate(..., {duration:
-                0}) above) until the scroll trigger plays it in. */}
-            <div className={styles.cursor} ref={cursorRef} aria-hidden="true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M4 3L4 18.5L8 15L10.5 20.5L13 19.3L10.5 14L16 14L4 3Z"
-                  fill="#ffffff"
-                  stroke="#00203a"
-                  strokeWidth="1.4"
-                  strokeLinejoin="round"
-                />
-              </svg>
             </div>
+          </div>
+
+          {/* Decorative interaction cue, not a real cursor — hidden from
+              assistive tech same as the rest of this card. Starts
+              invisible (opacity set via motion's animate(..., {duration:
+              0}) above) until the scroll trigger plays it in. */}
+          <div className={styles.cursor} ref={cursorRef} aria-hidden="true">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 3L4 18.5L8 15L10.5 20.5L13 19.3L10.5 14L16 14L4 3Z"
+                fill="#ffffff"
+                stroke="#00203a"
+                strokeWidth="1.4"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </div>
       </div>
