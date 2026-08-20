@@ -134,12 +134,18 @@
   text-align: center;
 }
 
+/* Own dedicated size, not var(--fs-heading) — by explicit request, scoped
+   to Hero only so every other section's heading (which shares that same
+   token) stays untouched. 56px/-1.68px is the same 56px/-3%-tracking
+   pair this Figma file's own other headings use at their literal size
+   (e.g. AdvisorSection's own Figma spec before it was mapped onto the
+   house --fs-heading scale), not an arbitrary number. */
 .heroHeading {
   font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-heading);
+  font-size: 56px;
   line-height: 1;
   font-weight: 400;
-  letter-spacing: var(--ls-heading);
+  letter-spacing: -1.68px;
   color: var(--color-ink);
   white-space: nowrap;
   pointer-events: auto;
@@ -158,12 +164,16 @@
   vertical-align: -0.06em;
 }
 
+/* Own dedicated size too, not var(--fs-body) — same "Hero only" scoping
+   as .heroHeading above. -0.14px keeps --ls-body's own ~-1%-of-size
+   tracking ratio at this smaller size instead of carrying over its flat
+   -0.16px (fitted for 16px) unchanged. */
 .heroSubtext {
   font-family: var(--font-body), serif;
-  font-size: var(--fs-body);
+  font-size: 14px;
   line-height: 1.4;
   font-weight: 300;
-  letter-spacing: var(--ls-body);
+  letter-spacing: -0.14px;
   color: var(--color-ink);
   pointer-events: auto;
 }
@@ -243,16 +253,18 @@
 
 .heroOutroText {
   font-family: var(--font-heading), sans-serif;
-  /* Flat 64px on web (any width above the 767px mobile breakpoint, which
-     overrides this to a flat 32px — see that breakpoint), by explicit
-     request — not fitted to the sun's own diameter the way the previous
-     value here was. At most web widths this is wider than the circle
-     (confirmed by measuring rendered text against a live render: e.g. the
-     longer line, "slow your money down.", runs to ~112% of the sun's
-     diameter at 1710px), so with .heroOutroLine's white-space: nowrap
-     above it will overflow past the circle's edges symmetrically rather
-     than wrap to a 3rd line or shrink to fit. */
-  font-size: 64px;
+  /* Flat 56px on web (any width above the 767px mobile breakpoint, which
+     overrides this to a flat 32px — see that breakpoint) — sized down
+     from the original flat 64px alongside .heroHeading, by explicit
+     request, not fitted to the sun's own diameter the way an even
+     earlier version of this value was. Re-verify against the sun's
+     circle live after changing this: at 64px the longer line ("slow your
+     money down.") measured ~112% of the sun's diameter at 1710px
+     (overflowing intentionally, per .heroOutroLine's white-space: nowrap
+     below) — at this smaller size that may now fit inside the circle
+     instead of overflowing it, which changes how the line reads against
+     the sun even though nothing about the sizing math itself is wrong. */
+  font-size: 56px;
   line-height: 1;
   font-weight: 400;
   /* em, not a calc() off --ls-heading: keeps the same -3% tracking ratio

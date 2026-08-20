@@ -6,7 +6,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import Button from "@/components/ui/Button";
 import { heroIntroSettledRef } from "@/lib/heroProgress";
-import { lenisRef } from "@/lib/lenis";
 import styles from "./Hero.module.css";
 
 if (typeof window !== "undefined") {
@@ -69,12 +68,6 @@ const MOBILE_QUERY = "(max-width: 767px)";
 const ZOOM_SCALE_MOBILE = ZOOM_SCALE;
 const ZOOM_Y_PERCENT_MOBILE = ZOOM_Y_PERCENT;
 
-// Once the pinned sequence finishes and the user scrolls past it, the
-// finished outro (sun + copy, see the screenshot this was specced from)
-// holds the viewport for this long before GrowSection/UsSection are
-// allowed to scroll in underneath.
-const OUTRO_HOLD_MS = 1500;
-
 export default function Hero() {
   const heroRef = useRef<HTMLElement>(null);
   const zoomWrapRef = useRef<HTMLDivElement>(null);
@@ -82,7 +75,6 @@ export default function Hero() {
   const sunRef = useRef<HTMLDivElement>(null);
   const outroShownRef = useRef(false);
   const [showOutro, setShowOutro] = useState(false);
-  const holdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useGSAP(
     () => {
@@ -115,24 +107,6 @@ export default function Hero() {
               outroShownRef.current = shouldShow;
               setShowOutro(shouldShow);
             }
-          },
-          // Fires exactly once per forward crossing of the pin's end — right
-          // as the finished outro state would otherwise start scrolling away.
-          // Freezes Lenis there for OUTRO_HOLD_MS before releasing it, so the
-          // hold re-triggers correctly too if the user scrolls back up into
-          // the hero and forward past it again later.
-          onLeave: () => {
-            const lenis = lenisRef.current;
-            // No Lenis instance under prefers-reduced-motion (see
-            // SmoothScroll) — nothing to hold scroll with, so skip the hold
-            // rather than leaving native scroll running unlocked.
-            if (!lenis || holdTimeoutRef.current) return;
-
-            lenis.stop();
-            holdTimeoutRef.current = setTimeout(() => {
-              lenis.start();
-              holdTimeoutRef.current = null;
-            }, OUTRO_HOLD_MS);
           },
         },
       });
@@ -167,16 +141,6 @@ export default function Hero() {
           { yPercent: 0, ease: "none", duration: 0.35 },
           0.5
         );
-
-      // Guards against a hold outliving the component it was scheduled by —
-      // without this, an unmount mid-hold would call .start() on whatever
-      // Lenis instance (or none) exists by the time the timer fires.
-      return () => {
-        if (holdTimeoutRef.current) {
-          clearTimeout(holdTimeoutRef.current);
-          holdTimeoutRef.current = null;
-        }
-      };
     },
     { scope: heroRef }
   );

@@ -4,10 +4,13 @@
    Copied, not shared. Same house rule as every other section: this
    file duplicates nothing and is duplicated by nothing.
 
-   Figma node 510:8616. Left-aligned copy, vertically centered in the card,
-   beside a video-call photo (fixed 32px inset from the card's own top and
-   right edges) with an overlapping "insight card" anchored to the photo's
-   own box — see .mediaCluster/.photo/.insightCard below.
+   Figma node 482:3507 — a single static frame (photo + "Total value"
+   card, no interaction). Every child position below is a percentage of
+   the card's own 1376x657 box, converted from Figma's literal px
+   positions (each rule's own comment has the source numbers) — the whole
+   card is aspect-ratio-locked, so percentages alone keep every element
+   exactly proportional at any width with no extra grid/container-query
+   machinery needed.
    ============================================================ */
 
 .section {
@@ -15,54 +18,32 @@
   width: 100%;
 }
 
-/* Figma node 510:8617: 1376x657 at a 1440px frame, 24px radius on all four
-   corners. Held as a ratio rather than a fixed height so the card keeps its
-   proportions as the page margin and viewport change.
-   min-height is a floor, not a redesign — .insightCard's "Total value"
-   face settles at a fixed ~320px tall, positioned starting 32px (media
-   cluster) + 84.6% of the 459px photo ≈ 420px down from the frame's own
-   top (see .insightCard's own comment for that math). At narrower desktop
-   widths the aspect-ratio above yields a shorter frame than that ~740px
-   requirement, and since this frame clips (overflow: hidden, needed for
-   the sky-image crop), the card's bottom — including part of the graph —
-   was getting cut off. This only overrides the ratio where it would
-   otherwise fall short; wide viewports are unaffected.
-   --advisor-photo-w scales the photo (and everything anchored to it)
-   down on narrower desktop frames so text and media stop overlapping
-   before the 1024px stacked fallback kicks in. */
+/* Figma node 482:3508: 1376x657 inside a 1440x729 reference frame — a
+   32px horizontal / 36px vertical inset, not the flat 32px this section
+   used before. Held as a ratio rather than a fixed height so the card
+   keeps its proportions as the page margin and viewport change.
+   max-width is a ceiling, not part of the Figma spec itself: past
+   ~1600px wide, aspect-ratio alone would keep growing the card taller in
+   lockstep with an ever-wider viewport (unlike every other section on
+   this site, which is deliberately full-bleed/uncapped — see
+   --page-max-width: none in globals.css — but has no aspect-ratio tying
+   its height to its width) until it got tall enough to fight the fixed
+   SiteNav for the same vertical space. margin-inline's max() keeps the
+   ordinary page-margin behavior below that width and only starts
+   centering the now-capped card once it would otherwise exceed it. */
 .frame {
   position: relative;
-  margin-inline: var(--page-margin);
-  container-type: inline-size;
-  --advisor-inset: 32px;
-  --advisor-gap: 32px;
-  --advisor-photo-w: min(688px, 50cqi);
-  --advisor-photo-h: calc(var(--advisor-photo-w) * 459 / 688);
-  /* Face B's settled height — sizes the frame floor and the padding that
-     reserves room for the card overhang below the photo. */
-  --advisor-card-h: 320px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: var(--advisor-gap);
-  padding: var(--advisor-inset);
+  margin-inline: max(var(--page-margin), calc((100% - 1600px) / 2));
+  max-width: 1600px;
   aspect-ratio: 1376 / 657;
-  min-height: max(
-    780px,
-    calc(
-      var(--advisor-inset) * 2 + var(--advisor-photo-h) * 0.846 + var(--advisor-card-h)
-    )
-  );
   border-radius: 24px;
   overflow: hidden;
 }
 
-/* Full-bleed behind the grid columns — pulled out of flow so it doesn't
-   participate in centering math. */
+/* Top-anchored cover: the box is wider than the artwork's own ratio, so
+   the crop comes off the bottom (where the sky fades out) and the
+   horizon stays put. */
 .bgImage {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
   display: block;
   width: 100%;
   height: 100%;
@@ -70,16 +51,30 @@
   object-position: center top;
 }
 
-/* Left column — grid cell, vertically centered via the frame's own
-   align-items: center (same treatment as .mediaCluster on the right). */
+/* Figma node 482:3509: x=148,y=216,w=562 inside the 1440-wide outer
+   frame → card-relative x=148-32=116, y=216-36=180 (the card's own inset
+   is 32/36, see .frame above). 116px happens to land almost exactly on
+   this site's own 12-column grid's column-2 start (~141.7px from the
+   page edge at 1440px, plus this card's own 24px page-margin ≈ 165.7 —
+   within a couple px of Figma's 140px-from-page-edge here) — which is
+   exactly why GrowSection/UsSection's own text reads as aligned with
+   this section's: both are landing on the same column, just arrived at
+   from different reference points. */
 .content {
-  position: relative;
-  z-index: 1;
-  max-width: 706px;
-  min-width: 0;
+  position: absolute;
+  left: 8.4302%;
+  top: 27.3966%;
+  /* Wider than Figma's own 562px/40.843% here — Figma's width was fitted
+     to its own 56px heading (see .heading's comment: this site's house
+     --fs-heading is a flat 64px instead, by established convention), and
+     "Got questions about" needs ~610px at that larger size to still
+     break after "about" rather than wrapping a line early. 45.9% (631px
+     at the 1376px reference) covers that with a little to spare, and
+     still lands well clear of .photo, which starts at 58.43%. */
+  width: 45.9%;
+  max-width: 631px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: flex-start;
   text-align: left;
   gap: var(--space-32);
@@ -111,10 +106,13 @@
   vertical-align: -0.06em;
 }
 
+/* line-height: 30px is Figma's own literal value here (not this site's
+   usual 1.4 ratio) — a deliberately looser line-height for this section's
+   longer two-line paragraph. */
 .subtext {
   font-family: var(--font-body), serif;
   font-size: var(--fs-body);
-  line-height: 1.4;
+  line-height: 30px;
   font-weight: 300;
   letter-spacing: var(--ls-body);
   color: #003b66;
@@ -123,9 +121,7 @@
 
 /* Local override on the shared Button — same 40px/10px/14px pattern
    GrowSection/UsSection/Hero/Footer already use. Button's own default
-   black gradient already matches Figma's CTA here. Reused verbatim for
-   the insight card's "Approve" button below — both are visually identical
-   in Figma. */
+   black gradient already matches Figma's CTA here. */
 .cta {
   height: 40px;
   padding-inline: var(--space-16);
@@ -133,33 +129,20 @@
   font-size: var(--fs-nav);
 }
 
-/* Right column — grid cell. padding-bottom reserves the insight card's
-   overhang below the photo so align-items: center centers the full visual
-   (photo + card), not just the image box. The card itself sits inside
-   .photo and keeps its Figma %-based overlap (-42.6% / 84.6%). */
-.mediaCluster {
-  position: relative;
-  z-index: 1;
-  width: var(--advisor-photo-w);
-  max-width: 100%;
-  padding-bottom: max(
-    0px,
-    calc(var(--advisor-card-h) - var(--advisor-photo-h) * 0.154)
-  );
-}
-
+/* Figma node 509:8613: x=836,y=68,w=540,h=359.91 inside the outer frame
+   → card-relative x=836-32=804, y=68-36=32. aspect-ratio keeps the crop
+   stable instead of also tracking height as a second percentage (which
+   would drift out of sync with width on viewports whose own aspect ratio
+   isn't exactly the card's). */
 .photo {
-  position: relative;
-  width: 100%;
-}
-
-/* Rounded crop for the video-call image only — overflow stays here so
-   .photo itself can stay overflow: visible for the overlapping card. */
-.photoClip {
+  position: absolute;
+  left: 58.4302%;
+  top: 4.8706%;
+  width: 39.2442%;
+  max-width: 540px;
+  aspect-ratio: 540 / 359.91;
   border-radius: 20px;
   overflow: hidden;
-  width: 100%;
-  aspect-ratio: 688 / 459;
 }
 
 .photoImg {
@@ -169,28 +152,27 @@
   object-fit: cover;
 }
 
-/* Position kept as a fraction of .photo's own box (-42.6% / 84.6%,
-   originally derived from Figma's 510:8739-relative-to-510:8630 offset)
-   so the overlap holds at any rendered size, even though the photo itself
-   is now a fixed 688x459 rather than Figma's 500x333.25. Width is a fixed
-   540px per explicit design direction; height is intentionally NOT also
-   fixed — a literal 208px clipped the last line of real (non-Figma)
-   browser font metrics, so the card hugs its content instead via padding
-   + gap, sized however tall that content actually renders (AdvisorSection
-   .tsx sets this height explicitly via GSAP once .cardFaceA has laid out,
-   then tweens it to .cardFaceB's own height on click — see there).
-   overflow: hidden clips that height tween, and the two faces crossfading
-   underneath it, to a clean-edged box throughout. No padding/gap here
-   anymore — both live on .cardFaceA/.cardFaceB instead, since this box no
-   longer has a single, fixed set of children to lay out directly. */
+/* Figma node 510:8615: x=836,y=354,w=540 inside the outer frame →
+   card-relative x=804,y=354-36=318 — the EXACT same x and width as
+   .photo above (unlike this section's earlier animated version, this
+   card doesn't overhang past either of the photo's own edges, just its
+   bottom). Height is intentionally not pinned to Figma's own 320px —
+   this card's own padding + gap sizes it to whatever its content actually
+   renders at, so it can't clip against real (non-Figma) browser font
+   metrics the way a literal fixed height did earlier in this section's
+   history. */
 .insightCard {
   position: absolute;
-  left: -42.6%;
-  top: 84.6%;
-  width: min(540px, 78.5%);
-  max-width: calc(100vw - var(--page-margin) * 2 - var(--advisor-inset) * 2);
+  left: 58.4302%;
+  top: 48.4018%;
+  width: 39.2442%;
+  max-width: 540px;
   z-index: 1;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 23px;
+  padding: 16px;
   border-radius: 20px;
   background: #ffffff;
   /* Navy-tinted, same palette as the old bubble field's .bubbleBlue shadow
@@ -201,55 +183,11 @@
     0 8px 16px rgba(0, 38, 61, 0.08);
 }
 
-/* "Portfolio Calibration Recommended" — Figma node 510:8616. The sole
-   normal-flow child of .insightCard, so its own natural height is what
-   AdvisorSection.tsx reads as the card's starting height. */
-.cardFaceA {
-  position: relative;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 16px;
-}
-
-/* "Total value" — Figma node 510:8615, what .cardFaceA turns into once the
-   cursor clicks Approve. top/left/right (no bottom) pulls it out of normal
-   flow — so it never affects .insightCard's own auto-height — while still
-   letting it size to its own natural content height, which
-   AdvisorSection.tsx reads as the card's target height. Starts hidden
-   (opacity/pointer-events) as a CSS default so it's already invisible on
-   first paint, before the GSAP setup in AdvisorSection.tsx even runs. */
-.cardFaceB {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 23px;
-  padding: 16px;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .insightHead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-}
-
-.insightTitle {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 18px;
-  font-weight: 500;
-  line-height: 27px;
-  letter-spacing: -0.36px;
-  color: #000000;
-  margin: 0;
 }
 
 .insightStatus {
@@ -265,85 +203,6 @@
   color: #676767;
   white-space: nowrap;
 }
-
-.insightBody {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 30px;
-  letter-spacing: -0.4px;
-  color: #bababa;
-  margin: 0;
-}
-
-.insightFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-}
-
-.advisorRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* Figma node 510:8756: 41.5px circle, 2px border at 20% gray. */
-.advisorAvatar {
-  flex: none;
-  width: 41.5px;
-  height: 41.5px;
-  border-radius: 50%;
-  border: 2px solid rgba(190, 190, 190, 0.2);
-  overflow: hidden;
-}
-
-.advisorAvatarImg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.advisorInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.advisorReviewed {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 21px;
-  letter-spacing: -0.24px;
-  color: #737373;
-  margin: 0;
-  white-space: nowrap;
-}
-
-.advisorName {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 21px;
-  letter-spacing: -0.32px;
-  color: #000000;
-  margin: 0;
-}
-
-/* Inline-flex, not a bare span, purely so AdvisorSection.tsx has a real
-   box to measure/scale for the click animation — Button itself doesn't
-   forward a ref. Sizes identically to the Button it wraps either way. */
-.approveWrap {
-  display: inline-flex;
-}
-
-/* ---------- CARD FACE B: "Total value" (Figma node 510:8615) ---------- */
 
 .totalValueLabel {
   font-family: var(--font-inter), sans-serif;
@@ -398,59 +257,20 @@
   margin: 0;
 }
 
-.graphWrap {
-  width: 100%;
-}
-
 .graphImg {
   display: block;
   width: 100%;
   height: auto;
 }
 
-/* Decorative click cue — AdvisorSection.tsx animates x/y/opacity/scale via
-   GSAP transform, so position: absolute + top/left: 0 is just the (0, 0)
-   reference point those transforms are measured from. transform-origin
-   sits at the glyph's own tip (see the SVG path in the .tsx), so the
-   "press" scale pinches from the tip rather than the shape's center.
-   pointer-events: none — it's a visual overlay, never an input target. */
-.cursor {
-  position: absolute;
-  top: 0;
-  left: 0;
-  pointer-events: none;
-  transform-origin: 4px 3px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
-}
-
 /* No Figma spec exists below 1024px — this follows the same stacked
    fallback GrowSection/UsSection use at this breakpoint: the card drops
    its fixed ratio and becomes a plain top-to-bottom flex column (content,
-   then photo, then insight card — the overlap doesn't carry over here,
-   since .insightCard's -42.6% offset is sized for sitting beside a fixed-
-   width photo, not a full-width stacked one), with the sky pulled out
-   from normal flow into a full-bleed backdrop behind them instead.
-   .photo and .insightCard's fixed pixel widths (688 / 540, .insightCard's
-   own height is already intrinsic at every breakpoint) are both reset to
-   fluid here too — full width, and .photo's height following from that
-   via aspect-ratio — since either would overflow a narrow viewport left
-   at their desktop pixel widths. The click/crossfade animation still
-   plays at this breakpoint; only the layout around it changes. */
-@media (max-width: 1200px) {
-  .frame {
-    --advisor-inset: 24px;
-    --advisor-gap: 24px;
-  }
-
-  .content {
-    gap: var(--space-24);
-  }
-}
-
+   then photo, then insight card), with the sky pulled out of normal flow
+   into a full-bleed backdrop behind them instead. */
 @media (max-width: 1024px) {
   .frame {
     aspect-ratio: auto;
-    min-height: min(640px, 85vh);
     display: flex;
     flex-direction: column;
     gap: 24px;
@@ -461,99 +281,37 @@
     position: absolute;
     inset: 0;
     z-index: 0;
-    width: 100%;
-    height: 100%;
-    min-height: 100%;
-    object-fit: cover;
-    object-position: center top;
   }
 
-  .content {
-    z-index: 1;
-    width: 100%;
-    max-width: none;
-    min-width: 0;
-    align-items: center;
-    text-align: center;
-  }
-
-  .mediaCluster {
-    z-index: 1;
-    width: 100%;
-    max-width: none;
-    padding-bottom: 0;
-  }
-
-  .photo {
-    width: 100%;
-    max-width: 560px;
-    margin-inline: auto;
-  }
-
-  .photoClip {
-    width: 100%;
-    aspect-ratio: 688 / 459;
-  }
-
+  .content,
+  .photo,
   .insightCard {
     position: relative;
     left: auto;
     top: auto;
+    z-index: 1;
     width: 100%;
     max-width: none;
-    height: auto;
-    margin-top: 24px;
+  }
+
+  .photo {
+    aspect-ratio: 540 / 359.91;
   }
 }
 
 @media (max-width: 767px) {
   .frame {
-    min-height: 0;
     padding: 24px 16px;
     gap: 16px;
-    border-radius: 16px;
   }
 
-  .content {
-    gap: var(--space-16);
-  }
-
-  .cardFaceA,
-  .cardFaceB {
+  .insightCard {
     padding: 16px;
     gap: 16px;
-  }
-
-  .insightTitle {
-    font-size: 16px;
-    line-height: 24px;
-  }
-
-  .insightBody {
-    font-size: 16px;
-    line-height: 24px;
-  }
-
-  .totalValueAmount {
-    font-size: clamp(28px, 8vw, 40px);
-    letter-spacing: -0.84px;
   }
 
   .totalValueMetaRow {
     flex-wrap: wrap;
     gap: 8px;
-  }
-
-  .insightFooter {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .advisorReviewed {
-    white-space: normal;
-  }
-
-  .insightStatus {
-    font-size: 12px;
   }
 }
