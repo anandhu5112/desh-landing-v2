@@ -36,7 +36,7 @@ own `--sun-size` (34vw desktop / 60vw at the ≤1024px breakpoint). Its reveal i
 driven purely by a GSAP `yPercent` tween (120 → 0) inside `Hero.tsx`'s pinned
 `useGSAP` timeline — no opacity or scale animation on the sun itself, only
 vertical translation, timed to settle at the same `0.85` scroll-progress point
-(`OUTRO_REVEAL_AT`) that reveals the "Distance shouldn't, slow your money down."
+(`OUTRO_REVEAL_AT`) that reveals the "Anchor your roots. Expand your reach."
 statement over it.
 
 ## Timeline

@@ -20,6 +20,11 @@
      desynced copy. Overridden at both mobile breakpoints below alongside
      .sun's other mobile rules. */
   --sun-size: 34vw;
+  /* A ceiling for .heroOutroText, not its final size. Hero.tsx measures the
+     statement against the sun's rendered circle and shrinks it from here
+     whenever the designed size would not fit inside (see syncOutroToSun);
+     the copy is only ever allowed to come down from this, never past it. */
+  --outro-font-size-max: 56px;
 }
 
 /* Backdrop behind .zoomWrap (grassland + sun) — a sibling, not a child, so
@@ -29,6 +34,24 @@
 .heroSky {
   position: absolute;
   inset: 0;
+  /* Declared here rather than as an inline style in Hero.tsx: React keeps
+     only one value per property, so it cannot express the two-declaration
+     cascade that gives image-set() a fallback. Browsers without image-set()
+     + type() (Safari 16 and older) take the plain url(); everyone else gets
+     the WebP — 24KB at phone width against the PNG's 1.1MB. Regenerate with
+     `npm run optimize:images`.
+
+     Widths are switched by media query rather than by image-set's own `x`
+     descriptors: those select on device pixel ratio, which is not the
+     question here. A 3x phone has a high ratio but a small viewport, and
+     would be served the largest file by a DPR-based rule — exactly the
+     over-fetch this is meant to avoid. The <img> in Hero.tsx can just use
+     srcset + sizes; a background-image has no such thing. */
+  background-image: url("/images/hero-sky.png");
+  background-image: image-set(
+    url("/images/hero-sky-1280.webp") type("image/webp"),
+    url("/images/hero-sky.png") type("image/png")
+  );
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center top;
@@ -39,18 +62,42 @@
      no explicit z-index of its own to out-rank it with. */
 }
 
+/* Step the sky up with viewport width — see .heroSky for why this is a media
+   query and not image-set's `x` descriptors. Mobile keeps the 1280 above. */
+@media (min-width: 1281px) {
+  .heroSky {
+    background-image: image-set(
+      url("/images/hero-sky-1920.webp") type("image/webp"),
+      url("/images/hero-sky.png") type("image/png")
+    );
+  }
+}
+
+@media (min-width: 1921px) {
+  .heroSky {
+    background-image: image-set(
+      url("/images/hero-sky-4096.webp") type("image/webp"),
+      url("/images/hero-sky.png") type("image/png")
+    );
+  }
+}
+
+/* An <img> inside a <picture>, not a background-image — see Hero.tsx for
+   why. object-fit/object-position are the direct equivalents of the
+   background-size/background-position this used to carry. */
 .heroBaseImg {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-repeat: no-repeat;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   /* Top-anchored, not center: on wide/short viewports `cover` overflows
      vertically and crops from both edges when centered, eating into the
-     transparent sky (hero-bg.png's sky is real alpha, not baked-in white)
+     transparent sky (hero-bg's sky is real alpha, not baked-in white)
      and pushing the hills up under the hero copy. Anchoring to the top
      means any vertical overflow is cropped from the bottom only, so the
      sky-to-horizon position stays consistent regardless of aspect ratio. */
-  background-position: center top;
+  object-position: center top;
   z-index: 5;
 }
 
@@ -66,6 +113,21 @@
   inset: var(--hero-frame-inset);
   border-radius: var(--hero-frame-radius);
   overflow: hidden;
+  /* What the frame is before any artwork arrives.
+
+     Not decoration — this is the hero's loading state. The frame used to
+     inherit .hero's white, so a cold load went white box -> sky -> hills
+     painting downward, and every stage of that read as something being
+     broken. This is the colour the sky layer actually resolves to once it
+     lands (hero-sky.png averages #aed8f8, and .heroSky renders it at 0.7
+     over white), so the first painted frame already looks like the top of
+     the scene and the image settles onto near-identical colour.
+
+     Deliberately not a spinner or a skeleton: nothing here should announce
+     itself as loading. Keep this in step with .heroSky's art and opacity —
+     if either changes, resample. .hero itself stays white; that is the page
+     margin around the frame, not the scene. */
+  background: #c6e4fa;
 }
 
 .zoomWrap {
@@ -75,9 +137,10 @@
   will-change: transform;
 }
 
-/* Rises from behind the hills during the outro. Sits inside .zoomWrap so it
+/* Rises from below the frame during the outro. Sits inside .zoomWrap so it
    scales and travels with the landscape instead of drifting off the horizon.
-   Hidden purely by GSAP's yPercent (see Hero.tsx) — no opacity/fade here. */
+   Hidden purely by a Y offset (see .sun's transform below and Hero.tsx) — no
+   opacity/fade, and deliberately no visibility toggle. */
 .sun {
   /* --sun-size itself now lives on .hero (see its own rule) — inherited
      from there, not redeclared here. */
@@ -92,6 +155,28 @@
   border-radius: 50%;
   background: #ffc400;
   pointer-events: none;
+  /* Resting state, declared here and not left to GSAP's fromTo alone. The
+     tween's from-values only land once the client bundle has hydrated and
+     useGSAP's layout effect has run; until then the server-rendered markup
+     paints with no transform at all, which put the sun at its settled
+     position (top: 47%) for a frame or two on every first load — a visible
+     yellow flash before any scrolling.
+
+     Why 100% + 100vh, rather than the 120% this was tuned to: 120% leaves
+     ~94px of the sun *inside* .heroFrame, so overflow: hidden never clipped
+     it and the only thing hiding it was .heroBaseImg's opaque hills
+     painting on top. That made the sun's concealment depend on an image
+     arriving over the network, and it flashed as a yellow arc along the
+     bottom of the frame until that image decoded. Clearing the frame
+     outright means nothing has to cover it.
+
+     The exact clearance is viewport-dependent, so CSS cannot compute it —
+     this value merely has to be *at least* far enough at every viewport,
+     which it is: the frame is never taller than max(100vh, 800px) and the
+     sun's own height covers the rest. Hero.tsx replaces it with the precise
+     figure at setup (see sunClearanceFor); both are below the frame, so the
+     correction is invisible. */
+  transform: translateY(calc(100% + 100vh));
 }
 
 /* Content overlay — sibling of .zoomWrap so it is never scaled by the zoom */
@@ -132,6 +217,82 @@
   max-width: 1100px;
   padding-inline: var(--page-margin);
   text-align: center;
+}
+
+/* Entrance for the hero copy: fades and rises into focus rather than simply
+   being there.
+
+   Copy is plain HTML, so it lands well before the artwork does — on a cold
+   load it used to sit finished and alone on an empty frame while the scene
+   assembled behind it. Bringing it in gives the backdrop a moment to arrive
+   and makes the order read as intended rather than accidental.
+
+   CSS rather than GSAP on purpose. This has to start at first paint, and a
+   JS entrance cannot run until the bundle has downloaded, parsed and
+   hydrated — which would reintroduce exactly the late-text problem this
+   exists to solve. It also means it still plays if the JS fails.
+
+   The blur is kept small and brief: unlike opacity and transform, `filter`
+   repaints every frame, and this runs during load when a phone is at its
+   busiest. 6px over half a second is enough to read as focus pulling in
+   without giving a slow device real work. */
+/* Pure opacity and blur, no travel. Modelled on the reference this was asked
+   to match, whose words don't move at all — they simply pull into focus. A
+   rise on top of the blur made it read as two effects competing; dropping it
+   leaves one clear idea. */
+@keyframes heroCopyIn {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+  }
+  /* No `filter` here on purpose. Written as blur(0) — or blur(0px) — the
+     minifier normalises it to a bare `blur()`; Chrome accepts that, but it
+     is not worth depending on, because a browser that rejects the function
+     drops this keyframe and the copy then stays blurred permanently.
+     Omitting the property instead makes the animation interpolate to the
+     element's own filter, which is `none`. Same result, nothing for a
+     minifier to mangle. */
+  to {
+    opacity: 1;
+  }
+}
+
+.heroInner {
+  /* How long the scene has to itself before any copy appears. The frame's
+     resting colour (see .heroFrame) is already up by then, so this reads as
+     the words arriving into a settled sky rather than the page still
+     assembling. Shared by every beat below so the whole sequence shifts
+     together if this is retuned. */
+  --copy-delay: 260ms;
+  /* Gap between consecutive words of the heading. Six words, so the line
+     finishes ~300ms after it starts — quick enough to read as one gesture. */
+  --word-stagger: 60ms;
+}
+
+.heroWord,
+.heroSubtext,
+.heroCta {
+  /* `both` matters: it holds the from-state through the delay, so a later
+     beat cannot flash at full opacity before its turn. */
+  animation: heroCopyIn 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* inline-block so blur and opacity apply to the word as a unit — on a plain
+   inline span a filter is applied per line-box, which breaks apart when the
+   heading wraps at narrow widths. */
+.heroWord {
+  display: inline-block;
+  animation-delay: calc(var(--copy-delay) + var(--word-index) * var(--word-stagger));
+}
+
+/* Follows the last word rather than overlapping the line, so the heading
+   reads as finished before the supporting copy starts. */
+.heroSubtext {
+  animation-delay: calc(var(--copy-delay) + 6 * var(--word-stagger));
+}
+
+.heroCta {
+  animation-delay: calc(var(--copy-delay) + 6 * var(--word-stagger) + 120ms);
 }
 
 /* Own dedicated size, not var(--fs-heading) — by explicit request, scoped
@@ -189,18 +350,23 @@
    scaled by the zoom (stays legible at 1x while the landscape behind it
    scales to 1.6x).
 
-   .heroOutro centers on the full viewport by default, but the sun it sits
-   over does not — .sun's own position, plus .zoomWrap's scale/pan transform
-   at this point in the timeline, puts the sun's visual centre below
-   viewport centre by an amount that grows sharply as viewport width
-   shrinks (--sun-size is vw-based, so a narrower viewport means both a
-   smaller sun AND a higher sun.top). A flat px offset can only ever be
-   correct at one width; this formula is a linear fit against the sun's
-   actual on-screen (post-transform) position, measured across 1280–1920px
-   at the timeline's settled end-state — max(0px, …) so it doesn't
-   overshoot into a negative (upward) offset on ultra-wide screens, where
-   the sun's top clips against the frame's own top edge and the needed
-   offset plateaus at 0 rather than continuing to shrink. */
+   The statement's whole job is to sit dead centre inside the sun. That is a
+   geometry problem rather than a design constant: the sun's on-screen centre
+   is --sun-size (a vw) resolved through .sun's own top offset AND
+   .zoomWrap's settled scale/pan, so it moves with viewport width and height
+   both. Two earlier versions approximated it — a flat px offset, then a
+   linear fit against positions measured across 1280–1920px — and an
+   approximation is only ever right near where it was measured, which is why
+   the copy sat low in the circle everywhere else and needed its own
+   breakpoint escapes to stay presentable.
+
+   Hero.tsx now derives the offset from the same numbers the timeline
+   animates with and writes it here as --sun-offset-y (see syncOutroToSun),
+   so this rule only has to centre on the frame and shift by that. One
+   behaviour at every width — no breakpoint overrides below. The 0px
+   fallback is what the pre-hydration paint gets: frame-centred, the closest
+   available wrong answer, and invisible in practice since the statement is
+   still transparent that early. */
 .heroOutro {
   position: absolute;
   inset: 0;
@@ -208,23 +374,24 @@
   display: flex;
   align-items: center;
   pointer-events: none;
-  transform: translateY(max(0px, calc(325px - 13.4vw)));
+  transform: translateY(var(--sun-offset-y, 0px));
 }
 
 .heroOutroInner {
   position: relative;
   grid-column: 3 / span 8;
-  /* Column 3/span 8 is far wider than the sun at most viewport widths — the
-     copy was wrapping at the grid track's own width instead of the sun's,
-     so both lines ran well past its edges. Capping width to a share of
-     --sun-size (inherited from .hero — see that rule) keeps it wrapping to
-     fit the circle instead, at every breakpoint that changes --sun-size.
-     0.85, not 1: a hair of clearance inside the circle's curve, since a
-     multi-line block's top/bottom lines sit off-center where the circle is
-     narrower than its full diameter. margin-inline: auto re-centers the
-     now-narrower box within its (already centered) grid track. */
+  /* Column 3/span 8 is far wider than the sun at most viewport widths, so
+     without a cap the copy measured itself against the grid track and ran
+     past the circle's edges. --sun-fit-width is that cap, computed in
+     Hero.tsx: the chord across the sun at the height of this block's own
+     top and bottom edges — i.e. the width actually available where the
+     copy's corners sit, not the full diameter across the middle, which a
+     two-line block never gets to use. The 0.85-of-diameter fallback is the
+     approximation this replaces, kept for the pre-hydration paint.
+     margin-inline: auto re-centres the now-narrower box within its
+     (already centred) grid track. */
   width: 100%;
-  max-width: calc(var(--sun-size) * 0.85);
+  max-width: var(--sun-fit-width, calc(var(--sun-size) * 0.85));
   margin-inline: auto;
   /* Appears on scroll rather than popping in: .heroOutro itself now stays
      mounted at all times (see Hero.tsx) so this can transition instead of
@@ -253,18 +420,20 @@
 
 .heroOutroText {
   font-family: var(--font-heading), sans-serif;
-  /* Flat 56px on web (any width above the 767px mobile breakpoint, which
-     overrides this to a flat 32px — see that breakpoint) — sized down
-     from the original flat 64px alongside .heroHeading, by explicit
-     request, not fitted to the sun's own diameter the way an even
-     earlier version of this value was. Re-verify against the sun's
-     circle live after changing this: at 64px the longer line ("slow your
-     money down.") measured ~112% of the sun's diameter at 1710px
-     (overflowing intentionally, per .heroOutroLine's white-space: nowrap
-     below) — at this smaller size that may now fit inside the circle
-     instead of overflowing it, which changes how the line reads against
-     the sun even though nothing about the sizing math itself is wrong. */
-  font-size: 56px;
+  /* Fitted, not flat: Hero.tsx solves for the largest size whose two nowrap
+     lines fit inside the sun's rendered circle and writes it here as
+     --outro-font-size, clamped to --outro-font-size-max (56px on web, 32px
+     on phones — see .hero and the 767px block) so it can only ever come
+     down from the designed size, never up. The fallback is that same
+     ceiling, which is what the pre-hydration paint renders at.
+
+     History behind the ceiling, since it is still a design value: sized
+     down from a flat 64px alongside .heroHeading by explicit request. At
+     64px the longer line of the previous copy measured ~112% of the
+     sun's diameter at 1710px and overflowed the circle on purpose. It no
+     longer does — the copy staying inside the sun is the rule this block is
+     now built around. */
+  font-size: var(--outro-font-size, var(--outro-font-size-max));
   line-height: 1;
   font-weight: 400;
   /* em, not a calc() off --ls-heading: keeps the same -3% tracking ratio
@@ -288,21 +457,14 @@
     grid-column: 1 / span 12;
   }
 
-  /* Desktop centers this text over the sun (see .heroOutro's base rule) —
-     at tablet widths --sun-size grows to 60vw, so that same centered
-     position lands the text on top of the sun instead of beside it, and the
-     three stacked lines overflow past its edges. Pinned to the top instead,
-     in the clear sky above the sun, using the same clearance the primary
-     heading already uses (--hero-content-padding-top) so both sit at a
-     consistent depth. Desktop's centered/translateY treatment is untouched
-     — this only fires under this block's own breakpoint. (True phone widths
-     get their own, different override below — the sun grows even bigger
-     there and the copy goes back to centering over it.) */
-  .heroOutro {
-    align-items: flex-start;
-    padding-top: var(--hero-content-padding-top);
-    transform: none;
-  }
+  /* No .heroOutro override here any more. Tablet widths used to pin the
+     statement to the clear sky above the sun instead of centring on it:
+     --sun-size grows to 60vw here, and against the old approximated offset
+     and fixed font size the copy landed badly on the circle and overflowed
+     its edges, so sitting above it was the better of two poor options. Both
+     of those causes are gone — the offset is measured and the size is
+     fitted (see .heroOutro and .heroOutroText) — so this width now gets the
+     same centred-in-the-sun treatment as every other. */
 
   .heroInner {
     max-width: 753px;
@@ -331,30 +493,23 @@
 }
 
 /* True phone widths only — narrower than the 1024px tablet block above,
-   whose rules still apply here too (source order lets these two
-   properties win over its .sun/.heroOutro values; everything else it sets,
-   e.g. .heroOutroInner's full-width column, is untouched). Per design
-   feedback: the sun should read as the dominant shape (roughly half the
-   screen) with the outro copy sitting over it, not pinned in the clear sky
-   above it like the 1024px block does — that treatment reads as too
-   disconnected from the sun at true phone widths, per a screenshot review. */
+   whose rules still apply here too (everything it sets, e.g.
+   .heroOutroInner's full-width column, is untouched). Per design feedback
+   the sun should read as the dominant shape here, roughly the width of the
+   screen, with the statement sitting over it. Positioning that no longer
+   takes an override: every width centres the copy in the sun now (see
+   .heroOutro), so all this breakpoint still owns is how big the sun is and
+   how large the copy is allowed to get inside it. */
 @media (max-width: 767px) {
   .hero {
     --sun-size: 95vw;
-  }
-
-  .heroOutro {
-    align-items: center;
-    padding-top: 0;
-  }
-
-  /* Flat, not the base rule's calc(var(--sun-size) * 0.079) — --sun-size
-     jumps from 60vw (tablet) to 95vw here, and that same ratio would size
-     mobile's text larger than tablet's despite the smaller viewport. 32px
-     is a fixed value confirmed to keep both lines on one row each (no 3rd
-     line) within the bigger mobile sun. */
-  .heroOutroText {
-    font-size: 32px;
+    /* A ceiling, like the base rule's — not a flat size. 32px rather than
+       desktop's 56px because --sun-size jumps from 60vw (tablet) to 95vw
+       here: the fit solver measures against the circle alone, so without a
+       lower ceiling a phone's bigger sun would earn it larger copy than a
+       tablet gets. The solver still comes down from this whenever the
+       circle is too small to hold both lines at 32px. */
+    --outro-font-size-max: 32px;
   }
 }
 
@@ -366,5 +521,17 @@
 
   .heroOutroInner {
     transition: none;
+  }
+
+  /* The copy still arrives, it just doesn't defocus or stagger to get there.
+     Overriding the shorthand rather than only animation-name, so the delays
+     go too — otherwise the words would still appear in sequence, which is
+     the very pacing the preference asks us to drop. */
+  .heroWord,
+  .heroSubtext,
+  .heroCta {
+    animation: none;
+    opacity: 1;
+    filter: none;
   }
 }

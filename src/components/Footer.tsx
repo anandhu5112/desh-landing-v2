@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { IconBrandX, IconBrandWhatsapp, IconBrandFacebook } from "@tabler/icons-react";
 
 import { useSnapIntoView } from "@/hooks/useSnapIntoView";
@@ -14,11 +13,27 @@ export default function Footer() {
       {/* The large "Desh" wordmark is part of this artwork, not a separate
           layer — the scene is supplied with it already composited in, and its
           transparent upper third fades into the white page above. */}
-      <Image
+      {/* A plain <img>, not next/image: next.config sets images.unoptimized
+          (a static export has no optimizer), so next/image would ship the one
+          native-width file to every device, and it owns the srcSet prop
+          rather than passing it through. Offering the widths directly lets a
+          phone pull 208KB instead of 808KB. Widths come from
+          `npm run optimize:images`. Below the fold, hence lazy. */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- see above:
+          next/image cannot serve these variants under output: "export". */}
+      <img
         src="/images/footer-scene.webp"
+        srcSet={
+          "/images/footer-scene-1280.webp 1280w, " +
+          "/images/footer-scene-1920.webp 1920w, " +
+          "/images/footer-scene.webp 2880w"
+        }
+        sizes="100vw"
         alt=""
         width={2880}
         height={1598}
+        loading="lazy"
+        decoding="async"
         className={styles.bgImage}
       />
 

@@ -34,7 +34,7 @@ export default function UsSection() {
         <div className={styles.text}>
           <LogoCarousel logos={COMPANY_LOGOS} className={styles.avatarStack} />
           <h2 className={styles.heading}>
-            <span className={styles.dropCap}>I</span>nvest beyond borders
+            <span className={styles.dropCap}>H</span>edge against the depreciating rupee
           </h2>
           <p className={styles.subtext}>
             Own shares in the world&apos;s leading companies and build long

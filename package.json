@@ -7,7 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "optimize:images": "node scripts/optimize-images.mjs",
+    "measure:skyline": "node scripts/measure-skyline.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -29,6 +31,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
     "playwright": "^1.62.1",
+    "sharp": "^0.34.5",
     "typescript": "^5",
     "wrangler": "^4.114.0"
   }

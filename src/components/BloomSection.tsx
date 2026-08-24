@@ -6,12 +6,20 @@ import Image from "next/image";
 import Button from "@/components/ui/Button";
 import styles from "./BloomSection.module.css";
 
-/** Also used by ContactModal/GrowSection/UsSection — same four faces. */
+/** Also used by ContactModal/GrowSection/UsSection — same four faces.
+ *
+ * The .webp variants, not the source PNGs: these render as 30px circles, and
+ * the originals are full-size portraits up to 927px and 1.2MB apiece — 2.1MB
+ * of downloads between them to fill 120px of screen. Resized to 90px (3x,
+ * for the densest phone screens) the four together come to 11KB. No PNG
+ * fallback here, unlike the hero: these are decorative faces, and a browser
+ * too old for WebP showing four gaps is a better trade than every modern
+ * visitor paying 2.1MB. Regenerate with `npm run optimize:images`. */
 const AVATARS = [
-  "/images/join-avatar-1.png",
-  "/images/join-avatar-2.png",
-  "/images/join-avatar-3.png",
-  "/images/join-avatar-4.png",
+  "/images/join-avatar-1.webp",
+  "/images/join-avatar-2.webp",
+  "/images/join-avatar-3.webp",
+  "/images/join-avatar-4.webp",
 ];
 
 /**

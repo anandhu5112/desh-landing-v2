@@ -29,7 +29,7 @@ export default function GrowSection() {
         <div className={styles.text}>
           <LogoCarousel logos={BADGES} className={styles.badgeStack} />
           <h2 className={styles.heading}>
-            <span className={styles.dropCap}>G</span>row your wealth in India.
+            <span className={styles.dropCap}>G</span>row wealth beyond FDs
           </h2>
           <p className={styles.subtext}>
             Access professionally managed mutual funds that help NRIs

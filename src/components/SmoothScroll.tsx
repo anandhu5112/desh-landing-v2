@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
 import { lenisRef } from "@/lib/lenis";
+import { lenisLerp } from "@/lib/scrollTuning";
 
 /**
  * Renders nothing — purely wires Lenis's smoothed scroll into GSAP's ticker
@@ -42,7 +43,10 @@ export default function SmoothScroll() {
       };
     }
 
-    const lenis = new Lenis({ anchors: true });
+    // lerp is set explicitly rather than left at Lenis's default (0.1) —
+    // see scrollTuning.ts for why the two smoothing layers are tuned
+    // together.
+    const lenis = new Lenis({ anchors: true, lerp: lenisLerp() });
     lenis.on("scroll", ScrollTrigger.update);
     lenisRef.current = lenis;
 
