@@ -10,6 +10,14 @@
   // Safari/iOS. Routing through main + env.ASSETS.fetch() fixes that; see
   // src/worker.ts for the empirical evidence.
   "main": "src/worker.ts",
+  // Both hostnames are declared so wrangler creates (and keeps) a DNS
+  // record for each. www is served only to be 301'd to the apex by the
+  // fetch handler; without it declared here www has no DNS record at all
+  // and browsers get NXDOMAIN.
+  "routes": [
+    { "pattern": "getdesh.com", "custom_domain": true },
+    { "pattern": "www.getdesh.com", "custom_domain": true }
+  ],
   "assets": {
     "binding": "ASSETS",
     "directory": "./out",

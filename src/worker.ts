@@ -23,6 +23,14 @@ const RANGEABLE = /\.(mp4|webm|mov|m4v)$/i;
 const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    // www is a declared custom domain purely so a DNS record exists for it;
+    // the canonical host is the apex, so send visitors there.
+    if (url.hostname === "www.getdesh.com") {
+      url.hostname = "getdesh.com";
+      return Response.redirect(url.toString(), 301);
+    }
+
     if (!RANGEABLE.test(url.pathname)) {
       return env.ASSETS.fetch(request);
     }
