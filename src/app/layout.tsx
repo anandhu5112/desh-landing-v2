@@ -37,13 +37,38 @@ const petitFormalScript = Petit_Formal_Script({
   subsets: ["latin"],
 });
 
-// Both lines are the site's own copy, not new marketing: the title is the
-// hero H1 and the description condenses the hero body plus section 3 (see
-// design-handoff/copy-deck.md).
+// metadataBase is what lets the relative og:image path below resolve to an
+// absolute URL — scrapers (WhatsApp, iMessage, Twitter) will not follow a
+// relative one, so without it the card renders blank.
 export const metadata: Metadata = {
-  title: "Desh — Invest like a true global citizen",
+  metadataBase: new URL("https://getdesh.com"),
+  title: "Desh | Wealth guidance for global Indians",
   description:
-    "Indian mutual funds and US stocks for NRIs, with a dedicated human advisor. Grow your wealth across top global asset classes.",
+    "Build a portfolio across Indian mutual funds and US stocks with dedicated guidance for NRIs.",
+  openGraph: {
+    type: "website",
+    url: "https://getdesh.com",
+    siteName: "Desh",
+    title: "Desh | Wealth guidance for global Indians",
+    description:
+      "Build a portfolio across Indian mutual funds and US stocks with dedicated guidance for NRIs.",
+    locale: "en_IN",
+    images: [
+      {
+        url: "/images/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Desh landscape artwork with chairs by a river",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Desh | Wealth guidance for global Indians",
+    description:
+      "Build a portfolio across Indian mutual funds and US stocks with dedicated guidance for NRIs.",
+    images: ["/images/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({
