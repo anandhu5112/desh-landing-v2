@@ -33,6 +33,15 @@
   transform: translateY(-100%);
 }
 
+/* Positioning context shared by the pill and the mobile dropdown, so the
+   menu can hang below the pill's right (burger) edge instead of sitting
+   next to it as a flex sibling in .nav's centered row. */
+.navShell {
+  position: relative;
+  pointer-events: auto;
+  display: flex;
+}
+
 .pill {
   pointer-events: auto;
   display: flex;
@@ -136,10 +145,17 @@
   }
 }
 
+/* Dropdown anchored to .navShell's right edge — i.e. directly under the
+   burger, which is the pill's last child. Width hugs the links but stays
+   inside the viewport on the narrowest phones. */
 .mobileMenu {
+  position: absolute;
+  top: calc(100% + var(--space-8));
+  right: 0;
+  width: max-content;
+  min-width: 180px;
+  max-width: calc(100vw - (var(--space-16) * 2));
   pointer-events: auto;
-  margin-top: var(--space-16);
-  margin-inline: var(--space-16);
   padding: var(--space-16);
   display: flex;
   flex-direction: column;
@@ -187,6 +203,14 @@
   opacity: 0.85;
 }
 
+/* The menu only ever renders below 640px, but .links returns at 641px —
+   guard against a stale open state surviving a resize onto desktop. */
+@media (min-width: 641px) {
+  .mobileMenu {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   .links {
     display: none;
@@ -194,6 +218,12 @@
 
   .menuButton {
     display: inline-flex;
+  }
+
+  /* Only [logo, burger] left in the pill at this width — the desktop gap
+     leaves it looking stretched. */
+  .pill {
+    gap: var(--space-32);
   }
 }
 

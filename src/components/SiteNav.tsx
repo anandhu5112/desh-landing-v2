@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { List, X } from "@phosphor-icons/react/dist/ssr";
 import { heroIntroSettledRef } from "@/lib/heroProgress";
-import ContactModal from "./ContactModal";
+import { useContactModal } from "./ContactModalProvider";
 import styles from "./SiteNav.module.css";
 
 // Sub-pixel/trackpad noise shouldn't flip direction; only a real scroll counts.
@@ -31,8 +31,10 @@ const IDLE_REVEAL_MS = 150;
  */
 export default function SiteNav() {
   const [hidden, setHidden] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The modal itself is mounted once by ContactModalProvider — the nav is no
+  // longer the only way in, so it no longer owns the open state either.
+  const { open: openContact } = useContactModal();
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -71,72 +73,76 @@ export default function SiteNav() {
 
   return (
     <header ref={navRef} className={`${styles.nav} ${hidden ? styles.navHidden : ""}`}>
-      <div className={styles.pill}>
-        <Link href="/" className={styles.brand}>
-          {/* Source is 63x20.5 (~3.07:1). Height-constrained, width auto, so
-              it scales proportionally regardless of the intrinsic width/
-              height next/image needs. */}
-          <Image
-            src="/images/desh-logo-mark.svg"
-            alt="Desh"
-            width={63}
-            height={21}
-            className={styles.brandLogo}
-            priority
-          />
-        </Link>
-        <nav className={styles.links} aria-label="Primary">
-          <a href="#services" className={styles.link}>
-            Services
-          </a>
-          <a href="#wealth-bloom" className={styles.link}>
-            SIP Calculator
-          </a>
+      {/* Positioning context for the mobile dropdown: without it the menu is
+          a flex sibling of .pill and lands *beside* the logo rather than
+          under the toggle. */}
+      <div className={styles.navShell}>
+        <div className={styles.pill}>
+          <Link href="/" className={styles.brand}>
+            {/* Source is 63x20.5 (~3.07:1). Height-constrained, width auto, so
+                it scales proportionally regardless of the intrinsic width/
+                height next/image needs. */}
+            <Image
+              src="/images/desh-logo-mark.svg"
+              alt="Desh"
+              width={63}
+              height={21}
+              className={styles.brandLogo}
+              priority
+            />
+          </Link>
+          <nav className={styles.links} aria-label="Primary">
+            <a href="#services" className={styles.link}>
+              Services
+            </a>
+            <a href="#wealth-bloom" className={styles.link}>
+              SIP Calculator
+            </a>
+            <button
+              type="button"
+              className={styles.contactCta}
+              onClick={() => openContact()}
+            >
+              Contact us
+            </button>
+          </nav>
+
+          {/* Mobile-only stand-in for .links (hidden below 640px, see
+              SiteNav.module.css) — same links, collapsed behind a toggle
+              since the full row no longer fits at phone widths. */}
           <button
             type="button"
-            className={styles.contactCta}
-            onClick={() => setContactOpen(true)}
+            className={styles.menuButton}
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav-menu"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
           >
-            Contact us
+            {menuOpen ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
           </button>
-        </nav>
+        </div>
 
-        {/* Mobile-only stand-in for .links (hidden below 640px, see
-            SiteNav.module.css) — same links, collapsed behind a toggle
-            since the full row no longer fits at phone widths. */}
-        <button
-          type="button"
-          className={styles.menuButton}
-          onClick={() => setMenuOpen((open) => !open)}
-          aria-expanded={menuOpen}
-          aria-controls="mobile-nav-menu"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-        >
-          {menuOpen ? <X size={20} weight="bold" /> : <List size={20} weight="bold" />}
-        </button>
+        {menuOpen && (
+          <nav id="mobile-nav-menu" className={styles.mobileMenu} aria-label="Primary">
+            <a href="#services" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+              Services
+            </a>
+            <a href="#wealth-bloom" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+              SIP Calculator
+            </a>
+            <button
+              type="button"
+              className={styles.mobileContactCta}
+              onClick={() => {
+                setMenuOpen(false);
+                openContact();
+              }}
+            >
+              Contact us
+            </button>
+          </nav>
+        )}
       </div>
-
-      {menuOpen && (
-        <nav id="mobile-nav-menu" className={styles.mobileMenu} aria-label="Primary">
-          <a href="#services" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-            Services
-          </a>
-          <a href="#wealth-bloom" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-            SIP Calculator
-          </a>
-          <button
-            type="button"
-            className={styles.mobileContactCta}
-            onClick={() => {
-              setMenuOpen(false);
-              setContactOpen(true);
-            }}
-          >
-            Contact us
-          </button>
-        </nav>
-      )}
-      <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
     </header>
   );
 }
