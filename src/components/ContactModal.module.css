@@ -70,7 +70,19 @@
   position: relative;
   width: 100%;
   max-width: 1014px;
+  /* 48px = the backdrop's 24px padding on both sides. These have to agree:
+     subtract less and the card is taller than the box it is centred in, and
+     the overhang splits evenly onto the top and bottom edges.
+
+     dvh, not vh, because 100vh is the *largest* viewport — the height with a
+     phone's toolbars retracted. Sized against it, the card's lower edge sits
+     behind the address bar, and since the card is its own scroll container
+     and body scroll is locked while it is open, nothing can bring that edge
+     back into view: the submit button is unreachable rather than merely
+     below the fold. The vh line above is the fallback for browsers without
+     dvh, which are also the ones without a collapsing toolbar. */
   max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
   overflow-y: auto;
   display: flex;
   gap: var(--space-24);
@@ -457,9 +469,10 @@
 }
 
 @media (max-width: 900px) {
+  /* No max-height override here: the rule above already subtracts the full
+     gutter, and the 32px this used to subtract was the bug. */
   .card {
     flex-direction: column;
-    max-height: calc(100vh - 32px);
   }
 
   .photo {
