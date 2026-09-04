@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { List, X } from "@phosphor-icons/react/dist/ssr";
 import { heroIntroSettledRef } from "@/lib/heroProgress";
-import { useContactModal } from "./ContactModalProvider";
+import ContactModal from "./ContactModal";
 import styles from "./SiteNav.module.css";
 
 // Sub-pixel/trackpad noise shouldn't flip direction; only a real scroll counts.
@@ -31,10 +31,8 @@ const IDLE_REVEAL_MS = 150;
  */
 export default function SiteNav() {
   const [hidden, setHidden] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  // The modal itself is mounted once by ContactModalProvider — the nav is no
-  // longer the only way in, so it no longer owns the open state either.
-  const { open: openContact } = useContactModal();
   const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -74,7 +72,7 @@ export default function SiteNav() {
   return (
     <header ref={navRef} className={`${styles.nav} ${hidden ? styles.navHidden : ""}`}>
       {/* Positioning context for the mobile dropdown: without it the menu is
-          a flex sibling of .pill and lands *beside* the logo rather than
+          a flex sibling of .pill and lands *beside* the logo pill rather than
           under the toggle. */}
       <div className={styles.navShell}>
         <div className={styles.pill}>
@@ -101,7 +99,7 @@ export default function SiteNav() {
             <button
               type="button"
               className={styles.contactCta}
-              onClick={() => openContact()}
+              onClick={() => setContactOpen(true)}
             >
               Contact us
             </button>
@@ -135,7 +133,7 @@ export default function SiteNav() {
               className={styles.mobileContactCta}
               onClick={() => {
                 setMenuOpen(false);
-                openContact();
+                setContactOpen(true);
               }}
             >
               Contact us
@@ -143,6 +141,7 @@ export default function SiteNav() {
           </nav>
         )}
       </div>
+      <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
     </header>
   );
 }
