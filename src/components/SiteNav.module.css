@@ -42,8 +42,19 @@
   display: flex;
 }
 
+/* The black surface. On phones this is what grows into the menu, so the
+   background/radius live here while the padded toggle row moves to
+   .pillRow — otherwise the expanded panel would inherit the row's own
+   insets and the links couldn't be centred against the full width. */
 .pill {
   pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  background: #000000;
+  border-radius: 16px;
+}
+
+.pillRow {
   display: flex;
   align-items: center;
   gap: var(--space-40);
@@ -51,8 +62,6 @@
      the logo mark's own left edge (matches Figma's 20px/10px). */
   padding-block: var(--space-8);
   padding-inline: 20px 10px;
-  background: #000000;
-  border-radius: 16px;
 }
 
 .brand {
@@ -121,6 +130,7 @@
    swapped out for a separate element. */
 .menuButton {
   display: none;
+  position: relative;
   pointer-events: auto;
   flex: none;
   align-items: center;
@@ -134,38 +144,124 @@
   cursor: pointer;
 }
 
-@keyframes mobileMenuFadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Three bars at staggered widths, left-aligned so the ragged edge is on the
+   right only. Opening rotates the outer two into an X and collapses the
+   middle, so the mark morphs rather than swapping to a different icon.
+   left: 8px centres the 24px bar in the 40px button. */
+.menuBar {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  transform-origin: 50% 50%;
+  transition:
+    width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.18s ease;
 }
 
-/* Dropdown anchored to .navShell's right edge — i.e. directly under the
-   burger, which is the pill's last child. Width hugs the links but stays
-   inside the viewport on the narrowest phones. */
+.menuBar:nth-child(1) {
+  width: 24px;
+  transform: translateY(-50%) translateY(-6px);
+}
+
+.menuBar:nth-child(2) {
+  width: 12px;
+  transform: translateY(-50%);
+}
+
+.menuBar:nth-child(3) {
+  width: 16px;
+  transform: translateY(-50%) translateY(6px);
+}
+
+.pillOpen .menuBar:nth-child(1) {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.pillOpen .menuBar:nth-child(2) {
+  opacity: 0;
+  transform: translateY(-50%) scaleX(0);
+}
+
+.pillOpen .menuBar:nth-child(3) {
+  width: 24px;
+  transform: translateY(-50%) rotate(-45deg);
+}
+
+/* Collapsed this is a zero-height grid row; opening animates it to 1fr.
+   grid-template-rows interpolates where `height: auto` does not, so the
+   panel can size itself to its content without JS measuring it. */
+.mobileMenuWrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobileMenuWrap > * {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.pillOpen .mobileMenuWrap {
+  grid-template-rows: 1fr;
+}
+
+/* No background or radius of its own — it sits on the pill's surface.
+   Vertical breathing room is deliberately child margins rather than padding
+   here: overflow:hidden clamps the content's contribution to the collapsed
+   grid track, but not this box's own padding, which would otherwise hold the
+   pill 32px taller than the toggle row while closed. */
 .mobileMenu {
-  position: absolute;
-  top: calc(100% + var(--space-8));
-  right: 0;
-  width: max-content;
-  min-width: 180px;
-  max-width: calc(100vw - (var(--space-16) * 2));
-  pointer-events: auto;
-  padding: var(--space-16);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-16);
-  background: #000000;
-  border-radius: 16px;
-  animation: mobileMenuFadeInDown 0.2s ease;
+  padding-inline: var(--space-16);
 }
 
+.mobileMenu > *:first-child {
+  margin-top: var(--space-8);
+}
+
+.mobileMenu > *:last-child {
+  margin-bottom: var(--space-24);
+}
+
+/* The rows fade up just behind the pill's own growth, staggered, so the
+   panel reads as filling in rather than arriving all at once. */
+.mobileMenu > * {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.24s ease,
+    transform 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+    color 0.2s ease;
+}
+
+.pillOpen .mobileMenu > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pillOpen .mobileMenu > *:nth-child(1) {
+  transition-delay: 0.12s;
+}
+
+.pillOpen .mobileMenu > *:nth-child(2) {
+  transition-delay: 0.18s;
+}
+
+.pillOpen .mobileMenu > *:nth-child(3) {
+  transition-delay: 0.24s;
+}
+
+/* No transition of its own: `.mobileMenu > *` above already owns one, and
+   an equal-specificity shorthand here would replace it wholesale — killing
+   the staggered fade-up and leaving the rows to pop in. Its colour leg
+   covers the hover below. */
 .mobileLink {
   font-family: var(--font-inter), sans-serif;
   font-size: var(--fs-nav);
@@ -173,7 +269,6 @@
   font-weight: 500;
   color: #9c9c9c;
   text-decoration: none;
-  transition: color 0.2s ease;
 }
 
 .mobileLink:hover,
@@ -182,6 +277,7 @@
 }
 
 .mobileContactCta {
+  min-width: 170px;
   height: 40px;
   padding-inline: var(--space-16);
   display: inline-flex;
@@ -195,7 +291,7 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  /* Transition likewise lives on `.mobileMenu > *` — see .mobileLink. */
 }
 
 .mobileContactCta:hover,
@@ -203,10 +299,9 @@
   opacity: 0.85;
 }
 
-/* The menu only ever renders below 640px, but .links returns at 641px —
-   guard against a stale open state surviving a resize onto desktop. */
+/* .links comes back at 641px, so the panel has no job here. */
 @media (min-width: 641px) {
-  .mobileMenu {
+  .mobileMenuWrap {
     display: none;
   }
 }
@@ -220,15 +315,38 @@
     display: inline-flex;
   }
 
-  /* Only [logo, burger] left in the pill at this width — the desktop gap
-     leaves it looking stretched. */
-  .pill {
+  /* Only [logo, toggle] left in the row at this width — the desktop gap
+     leaves it looking stretched. space-between is inert while the pill is
+     collapsed (the row is exactly content width) and pushes the toggle out
+     to the right edge as the pill grows. */
+  .pillRow {
     gap: var(--space-32);
+    justify-content: space-between;
+  }
+
+  /* --pill-w is the collapsed content width, measured in SiteNav.tsx:
+     `width` won't transition out of max-content, so both ends of the morph
+     have to be lengths. Opening runs the pill out to the page gutters at
+     the same time as the panel grows, so it reads as one movement. */
+  .pill {
+    width: var(--pill-w, max-content);
+    transition: width 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .pillOpen {
+    width: calc(100vw - (var(--space-16) * 2));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mobileMenu {
-    animation: none;
+  .pill,
+  .mobileMenuWrap,
+  .mobileMenu > *,
+  .menuBar {
+    transition-duration: 0.01ms;
+  }
+
+  .pillOpen .mobileMenu > * {
+    transition-delay: 0s;
   }
 }
