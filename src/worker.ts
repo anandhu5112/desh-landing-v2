@@ -20,6 +20,21 @@ export interface Env {
 
 const RANGEABLE = /\.(mp4|webm|mov|m4v)$/i;
 
+/**
+ * Cloudflare's asset layer only marks content-hashed files (/_next/static/*)
+ * as immutable; everything served under its original name — every clip in
+ * /videos and every image in /images — falls back to
+ * `public, max-age=0, must-revalidate`, so the browser re-fetches all of it
+ * on every single visit. For video that is the whole file each time, since
+ * serveRange() builds its 206 by hand and so has no 304 shortcut to fall
+ * back on. A day of hands-off caching removes that, and is short enough
+ * that replacing a file in place (same name, as these all are) still
+ * propagates within a day rather than being pinned for a year the way a
+ * true `immutable` would.
+ */
+const MEDIA_CACHE_CONTROL = "public, max-age=86400, stale-while-revalidate=604800";
+const CACHEABLE_MEDIA = /\.(mp4|webm|mov|m4v|webp|avif|png|jpe?g|gif|svg|woff2?)$/i;
+
 const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -32,7 +47,7 @@ const worker = {
     }
 
     if (!RANGEABLE.test(url.pathname)) {
-      return env.ASSETS.fetch(request);
+      return withMediaCache(await env.ASSETS.fetch(request), url.pathname);
     }
 
     const range = request.headers.get("Range");
@@ -46,6 +61,7 @@ const worker = {
     if (!full.ok) return full;
     const headers = new Headers(full.headers);
     headers.set("Accept-Ranges", "bytes");
+    headers.set("Cache-Control", MEDIA_CACHE_CONTROL);
     return new Response(full.body, { status: full.status, headers });
   },
 };
@@ -91,7 +107,24 @@ async function serveRange(request: Request, env: Env, range: string): Promise<Re
       "Content-Length": String(slice.byteLength),
       "Content-Range": `bytes ${start}-${end}/${size}`,
       "Accept-Ranges": "bytes",
-      "Cache-Control": full.headers.get("Cache-Control") ?? "public, max-age=0, must-revalidate",
+      "Cache-Control": MEDIA_CACHE_CONTROL,
     },
+  });
+}
+
+/**
+ * Re-stamps Cache-Control on the static media that the asset layer leaves
+ * uncached (see MEDIA_CACHE_CONTROL). Anything else — HTML, the hashed
+ * /_next/static bundles, 304s and errors — is passed straight through with
+ * whatever headers it already had.
+ */
+function withMediaCache(response: Response, pathname: string): Response {
+  if (!response.ok || !CACHEABLE_MEDIA.test(pathname)) return response;
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", MEDIA_CACHE_CONTROL);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
   });
 }

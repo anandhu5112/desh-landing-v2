@@ -1,10 +1,17 @@
 "use client";
 
-import { useEffect, useState, type AnimationEvent, type FormEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type FormEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { X } from "@phosphor-icons/react/dist/ssr";
+import { Check, X } from "@phosphor-icons/react/dist/ssr";
 import Button from "@/components/ui/Button";
+import { submitContact } from "@/lib/contact";
 import styles from "./ContactModal.module.css";
 
 const JOIN_AVATARS = [
@@ -107,34 +114,91 @@ function StatCarousel({ items, forceHidden }: { items: Stat[]; forceHidden: bool
   );
 }
 
+/** Exported so each CTA can name the reason it should preselect without
+    re-typing a string that has to match one of these exactly. */
+export const CONTACT_REASONS = {
+  start: "Start my investment journey",
+  india: "Explore Indian mutual funds",
+  us: "Explore US stocks",
+  documentation: "I need help in NRI documentation",
+  portfolio: "Review my portfolio",
+  other: "Something else",
+} as const;
+
 const REASONS: { label: string; full?: boolean }[] = [
-  { label: "Start my investment journey", full: true },
-  { label: "Explore Indian mutual funds" },
-  { label: "I want to Invest in US stocks" },
-  { label: "I need help in NRI documentation" },
-  { label: "Review my portfolio" },
-  { label: "Something else", full: true },
+  { label: CONTACT_REASONS.start, full: true },
+  { label: CONTACT_REASONS.india },
+  { label: CONTACT_REASONS.us },
+  { label: CONTACT_REASONS.documentation },
+  { label: CONTACT_REASONS.portfolio },
+  { label: CONTACT_REASONS.other, full: true },
 ];
+
+export type ContactTab = "start" | "contact" | "join";
+
+type Fields = { name: string; email: string; phone: string; message: string };
+type FieldName = keyof Fields;
+type FieldErrors = Partial<Record<FieldName, string>>;
+
+const EMPTY_FIELDS: Fields = { name: "", email: "", phone: "", message: "" };
+/** Document order — used to focus the *first* thing that failed validation
+    rather than whichever key happens to come out of the errors object. */
+const FIELD_ORDER: FieldName[] = ["name", "email", "phone", "message"];
+
+/** Deliberately loose: the point is to catch a typo'd address before it
+    costs a lead, not to adjudicate RFC 5322. */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validate(fields: Fields): FieldErrors {
+  const errors: FieldErrors = {};
+
+  if (!fields.name.trim()) {
+    errors.name = "Please tell us your name.";
+  }
+
+  const email = fields.email.trim();
+  if (!email) {
+    errors.email = "We need an email address to reply to.";
+  } else if (!EMAIL_PATTERN.test(email)) {
+    errors.email = "That doesn't look like an email address.";
+  }
+
+  return errors;
+}
+
+/** Everything focusable the tab trap should cycle through. */
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 type ContactModalProps = {
   open: boolean;
   onClose: () => void;
+  /** Which tab a CTA wants this opened on. */
+  initialTab?: ContactTab;
+  /** Which radio option a CTA wants preselected. */
+  initialReason?: string;
 };
 
 /**
- * "Connect with us" — opened from SiteNav's Contact us pill. Portaled to
- * document.body so its fixed backdrop/z-index never has to fight the
+ * "Connect with us" — opened from SiteNav's Contact us pill and from every
+ * "Talk to an Advisor" CTA on the page, via ContactModalProvider. Portaled
+ * to document.body so its fixed backdrop/z-index never has to fight the
  * stacking contexts Hero's pinned layers already claim.
  */
-export default function ContactModal({ open, onClose }: ContactModalProps) {
-  const [activeTab, setActiveTab] = useState<"contact" | "join">("contact");
+export default function ContactModal({
+  open,
+  onClose,
+  initialTab = "start",
+  initialReason,
+}: ContactModalProps) {
+  const [activeTab, setActiveTab] = useState<ContactTab>(initialTab);
   // What's actually rendered — lags one dissolve behind `activeTab` while a
   // tab switch is mid-transition, so the swap itself happens while the
   // content is faded out rather than popping instantly.
-  const [contentTab, setContentTab] = useState<"contact" | "join">("contact");
+  const [contentTab, setContentTab] = useState<ContactTab>(initialTab);
   const [tabDissolving, setTabDissolving] = useState(false);
 
-  function selectTab(tab: "contact" | "join") {
+  function selectTab(tab: ContactTab) {
     if (tab === activeTab) return;
     // The tab button itself highlights immediately; only the content below
     // it dissolves.
@@ -152,7 +216,14 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
     }, DISSOLVE_MS);
   }
 
-  const [reason, setReason] = useState<string>(REASONS[0].label);
+  const [reason, setReason] = useState<string>(initialReason ?? REASONS[0].label);
+  const [fields, setFields] = useState<Fields>(EMPTY_FIELDS);
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const cardRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
   // Stays "closing" through the fade-out-down animation instead of
   // unmounting the instant `open` flips false, so the exit has time to play.
   const [phase, setPhase] = useState<"closed" | "open" | "closing">(
@@ -168,6 +239,20 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
     setPrevOpen(open);
     if (open) {
       setPhase("open");
+      // Every CTA opens this with its own intent, so an open re-seeds the
+      // tab and reason rather than resuming wherever the last one left off.
+      setActiveTab(initialTab);
+      setContentTab(initialTab);
+      setTabDissolving(false);
+      if (initialReason) setReason(initialReason);
+      // A sent enquiry is finished with; anything else is a half-typed one
+      // worth keeping, since the commonest way back here is a backdrop
+      // click closing the modal by accident.
+      if (status === "sent") {
+        setFields(EMPTY_FIELDS);
+        setErrors({});
+      }
+      if (status !== "sending") setStatus("idle");
     } else {
       // No animationend ever fires once the exit animation itself is
       // suppressed by reduced-motion, so skip "closing" and unmount
@@ -177,14 +262,44 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
     }
   }
 
-  // Escape closes; body scroll is locked while open (including through the
-  // closing animation) so the page behind can't scroll under the backdrop.
+  // Escape closes, Tab stays inside the dialog, and body scroll is locked
+  // while open (including through the closing animation) so the page behind
+  // can't scroll under the backdrop.
   useEffect(() => {
     if (phase === "closed") return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && phase === "open") onClose();
+      if (phase !== "open") return;
+
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      // aria-modal only tells assistive tech the rest of the page is inert;
+      // it does nothing for the Tab key, so the trap has to be explicit or
+      // focus walks straight out into the page behind the backdrop.
+      if (event.key !== "Tab") return;
+
+      const card = cardRef.current;
+      if (!card) return;
+
+      const focusable = Array.from(card.querySelectorAll<HTMLElement>(FOCUSABLE));
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || active === card)) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     };
+
     window.addEventListener("keydown", onKeyDown);
 
     const previousOverflow = document.body.style.overflow;
@@ -196,9 +311,24 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
     };
   }, [phase, onClose]);
 
+  // Move focus into the dialog on open and hand it back to whatever opened
+  // it on close — otherwise a keyboard user lands back at the top of the
+  // document, nowhere near the CTA they just pressed.
+  useEffect(() => {
+    if (phase !== "open") return;
+
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    // The card itself, not its first control: the visitor should hear the
+    // dialog's name before being dropped onto a radio group.
+    cardRef.current?.focus();
+
+    return () => previouslyFocused?.focus?.();
+  }, [phase]);
+
   if (phase === "closed") return null;
 
   const closing = phase === "closing";
+  const sending = status === "sending";
 
   // Fires for both the backdrop's and the card's own animation (each has
   // its own listener below) — actually unmounts once the exit finishes.
@@ -206,11 +336,44 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
     if (closing && event.target === event.currentTarget) setPhase("closed");
   }
 
-  // No backend to send to yet — closing on submit is the honest stand-in
-  // for "message sent" rather than faking a network call.
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function updateField(name: FieldName, value: string) {
+    setFields((current) => ({ ...current, [name]: value }));
+    // Clear the complaint as soon as the visitor starts addressing it,
+    // rather than leaving it up until the next submit.
+    setErrors((current) => (current[name] ? { ...current, [name]: undefined } : current));
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onClose();
+    if (status === "sending") return;
+
+    const nextErrors = validate(fields);
+    setErrors(nextErrors);
+
+    const firstInvalid = FIELD_ORDER.find((name) => nextErrors[name]);
+    if (firstInvalid) {
+      formRef.current
+        ?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)
+        ?.focus();
+      return;
+    }
+
+    setStatus("sending");
+    try {
+      await submitContact({
+        reason,
+        name: fields.name.trim(),
+        email: fields.email.trim(),
+        phone: fields.phone.trim(),
+        message: fields.message.trim(),
+      });
+      setStatus("sent");
+    } catch (error) {
+      // Surfaced to the visitor as the error panel below; logged so a
+      // misconfigured endpoint is findable rather than silent.
+      console.error("Contact form submission failed", error);
+      setStatus("error");
+    }
   }
 
   return createPortal(
@@ -220,6 +383,8 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
       onAnimationEnd={handleAnimationEnd}
     >
       <div
+        ref={cardRef}
+        tabIndex={-1}
         className={`${styles.card} ${closing ? styles.cardClosing : ""}`}
         role="dialog"
         aria-modal="true"
@@ -246,25 +411,18 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
               id="contact-modal-heading"
               className={`${styles.heading} ${tabDissolving ? styles.headingHidden : ""}`}
             >
-              {contentTab === "contact" ? "Connect with us" : "Join us"}
+              {contentTab === "start"
+                ? "How would you like to connect?"
+                : contentTab === "contact"
+                  ? "Connect with us"
+                  : "Join us"}
             </h2>
             <div className={styles.headerActions}>
-              <div className={styles.tabs}>
-                <button
-                  type="button"
-                  className={`${styles.tab} ${activeTab === "contact" ? styles.tabActive : ""}`}
-                  onClick={() => selectTab("contact")}
-                >
-                  Contact us
+              {contentTab !== "start" ? (
+                <button type="button" className={styles.back} onClick={() => selectTab("start")}>
+                  Back
                 </button>
-                <button
-                  type="button"
-                  className={`${styles.tab} ${activeTab === "join" ? styles.tabActive : ""}`}
-                  onClick={() => selectTab("join")}
-                >
-                  Join us
-                </button>
-              </div>
+              ) : null}
               <button
                 type="button"
                 className={styles.close}
@@ -278,46 +436,178 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
 
           <hr className={styles.divider} />
 
-          {contentTab === "contact" ? (
-            <form
-              className={`${styles.form} ${tabDissolving ? styles.formHidden : ""}`}
-              onSubmit={handleSubmit}
-            >
-              <div className={styles.options}>
-                {REASONS.map(({ label, full }) => (
-                  <label
-                    key={label}
-                    className={`${styles.option} ${full ? styles.optionFull : ""}`}
-                  >
-                    <span className={styles.radioBox}>
+          {contentTab === "start" ? (
+            <div className={styles.startBody}>
+              <p className={styles.startCopy}>
+                Pick the path that matches what you need. We&apos;ll keep the next step
+                focused and avoid a form unless it helps.
+              </p>
+              <div className={styles.startOptions}>
+                <button type="button" className={styles.startOption} onClick={() => selectTab("contact")}>
+                  <span className={styles.startOptionKicker}>Talk to an advisor</span>
+                  <span className={styles.startOptionTitle}>Send a quick enquiry</span>
+                  <span className={styles.startOptionBody}>
+                    Tell us what you need help with. We&apos;ll get back to you by email or
+                    phone.
+                  </span>
+                </button>
+                <button type="button" className={styles.startOption} onClick={() => selectTab("join")}>
+                  <span className={styles.startOptionKicker}>Join the community</span>
+                  <span className={styles.startOptionTitle}>Open the WhatsApp path</span>
+                  <span className={styles.startOptionBody}>
+                    Scan the QR code to join our NRI community on WhatsApp.
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : contentTab === "contact" ? (
+            status === "sent" ? (
+              // Replaces the form rather than closing the modal: closing on
+              // success reads as "did that actually go through?".
+              <div className={styles.success} role="status">
+                <span className={styles.successIcon} aria-hidden="true">
+                  <Check size={28} weight="bold" />
+                </span>
+                <p className={styles.successHeading}>Thanks — that&apos;s with us.</p>
+                <p className={styles.successBody}>
+                  An advisor will get back to you at {fields.email.trim()} within 24–48
+                  hours.
+                </p>
+                <Button type="button" onClick={onClose}>
+                  Done
+                </Button>
+              </div>
+            ) : (
+              <form
+                ref={formRef}
+                className={`${styles.form} ${tabDissolving ? styles.formHidden : ""}`}
+                onSubmit={handleSubmit}
+                noValidate
+              >
+                <fieldset className={styles.fieldset} disabled={sending}>
+                  <legend className={styles.srOnly}>What can we help with?</legend>
+                  <div className={styles.options}>
+                    {REASONS.map(({ label, full }) => (
+                      <label
+                        key={label}
+                        className={`${styles.option} ${full ? styles.optionFull : ""}`}
+                      >
+                        <span className={styles.radioBox}>
+                          <input
+                            type="radio"
+                            name="reason"
+                            value={label}
+                            checked={reason === label}
+                            onChange={() => setReason(label)}
+                            className={styles.radioInput}
+                          />
+                          <span className={styles.radioDot} aria-hidden="true" />
+                        </span>
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+
+                  <div className={styles.fields}>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="contact-name">
+                        Name
+                      </label>
                       <input
-                        type="radio"
-                        name="reason"
-                        value={label}
-                        checked={reason === label}
-                        onChange={() => setReason(label)}
-                        className={styles.radioInput}
+                        id="contact-name"
+                        name="name"
+                        type="text"
+                        autoComplete="name"
+                        placeholder="Your full name"
+                        className={`${styles.input} ${errors.name ? styles.inputInvalid : ""}`}
+                        value={fields.name}
+                        onChange={(event) => updateField("name", event.target.value)}
+                        aria-invalid={errors.name ? true : undefined}
+                        aria-describedby={errors.name ? "contact-name-error" : undefined}
                       />
-                      <span className={styles.radioDot} aria-hidden="true" />
-                    </span>
-                    {label}
-                  </label>
-                ))}
-              </div>
+                      {errors.name && (
+                        <p id="contact-name-error" className={styles.fieldError}>
+                          {errors.name}
+                        </p>
+                      )}
+                    </div>
 
-              <textarea
-                className={styles.textarea}
-                placeholder="Enter your message here"
-                rows={4}
-              />
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="contact-email">
+                        Email
+                      </label>
+                      <input
+                        id="contact-email"
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                        className={`${styles.input} ${errors.email ? styles.inputInvalid : ""}`}
+                        value={fields.email}
+                        onChange={(event) => updateField("email", event.target.value)}
+                        aria-invalid={errors.email ? true : undefined}
+                        aria-describedby={errors.email ? "contact-email-error" : undefined}
+                      />
+                      {errors.email && (
+                        <p id="contact-email-error" className={styles.fieldError}>
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
 
-              <div className={styles.footer}>
-                <Button type="submit">Send message</Button>
-              </div>
-            </form>
+                    <div className={`${styles.field} ${styles.fieldFull}`}>
+                      <label className={styles.label} htmlFor="contact-phone">
+                        Phone <span className={styles.optional}>(optional)</span>
+                      </label>
+                      {/* type="tel", not a country dropdown: this audience is
+                          spread across time zones and dialling codes, and a
+                          free-text field they can paste +971… into beats a
+                          picker they have to hunt through. */}
+                      <input
+                        id="contact-phone"
+                        name="phone"
+                        type="tel"
+                        autoComplete="tel"
+                        placeholder="Include your country code, e.g. +971 50 123 4567"
+                        className={styles.input}
+                        value={fields.phone}
+                        onChange={(event) => updateField("phone", event.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="contact-message">
+                      Message <span className={styles.optional}>(optional)</span>
+                    </label>
+                    <textarea
+                      id="contact-message"
+                      name="message"
+                      className={styles.textarea}
+                      placeholder="Enter your message here"
+                      rows={4}
+                      value={fields.message}
+                      onChange={(event) => updateField("message", event.target.value)}
+                    />
+                  </div>
+                </fieldset>
+
+                <div className={styles.footer}>
+                  {status === "error" && (
+                    <p className={styles.formError} role="alert">
+                      That didn&apos;t send. Please try again, or use the community path
+                      instead.
+                    </p>
+                  )}
+                  <Button type="submit" disabled={sending}>
+                    {sending ? "Sending…" : "Send message"}
+                  </Button>
+                </div>
+              </form>
+            )
           ) : (
-            // No backend to join against yet — closing on click is the same
-            // honest stand-in handleSubmit above uses for "message sent".
+            // The QR is the working path into the community; the button below
+            // it still has no invite URL to point at.
             <div className={`${styles.joinBody} ${tabDissolving ? styles.joinBodyHidden : ""}`}>
               <Image
                 src="/images/qr-code.png"
@@ -343,10 +633,10 @@ export default function ContactModal({ open, onClose }: ContactModalProps) {
                   <span className={styles.plusBadge}>+999</span>
                 </div>
                 <p className={styles.joinHeading}>
-                  Join our exclusive NRI WhatsApp community.
+                  Join our NRI community on WhatsApp.
                 </p>
                 <button type="button" className={styles.joinCta} onClick={onClose}>
-                  Join Our Community
+                  Join the community
                 </button>
               </div>
             </div>

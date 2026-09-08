@@ -4,7 +4,8 @@ import { Fragment, useRef, useState, type CSSProperties } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import Button from "@/components/ui/Button";
+import AdvisorCta from "@/components/AdvisorCta";
+import { CONTACT_REASONS } from "@/components/ContactModal";
 import { heroIntroSettledRef } from "@/lib/heroProgress";
 import { heroScrub } from "@/lib/scrollTuning";
 import styles from "./Hero.module.css";
@@ -45,7 +46,14 @@ if (typeof window !== "undefined") {
 // This is the rate the whole sequence was tuned at. Raising it slows
 // everything down together; individual beats are re-timed by their own
 // durations below.
-const SCROLL_PCT_PER_UNIT = 177;
+//
+// Lowered 177 -> 125. At 177 the pin cost ~2.9 viewport heights of
+// scrolling; the complaint was that the hero felt heavy while the rest of
+// the page felt fine, and a long pin is heaviness of a particular kind —
+// not slow motion, but a lot of gesture spent for a little visible change,
+// which reads as the page failing to respond. Every beat keeps its relative
+// timing because they are all expressed in units against this one rate.
+const SCROLL_PCT_PER_UNIT = 125;
 
 // Opening beat: the hero holds still before heroContent starts leaving. The
 // hero frame itself no longer animates — it's a static 32px margin (see
@@ -71,7 +79,13 @@ const ZOOM_DURATION = 0.4;
 // very last frame and the scene is pulled away the instant it completes.
 // Stated in scroll rather than in units because what it is worth is a
 // distance the reader travels, not a share of the animation.
-const HOLD_SCROLL_PCT = 60;
+//
+// Cut 60 -> 24. Per pixel scrolled this is the most expensive stretch on the
+// page: it is the one place where nothing moves at all, so the reader keeps
+// scrolling and gets no feedback whatsoever. The beat is worth keeping — the
+// scene should settle rather than be yanked away — but it only needs to be
+// long enough to register as a pause, not as a stall.
+const HOLD_SCROLL_PCT = 24;
 const HOLD_DURATION = HOLD_SCROLL_PCT / SCROLL_PCT_PER_UNIT;
 
 // Third round of tuning this pair: 1.6/30 (original) zoomed in too
@@ -844,9 +858,12 @@ export default function Hero() {
               Crafted specifically for NRIs to help them grow their wealth in top global
               asset classes.
             </p>
-            <Button type="button" className={styles.heroCta}>
-              Talk to an Advisor
-            </Button>
+            <AdvisorCta
+              className={styles.heroCta}
+              fallbackReason={CONTACT_REASONS.start}
+            >
+              Let’s talk money
+            </AdvisorCta>
           </div>
         </div>
         {/* Always mounted, not conditionally rendered — a fade/rise needs the
@@ -863,9 +880,8 @@ export default function Hero() {
             >
               <h2 ref={outroTextRef} className={styles.heroOutroText}>
                 <span className={styles.heroOutroLine}>
-                  <span className={styles.dropCap}>A</span>nchor your roots.
+                  For the life you crossed oceans to build.
                 </span>
-                <span className={styles.heroOutroLine}>Expand your reach.</span>
               </h2>
             </div>
           </div>

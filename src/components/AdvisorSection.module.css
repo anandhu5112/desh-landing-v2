@@ -17,7 +17,6 @@
   position: relative;
   width: 100%;
 }
-
 /* Figma node 482:3508: 1376x657 inside a 1440x729 reference frame — a
    32px horizontal / 36px vertical inset, not the flat 32px this section
    used before. Held as a ratio rather than a fixed height so the card

@@ -12,12 +12,12 @@ const FAQS = [
   {
     question: "Who can invest through Desh?",
     answer:
-      "NRIs, OCIs, and PIOs holding a valid passport can invest with Desh. We support investors across the US, UK, UAE, Singapore, Australia, and most other jurisdictions.",
+      "Desh supports NRIs and OCIs in most countries, except the United States. Eligibility may vary by country and product.",
   },
   {
     question: "Do I need to be in India to start investing?",
     answer:
-      "No. You can complete the entire onboarding process remotely and manage your investments from anywhere in the world.",
+      "No. You can complete onboarding remotely without visiting India, provided you have an NRE or NRO account.",
   },
   {
     question: "What investment options do you offer?",
@@ -32,12 +32,12 @@ const FAQS = [
   {
     question: "Can I start a SIP from overseas?",
     answer:
-      "Yes. You can set up and manage a SIP entirely online from your NRE or NRO account, with contributions debited automatically each month.",
+      "Yes. You can set up and manage a SIP online from your NRE or NRO account, with contributions debited automatically each month.",
   },
   {
     question: "Is my money held by Desh?",
     answer:
-      "No. Your money never sits with us — investments are held directly with SEBI-regulated fund houses and custodians in your own name.",
+      "No. Desh does not hold your money. Your investments are made through your own accounts.",
   },
 ];
 

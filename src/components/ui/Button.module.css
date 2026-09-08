@@ -20,6 +20,10 @@
   font-weight: 500;
   line-height: 24px;
   white-space: nowrap;
+  /* Set explicitly because Button also renders as an <a> for the Cal.com
+     booking CTAs — an anchor would otherwise arrive underlined and in the
+     link colour. */
+  text-decoration: none;
   cursor: pointer;
   box-shadow:
     inset 0 0 0 0.5px #000000,
@@ -35,4 +39,10 @@
 
 .button:active {
   opacity: 0.7;
+}
+
+/* A submit in flight stays visible but stops inviting a second click. */
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

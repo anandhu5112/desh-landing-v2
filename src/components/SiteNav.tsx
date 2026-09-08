@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { heroIntroSettledRef } from "@/lib/heroProgress";
-import ContactModal from "./ContactModal";
+import { useContactModal } from "./ContactModalProvider";
 import styles from "./SiteNav.module.css";
 
 // Sub-pixel/trackpad noise shouldn't flip direction; only a real scroll counts.
@@ -37,8 +37,10 @@ const MOBILE_MAX = 640;
  */
 export default function SiteNav() {
   const [hidden, setHidden] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // The modal itself is mounted once by ContactModalProvider — the nav is no
+  // longer the only way in, so it no longer owns the open state either.
+  const { open: openContact } = useContactModal();
   const navRef = useRef<HTMLElement>(null);
   const pillRef = useRef<HTMLDivElement>(null);
   const menuWrapRef = useRef<HTMLDivElement>(null);
@@ -165,9 +167,9 @@ export default function SiteNav() {
               <button
                 type="button"
                 className={styles.contactCta}
-                onClick={() => setContactOpen(true)}
+                onClick={() => openContact()}
               >
-                Contact us
+                Let’s talk money
               </button>
             </nav>
 
@@ -211,16 +213,15 @@ export default function SiteNav() {
                 className={styles.mobileContactCta}
                 onClick={() => {
                   setMenuOpen(false);
-                  setContactOpen(true);
+                  openContact();
                 }}
               >
-                Contact us
+                Let’s talk money
               </button>
             </nav>
           </div>
         </div>
       </div>
-      <ContactModal open={contactOpen} onClose={() => setContactOpen(false)} />
     </header>
   );
 }

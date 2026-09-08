@@ -1,6 +1,7 @@
 "use client";
 
-import Button from "@/components/ui/Button";
+import AdvisorCta from "@/components/AdvisorCta";
+import { CONTACT_REASONS } from "@/components/ContactModal";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
 import LogoCarousel from "@/components/LogoCarousel";
 import styles from "./UsSection.module.css";
@@ -37,13 +38,12 @@ export default function UsSection() {
             <span className={styles.dropCap}>H</span>edge against the depreciating rupee
           </h2>
           <p className={styles.subtext}>
-            Own shares in the world&apos;s leading companies and build long
-            term wealth through global diversification all from one seamless
-            platform.
+            Own shares in leading US companies and diversify your portfolio
+            beyond India.
           </p>
-          <Button type="button" className={styles.cta}>
-            Talk to an Advisor
-          </Button>
+          <AdvisorCta className={styles.cta} fallbackReason={CONTACT_REASONS.us}>
+            Let’s talk money
+          </AdvisorCta>
         </div>
       </div>
     </section>

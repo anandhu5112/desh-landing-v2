@@ -1,3 +1,4 @@
+import ContactModalProvider from "@/components/ContactModalProvider";
 import Hero from "@/components/Hero";
 import ServicesSection from "@/components/ServicesSection";
 import BloomSection from "@/components/BloomSection";
@@ -8,7 +9,9 @@ import SmoothScroll from "@/components/SmoothScroll";
 
 export default function Home() {
   return (
-    <>
+    // Owns the contact modal for the whole page, so the nav pill and every
+    // "Talk to an Advisor" CTA below open the same one.
+    <ContactModalProvider>
       {/* Renders nothing — wires Lenis into GSAP's ticker for the whole page. */}
       <SmoothScroll />
       {/* Fixed to the viewport, not inside Hero — must survive Hero's
@@ -27,6 +30,6 @@ export default function Home() {
       <BloomSection />
       <FaqSection />
       <Footer />
-    </>
+    </ContactModalProvider>
   );
 }

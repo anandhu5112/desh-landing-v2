@@ -21,22 +21,35 @@
 /**
  * Lenis interpolation, 0..1. Higher is snappier; 1 disables smoothing and
  * gives you the browser's native scroll.
+ *
+ * Deliberately NOT part of the hero-weight tuning below: this one is global,
+ * so it also governs every section that is *not* the hero — and those were
+ * reported as already feeling right. Changing it to fix the hero would have
+ * dragged the rest of the page along with it.
  */
 export const LENIS_LERP = 0.15;
 
 /**
  * ScrollTrigger scrub, in seconds of catch-up.
  *
- * Went 1 -> 0.3 to cut the stacked lag, then back up to 0.6: scrub does
- * double duty, and 0.3 lost too much of the second job. Beyond delaying the
- * animation, it smooths the *input* — mouse wheels deliver scroll in coarse
- * jumps, and the scrub interpolation is what turns those steps into
- * continuous motion. At 0.3 that chunkiness showed through on the sun,
- * which is the largest and slowest thing moving and therefore where any
- * steppiness is most visible. 0.6 keeps most of the responsiveness while
- * putting the smoothing back.
+ * History: 1 -> 0.3 to cut the stacked lag, then back up to 0.6 because 0.3
+ * let the coarseness of mouse-wheel deltas show through on the sun — scrub
+ * was doing double duty, delaying the animation *and* smoothing the input.
+ *
+ * Now back to 0.3, because the hero was the one part of the page that read
+ * as heavy while the rest read as smooth, and this is the only lag the rest
+ * of the page doesn't also carry. The earlier steppiness argument is weaker
+ * than it looked: Lenis sits in front of this and already advances the
+ * scroll position by interpolation on every frame, so what reaches the scrub
+ * is a continuous ramp, not raw wheel steps. Whatever chunkiness 0.3 showed
+ * before is bounded by LENIS_LERP, not by this number.
+ *
+ * At 0.6 the sun was still travelling ~600ms after the gesture stopped. If
+ * steppiness does reappear on a real mouse wheel, lower LENIS_LERP (smooth
+ * the input where the input actually is) rather than raising this back up —
+ * raising this puts the lag back.
  */
-export const HERO_SCRUB = 0.6;
+export const HERO_SCRUB = 0.3;
 
 export function lenisLerp(): number {
   return LENIS_LERP;

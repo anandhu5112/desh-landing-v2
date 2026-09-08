@@ -1,6 +1,7 @@
 "use client";
 
-import Button from "@/components/ui/Button";
+import AdvisorCta from "@/components/AdvisorCta";
+import { CONTACT_REASONS } from "@/components/ContactModal";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
 import LogoCarousel from "@/components/LogoCarousel";
 import styles from "./GrowSection.module.css";
@@ -32,13 +33,12 @@ export default function GrowSection() {
             <span className={styles.dropCap}>G</span>row wealth beyond FDs
           </h2>
           <p className={styles.subtext}>
-            Access professionally managed mutual funds that help NRIs
-            participate in India&apos;s long term growth with confidence and
-            convenience.
+            Participate in India&apos;s growth through professionally managed mutual
+            funds, with guidance for NRIs investing from abroad.
           </p>
-          <Button type="button" className={styles.cta}>
-            Talk to an Advisor
-          </Button>
+          <AdvisorCta className={styles.cta} fallbackReason={CONTACT_REASONS.india}>
+            Let’s talk money
+          </AdvisorCta>
         </div>
         <div className={styles.media}>
           <ScrollRevealVideo src="/videos/indian-ruppee.mp4" className={styles.video} />

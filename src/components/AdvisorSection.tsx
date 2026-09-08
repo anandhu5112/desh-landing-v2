@@ -39,8 +39,8 @@ export default function AdvisorSection() {
             your money?
           </h2>
           <p className={styles.subtext}>
-            Whether you&apos;re starting your investment journey or managing a growing
-            portfolio, receive personalised guidance whenever you need it.
+            From your first investment to your next big decision, get personal
+            guidance for your goals.
           </p>
           <Button type="button" className={styles.cta}>
             Book a Free Consultation

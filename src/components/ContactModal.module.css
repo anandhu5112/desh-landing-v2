@@ -212,30 +212,19 @@
   gap: var(--space-16);
 }
 
-.tabs {
-  flex: none;
-  display: flex;
-  gap: var(--space-8);
-  padding: var(--space-4);
-  background: #f1f1f1;
-  border-radius: 8px;
-}
-
-.tab {
-  padding-block: var(--space-8);
-  padding-inline: var(--space-16);
+.back {
   border: none;
-  border-radius: 6px;
   background: transparent;
-  font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-body);
-  color: #000000;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  font-weight: 500;
+  color: #5a5a5a;
   cursor: pointer;
 }
 
-.tabActive {
-  background: #ffffff;
-  box-shadow: 0 2px 2px rgba(101, 101, 101, 0.25);
+.back:hover,
+.back:focus-visible {
+  color: #000000;
 }
 
 .divider {
@@ -243,6 +232,76 @@
   margin-block: var(--space-24);
   border: none;
   background: #e5e5e5;
+}
+
+.startBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-24);
+  padding-top: var(--space-32);
+}
+
+.startCopy {
+  margin: 0;
+  max-width: 42ch;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 28px;
+  color: #5a5a5a;
+}
+
+.startOptions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-16);
+}
+
+.startOption {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-12);
+  padding: var(--space-24);
+  border: 1px solid #e5e5e5;
+  border-radius: 18px;
+  background: #fafafa;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.startOption:hover,
+.startOption:focus-visible {
+  transform: translateY(-2px);
+  border-color: #000000;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+}
+
+.startOptionKicker {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #5a5a5a;
+}
+
+.startOptionTitle {
+  font-family: var(--font-heading), sans-serif;
+  font-size: 24px;
+  line-height: 1.2;
+  color: #000000;
+}
+
+.startOptionBody {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 22px;
+  color: #5a5a5a;
 }
 
 .form {
@@ -326,6 +385,95 @@
   outline-offset: 2px;
 }
 
+/* Screen-reader-only: the radio group needs a <legend> to be announced as
+   a named group, but the visible design has no label above it. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Wraps every input so a submit in flight can disable the lot in one go
+   (see ContactModal.tsx) — carries no styling of its own. */
+.fieldset {
+  display: contents;
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: var(--space-40);
+  row-gap: var(--space-16);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.fieldFull {
+  grid-column: 1 / -1;
+}
+
+.label {
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 20px;
+  font-weight: 500;
+  color: #000000;
+}
+
+.optional {
+  font-weight: 400;
+  color: #acacac;
+}
+
+.input {
+  width: 100%;
+  height: 44px;
+  padding-inline: 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 24px;
+  color: #000000;
+}
+
+.input::placeholder {
+  color: #acacac;
+}
+
+.input:focus-visible,
+.textarea:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 1px;
+}
+
+.inputInvalid {
+  border-color: #d92d20;
+}
+
+.fieldError {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-caption);
+  line-height: 18px;
+  color: #d92d20;
+}
+
 .textarea {
   width: 100%;
   min-height: 102px;
@@ -347,7 +495,60 @@
 
 .footer {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: var(--space-16);
+}
+
+.formError {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 20px;
+  color: #d92d20;
+}
+
+/* ---- Sent ---- */
+
+.success {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-12);
+  padding-block: var(--space-40);
+}
+
+.successIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--space-4);
+  border-radius: 999px;
+  background: #e8f7ec;
+  color: #00b531;
+}
+
+.successHeading {
+  margin: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-size: var(--fs-heading-modal);
+  line-height: 1.3;
+  letter-spacing: var(--ls-heading-modal);
+  color: #000000;
+}
+
+.successBody {
+  margin: 0 0 var(--space-16);
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-body);
+  line-height: 24px;
+  color: #5a5a5a;
 }
 
 /* ---- Join us tab ---- */
@@ -462,6 +663,10 @@
     padding-top: var(--space-24);
   }
 
+  .startOptions {
+    grid-template-columns: 1fr;
+  }
+
   .joinTextCol {
     padding-block: 0;
     gap: var(--space-24);
@@ -480,8 +685,13 @@
     height: 200px;
   }
 
-  .options {
+  .options,
+  .fields {
     grid-template-columns: 1fr;
+  }
+
+  .startBody {
+    padding-top: var(--space-24);
   }
 }
 
