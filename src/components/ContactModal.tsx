@@ -12,6 +12,7 @@ import Image from "next/image";
 import { Check, X } from "@phosphor-icons/react/dist/ssr";
 import Button from "@/components/ui/Button";
 import { submitContact } from "@/lib/contact";
+import { getScroller } from "@/lib/scroller";
 import styles from "./ContactModal.module.css";
 
 const JOIN_AVATARS = [
@@ -262,7 +263,7 @@ export default function ContactModal({
     }
   }
 
-  // Escape closes, Tab stays inside the dialog, and body scroll is locked
+  // Escape closes, Tab stays inside the dialog, and page scroll is locked
   // while open (including through the closing animation) so the page behind
   // can't scroll under the backdrop.
   useEffect(() => {
@@ -302,12 +303,16 @@ export default function ContactModal({
 
     window.addEventListener("keydown", onKeyDown);
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    // Locks ScrollRoot's scroller, not body — body no longer scrolls (see
+    // lib/scroller.ts), so hiding its overflow would leave the page free to
+    // scroll on behind the backdrop.
+    const scroller = getScroller() ?? document.body;
+    const previousOverflow = scroller.style.overflow;
+    scroller.style.overflow = "hidden";
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = previousOverflow;
+      scroller.style.overflow = previousOverflow;
     };
   }, [phase, onClose]);
 
@@ -391,7 +396,7 @@ export default function ContactModal({
         aria-labelledby="contact-modal-heading"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className={styles.photo}>
+        <div className={`${styles.photo} ${contentTab === "start" ? styles.photoStart : ""}`}>
           <Image
             src="/images/contact-sky.jpg"
             alt=""
@@ -399,23 +404,23 @@ export default function ContactModal({
             sizes="322px"
             className={styles.photoImage}
           />
-          <StatCarousel
-            items={contentTab === "contact" ? CONTACT_STATS : JOIN_STATS}
-            forceHidden={tabDissolving}
-          />
+          {contentTab !== "start" && (
+            <StatCarousel
+              items={contentTab === "contact" ? CONTACT_STATS : JOIN_STATS}
+              forceHidden={tabDissolving}
+            />
+          )}
         </div>
 
-        <div className={styles.content}>
+        <div className={`${styles.content} ${contentTab === "start" ? styles.contentStart : ""}`}>
           <div className={styles.header}>
             <h2
               id="contact-modal-heading"
               className={`${styles.heading} ${tabDissolving ? styles.headingHidden : ""}`}
             >
-              {contentTab === "start"
-                ? "How would you like to connect?"
-                : contentTab === "contact"
-                  ? "Connect with us"
-                  : "Join us"}
+              {contentTab === "start" ? (
+                <>Home is more than one place.<br />Your future can be, too.</>
+              ) : contentTab === "contact" ? "What’s on your mind?" : "Meet the community"}
             </h2>
             <div className={styles.headerActions}>
               {contentTab !== "start" ? (
@@ -434,30 +439,23 @@ export default function ContactModal({
             </div>
           </div>
 
-          <hr className={styles.divider} />
+          {contentTab !== "start" && <hr className={styles.divider} />}
 
           {contentTab === "start" ? (
-            <div className={styles.startBody}>
+            <div className={`${styles.startBody} ${tabDissolving ? styles.formHidden : ""}`}>
               <p className={styles.startCopy}>
-                Pick the path that matches what you need. We&apos;ll keep the next step
-                focused and avoid a form unless it helps.
+                Let’s talk about what you want to build in India, abroad, and wherever life takes you.
               </p>
-              <div className={styles.startOptions}>
-                <button type="button" className={styles.startOption} onClick={() => selectTab("contact")}>
-                  <span className={styles.startOptionKicker}>Talk to an advisor</span>
-                  <span className={styles.startOptionTitle}>Send a quick enquiry</span>
-                  <span className={styles.startOptionBody}>
-                    Tell us what you need help with. We&apos;ll get back to you by email or
-                    phone.
-                  </span>
-                </button>
-                <button type="button" className={styles.startOption} onClick={() => selectTab("join")}>
-                  <span className={styles.startOptionKicker}>Join the community</span>
-                  <span className={styles.startOptionTitle}>Open the WhatsApp path</span>
-                  <span className={styles.startOptionBody}>
-                    Scan the QR code to join our NRI community on WhatsApp.
-                  </span>
-                </button>
+              <div className={styles.startActions}>
+                <Button type="button" onClick={() => selectTab("contact")}>
+                  Let’s talk <span aria-hidden="true">→</span>
+                </Button>
+                <p className={styles.communityPrompt}>
+                  Still finding your bearings?{" "}
+                  <button type="button" className={styles.communityLink} onClick={() => selectTab("join")}>
+                    Meet the Desh community.
+                  </button>
+                </p>
               </div>
             </div>
           ) : contentTab === "contact" ? (
@@ -484,6 +482,10 @@ export default function ContactModal({
                 onSubmit={handleSubmit}
                 noValidate
               >
+                <p className={styles.formIntro}>
+                  Choose a topic and leave your details. An advisor will reply by email
+                  within 24–48 hours.
+                </p>
                 <fieldset className={styles.fieldset} disabled={sending}>
                   <legend className={styles.srOnly}>What can we help with?</legend>
                   <div className={styles.options}>
@@ -584,7 +586,7 @@ export default function ContactModal({
                       id="contact-message"
                       name="message"
                       className={styles.textarea}
-                      placeholder="Enter your message here"
+                      placeholder="What would you like help with?"
                       rows={4}
                       value={fields.message}
                       onChange={(event) => updateField("message", event.target.value)}
@@ -595,19 +597,17 @@ export default function ContactModal({
                 <div className={styles.footer}>
                   {status === "error" && (
                     <p className={styles.formError} role="alert">
-                      That didn&apos;t send. Please try again, or use the community path
-                      instead.
+                      Your message couldn’t be sent. Your details are still here — please try again.
                     </p>
                   )}
                   <Button type="submit" disabled={sending}>
-                    {sending ? "Sending…" : "Send message"}
+                    {sending ? "Sending…" : "Send to a Desh advisor"}
                   </Button>
                 </div>
               </form>
             )
           ) : (
-            // The QR is the working path into the community; the button below
-            // it still has no invite URL to point at.
+            // The QR is the available community invitation.
             <div className={`${styles.joinBody} ${tabDissolving ? styles.joinBodyHidden : ""}`}>
               <Image
                 src="/images/qr-code.png"
@@ -635,9 +635,10 @@ export default function ContactModal({
                 <p className={styles.joinHeading}>
                   Join our NRI community on WhatsApp.
                 </p>
-                <button type="button" className={styles.joinCta} onClick={onClose}>
-                  Join the community
-                </button>
+                <p className={styles.joinInstructions}>
+                  Scan this code with your phone camera to open the community invite
+                  in WhatsApp.
+                </p>
               </div>
             </div>
           )}
