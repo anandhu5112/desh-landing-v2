@@ -1,0 +1,122 @@
+diff --git a/node_modules/liquid-glass-web-react/dist/index.cjs b/node_modules/liquid-glass-web-react/dist/index.cjs
+index c997585..7486b57 100644
+--- a/node_modules/liquid-glass-web-react/dist/index.cjs
++++ b/node_modules/liquid-glass-web-react/dist/index.cjs
+@@ -249,6 +249,16 @@ var instanceCounter = 0;
+ var UA = typeof navigator !== "undefined" ? navigator.userAgent : "";
+ var IS_IOS = typeof navigator !== "undefined" && (/iPad|iPhone|iPod/.test(UA) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+ var IS_SAFARI = IS_IOS || /^((?!chrome|chromium|android).)*safari/i.test(UA);
++// PATCHED (see patches/liquid-glass-web-react+0.1.1.patch): the filter's
++// coordinate units. Upstream picks userSpaceOnUse only for iOS and leaves
++// every other browser on objectBoundingBox — but on that path Chrome stops
++// displacing entirely once the filtered element's child is a scroll
++// container, which is exactly how this app is built (the page scrolls inside
++// the glass surface). userSpaceOnUse is platform-neutral: sizes and the
++// displacement scale are computed in px either way, so forcing it on gives
++// every browser the path that already works.
++var USE_USER_SPACE_UNITS = true;
++
+ function fe(name, attrs) {
+   const el = document.createElementNS(SVG_NS, name);
+   for (const key of Object.keys(attrs)) el.setAttribute(key, String(attrs[key]));
+@@ -367,7 +377,7 @@ var LiquidGlassEngine = class {
+    * filter's cost scales with the lens, not the container.
+    */
+   buildFilter() {
+-    const units = IS_IOS ? "userSpaceOnUse" : "objectBoundingBox";
++    const units = USE_USER_SPACE_UNITS ? "userSpaceOnUse" : "objectBoundingBox";
+     const filter = fe("filter", {
+       filterUnits: units,
+       primitiveUnits: units,
+@@ -520,9 +530,9 @@ var LiquidGlassEngine = class {
+     const left = this.x * W - hw;
+     const top = this.y * H - hh;
+     const bias = 0.5;
+-    const sx = IS_IOS ? 1 : 1 / W;
+-    const sy = IS_IOS ? 1 : 1 / H;
+-    if (IS_IOS) {
++    const sx = USE_USER_SPACE_UNITS ? 1 : 1 / W;
++    const sy = USE_USER_SPACE_UNITS ? 1 : 1 / H;
++    if (USE_USER_SPACE_UNITS) {
+       this.filterEl.setAttribute("width", String(W));
+       this.filterEl.setAttribute("height", String(H));
+     }
+@@ -536,7 +546,7 @@ var LiquidGlassEngine = class {
+       el.setAttribute("width", fw);
+       el.setAttribute("height", fh);
+     }
+-    const s = IS_IOS ? o.strength * Math.sqrt(W * W + H * H) / Math.SQRT2 : o.strength;
++    const s = USE_USER_SPACE_UNITS ? o.strength * Math.sqrt(W * W + H * H) / Math.SQRT2 : o.strength;
+     const c = o.chromaticAberration;
+     const scales = [s * (1 + 0.2 * c), s * (1 + 0.1 * c), s];
+     const blurInput = o.blur > 0 ? "blurred" : "SourceGraphic";
+@@ -546,7 +556,7 @@ var LiquidGlassEngine = class {
+     }
+     this.blurEl?.setAttribute(
+       "stdDeviation",
+-      IS_IOS ? `${o.blur} ${o.blur}` : `${o.blur / W} ${o.blur / H}`
++      USE_USER_SPACE_UNITS ? `${o.blur} ${o.blur}` : `${o.blur / W} ${o.blur / H}`
+     );
+     this.specularEl?.setAttribute("k2", String(o.specular));
+     if (IS_SAFARI) {
+diff --git a/node_modules/liquid-glass-web-react/dist/index.js b/node_modules/liquid-glass-web-react/dist/index.js
+index 5a9ed4a..584b486 100644
+--- a/node_modules/liquid-glass-web-react/dist/index.js
++++ b/node_modules/liquid-glass-web-react/dist/index.js
+@@ -226,6 +226,16 @@ var instanceCounter = 0;
+ var UA = typeof navigator !== "undefined" ? navigator.userAgent : "";
+ var IS_IOS = typeof navigator !== "undefined" && (/iPad|iPhone|iPod/.test(UA) || navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+ var IS_SAFARI = IS_IOS || /^((?!chrome|chromium|android).)*safari/i.test(UA);
++// PATCHED (see patches/liquid-glass-web-react+0.1.1.patch): the filter's
++// coordinate units. Upstream picks userSpaceOnUse only for iOS and leaves
++// every other browser on objectBoundingBox — but on that path Chrome stops
++// displacing entirely once the filtered element's child is a scroll
++// container, which is exactly how this app is built (the page scrolls inside
++// the glass surface). userSpaceOnUse is platform-neutral: sizes and the
++// displacement scale are computed in px either way, so forcing it on gives
++// every browser the path that already works.
++var USE_USER_SPACE_UNITS = true;
++
+ function fe(name, attrs) {
+   const el = document.createElementNS(SVG_NS, name);
+   for (const key of Object.keys(attrs)) el.setAttribute(key, String(attrs[key]));
+@@ -344,7 +354,7 @@ var LiquidGlassEngine = class {
+    * filter's cost scales with the lens, not the container.
+    */
+   buildFilter() {
+-    const units = IS_IOS ? "userSpaceOnUse" : "objectBoundingBox";
++    const units = USE_USER_SPACE_UNITS ? "userSpaceOnUse" : "objectBoundingBox";
+     const filter = fe("filter", {
+       filterUnits: units,
+       primitiveUnits: units,
+@@ -497,9 +507,9 @@ var LiquidGlassEngine = class {
+     const left = this.x * W - hw;
+     const top = this.y * H - hh;
+     const bias = 0.5;
+-    const sx = IS_IOS ? 1 : 1 / W;
+-    const sy = IS_IOS ? 1 : 1 / H;
+-    if (IS_IOS) {
++    const sx = USE_USER_SPACE_UNITS ? 1 : 1 / W;
++    const sy = USE_USER_SPACE_UNITS ? 1 : 1 / H;
++    if (USE_USER_SPACE_UNITS) {
+       this.filterEl.setAttribute("width", String(W));
+       this.filterEl.setAttribute("height", String(H));
+     }
+@@ -513,7 +523,7 @@ var LiquidGlassEngine = class {
+       el.setAttribute("width", fw);
+       el.setAttribute("height", fh);
+     }
+-    const s = IS_IOS ? o.strength * Math.sqrt(W * W + H * H) / Math.SQRT2 : o.strength;
++    const s = USE_USER_SPACE_UNITS ? o.strength * Math.sqrt(W * W + H * H) / Math.SQRT2 : o.strength;
+     const c = o.chromaticAberration;
+     const scales = [s * (1 + 0.2 * c), s * (1 + 0.1 * c), s];
+     const blurInput = o.blur > 0 ? "blurred" : "SourceGraphic";
+@@ -523,7 +533,7 @@ var LiquidGlassEngine = class {
+     }
+     this.blurEl?.setAttribute(
+       "stdDeviation",
+-      IS_IOS ? `${o.blur} ${o.blur}` : `${o.blur / W} ${o.blur / H}`
++      USE_USER_SPACE_UNITS ? `${o.blur} ${o.blur}` : `${o.blur / W} ${o.blur / H}`
+     );
+     this.specularEl?.setAttribute("k2", String(o.specular));
+     if (IS_SAFARI) {

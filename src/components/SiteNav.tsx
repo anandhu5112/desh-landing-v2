@@ -3,32 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { heroIntroSettledRef } from "@/lib/heroProgress";
 import { useContactModal } from "./ContactModalProvider";
+import { NAV_PILL_ID, useGlassConfig } from "./GlassContext";
 import styles from "./SiteNav.module.css";
 
-// Sub-pixel/trackpad noise shouldn't flip direction; only a real scroll counts.
-const DIRECTION_THRESHOLD = 4;
-// How long scrolling has to be still before the "stopped" reveal kicks in.
-const IDLE_REVEAL_MS = 150;
 // Matches the .links/.menuButton swap in SiteNav.module.css.
 const MOBILE_MAX = 640;
 
 /**
  * Persistent top navigation — one centered black pill (logo, links, and
  * Contact us all inside it, per Figma node 297:6248), not a full-width row.
- * Hides on scroll-down, reappears on scroll-up or once scrolling stops —
- * both are driven off native window scroll, which is what GSAP's
- * ScrollTrigger scrub reads too.
+ * Fixed in place for the whole page: it does not hide on scroll-down. It used
+ * to, reappearing on scroll-up or once scrolling stopped, which meant the
+ * glass lens under it had to chase a moving target every frame.
  *
  * The whole pill always carries its own black background, so — unlike the
  * previous bare-logo-on-the-left layout — nothing here needs to track what
  * section is behind it; it's legible over anything.
- *
- * One exception: through Hero's opening beat, hiding is suppressed entirely
- * (see heroIntroSettledRef) so the nav stays in place and only starts fading
- * — together with the hero heading/CTA, which are on the same gate — once
- * that beat is done.
  *
  * On phones the menu is *inside* the pill rather than a card floating below
  * it: opening grows the pill itself out to the page gutters and down over
@@ -36,7 +27,6 @@ const MOBILE_MAX = 640;
  * toggle row and the menu in a shared .pill — they're one surface.
  */
 export default function SiteNav() {
-  const [hidden, setHidden] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   // The modal itself is mounted once by ContactModalProvider — the nav is no
   // longer the only way in, so it no longer owns the open state either.
@@ -50,46 +40,6 @@ export default function SiteNav() {
   useEffect(() => {
     menuOpenRef.current = menuOpen;
   }, [menuOpen]);
-
-  useEffect(() => {
-    let lastY = window.scrollY;
-    let idleTimer: number | null = null;
-
-    // No rAF-gating here: the per-event work is a handful of getBoundingClientRect
-    // reads and a setState React already bails out of when the value hasn't
-    // changed, nowhere near the cost of e.g. the sphere's per-frame layout —
-    // so throttling would add complexity without a real performance need.
-    function onScroll() {
-      const y = window.scrollY;
-      const delta = y - lastY;
-
-      // Any scroll activity postpones the "stopped" reveal; it only fires
-      // once events stop arriving for IDLE_REVEAL_MS.
-      if (idleTimer !== null) window.clearTimeout(idleTimer);
-      idleTimer = window.setTimeout(() => setHidden(false), IDLE_REVEAL_MS);
-
-      if (menuOpenRef.current) {
-        // The open menu is part of the pill now, so hiding the nav would
-        // slide the menu off-screen with it. Keep lastY current so closing
-        // the menu doesn't then register one giant delta.
-        setHidden(false);
-        lastY = y;
-      } else if (!heroIntroSettledRef.current) {
-        // Hero's still in its opening beat — stay put regardless of delta.
-        setHidden(false);
-      } else if (Math.abs(delta) > DIRECTION_THRESHOLD) {
-        setHidden(delta > 0);
-        lastY = y;
-      }
-    }
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      if (idleTimer !== null) window.clearTimeout(idleTimer);
-    };
-  }, []);
 
   /**
    * The collapsed pill is sized by its own content (logo + toggle), but the
@@ -139,10 +89,26 @@ export default function SiteNav() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [menuOpen]);
 
+  const { config } = useGlassConfig();
+
   return (
-    <header ref={navRef} className={`${styles.nav} ${hidden ? styles.navHidden : ""}`}>
+    <header ref={navRef} className={styles.nav}>
       <div className={styles.navShell}>
-        <div ref={pillRef} className={`${styles.pill} ${menuOpen ? styles.pillOpen : ""}`}>
+        <div
+          // ScrollRoot's glass lens measures this element every frame to sit
+          // exactly under it — see ScrollRoot.tsx.
+          id={NAV_PILL_ID}
+          ref={pillRef}
+          className={`${styles.pill} ${menuOpen ? styles.pillOpen : ""}`}
+          style={{
+            "--glass-blur": `${config.blur}px`,
+            "--glass-opacity": config.opacity,
+            "--glass-saturate": config.saturate,
+            "--glass-contrast": config.contrast,
+            "--glass-rim-light": `rgba(255, 255, 255, ${config.rimLight})`,
+            "--glass-shadow-opacity": config.shadowOpacity,
+          } as React.CSSProperties}
+        >
           <div className={styles.pillRow}>
             <Link href="/" className={styles.brand}>
               {/* Source is 63x20.5 (~3.07:1). Height-constrained, width auto, so

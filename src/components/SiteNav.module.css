@@ -24,13 +24,6 @@
      full-width row lets clicks/drags through to the hero's spotlight and
      sphere beneath it. */
   pointer-events: none;
-  transform: translateY(0);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* -100% of the row's own height (padding-top + content) clears it fully. */
-.navHidden {
-  transform: translateY(-100%);
 }
 
 /* Positioning context shared by the pill and the mobile dropdown, so the
@@ -50,8 +43,15 @@
   pointer-events: auto;
   display: flex;
   flex-direction: column;
-  background: #000000;
+  background: rgba(0, 0, 0, var(--glass-opacity, 0.4));
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(var(--glass-saturate, 1.5)) contrast(var(--glass-contrast, 1.1));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(var(--glass-saturate, 1.5)) contrast(var(--glass-contrast, 1.1));
+  box-shadow: 
+    inset 0 1px 1px var(--glass-rim-light, rgba(255,255,255,0.15)),
+    0 8px 32px rgba(0, 0, 0, var(--glass-shadow-opacity, 0.3));
   border-radius: 16px;
+  /* Optional: subtle border to enforce edge */
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .pillRow {
@@ -90,15 +90,17 @@
   font-size: var(--fs-nav);
   line-height: 1.5;
   font-weight: 500;
-  color: #9c9c9c;
+  color: #ffffff;
   text-decoration: none;
   white-space: nowrap;
-  transition: color 0.2s ease;
+  /* Was #9c9c9c brightening to white on hover. At full white there is no
+     brighter to go, so the hover cue dims instead. */
+  transition: opacity 0.2s ease;
 }
 
 .link:hover,
 .link:focus-visible {
-  color: #ffffff;
+  opacity: 0.7;
 }
 
 .contactCta {
@@ -267,13 +269,14 @@
   font-size: var(--fs-nav);
   line-height: 1.5;
   font-weight: 500;
-  color: #9c9c9c;
+  color: #ffffff;
   text-decoration: none;
+  transition: opacity 0.2s ease;
 }
 
 .mobileLink:hover,
 .mobileLink:focus-visible {
-  color: #ffffff;
+  opacity: 0.7;
 }
 
 .mobileContactCta {

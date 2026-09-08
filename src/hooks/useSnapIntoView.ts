@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { lenisRef } from "@/lib/lenis";
+import { getScroller } from "@/lib/scroller";
 
 /** Fraction of the section's own height that must be visible to trigger the snap. */
 const TRIGGER_RATIO = 0.3;
@@ -50,7 +51,14 @@ export function useSnapIntoView<T extends HTMLElement>() {
           el.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       },
-      { threshold: [0, REARM_RATIO, TRIGGER_RATIO, 1] },
+      {
+        // Observe against the element the page actually scrolls in, not the
+        // window (see lib/scroller.ts). It is fixed at exactly viewport size,
+        // so the ratios work out the same either way — but naming it keeps
+        // this correct if that box ever stops being the full viewport.
+        root: getScroller(),
+        threshold: [0, REARM_RATIO, TRIGGER_RATIO, 1],
+      },
     );
 
     observer.observe(el);

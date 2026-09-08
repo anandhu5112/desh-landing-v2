@@ -8,6 +8,7 @@ import AdvisorSection from "./AdvisorSection";
 import GrowSection from "./GrowSection";
 import UsSection from "./UsSection";
 import { useSnapIntoView } from "@/hooks/useSnapIntoView";
+import { getScroller } from "@/lib/scroller";
 import styles from "./ServicesSection.module.css";
 
 if (typeof window !== "undefined") {
@@ -47,6 +48,9 @@ export default function ServicesSection() {
         y: 0,
         ease: "none",
         scrollTrigger: {
+          // The page scrolls in ScrollRoot's div, not the window — without
+          // this ScrollTrigger would watch a window scroll that never moves.
+          scroller: getScroller(),
           trigger: riseRef.current,
           start: "top bottom",
           end: "top center",

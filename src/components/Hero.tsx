@@ -6,7 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import AdvisorCta from "@/components/AdvisorCta";
 import { CONTACT_REASONS } from "@/components/ContactModal";
-import { heroIntroSettledRef } from "@/lib/heroProgress";
+import { getScroller } from "@/lib/scroller";
 import { heroScrub } from "@/lib/scrollTuning";
 import styles from "./Hero.module.css";
 
@@ -167,26 +167,6 @@ const SUN_SETTLE_AT = SUN_RISE_STARTS_AT + SUN_RISE_DURATION;
 const TIMELINE_UNITS = SUN_SETTLE_AT + HOLD_DURATION;
 const PIN_END = `+=${(TIMELINE_UNITS * SCROLL_PCT_PER_UNIT).toFixed(1)}%`;
 
-/**
- * A position in timeline units, as ScrollTrigger's own 0..1 progress.
- *
- * Worth having as a function rather than open-coded per constant: both
- * callers below used to divide by the pin's scroll range as though one
- * timeline unit cost ZOOM_SCROLL_PCT of it, which was true only before the
- * hold was appended to the timeline. After that the outro revealed about a
- * sixth of the range early — while the sun was still two-thirds of the way
- * up, positioned for where it was going to stop — and SiteNav released
- * slightly before the intro had actually settled.
- */
-const progressAt = (unit: number) => unit / TIMELINE_UNITS;
-
-// Progress at which the second-section statement reveals: exactly as the sun
-// arrives, which is the whole point of it.
-const OUTRO_REVEAL_AT = progressAt(SUN_SETTLE_AT);
-
-// The opening beat's end, for SiteNav (see heroProgress.ts) — derived, not
-// hand-copied, so it can't drift out of sync.
-const HERO_INTRO_SETTLED_PROGRESS = progressAt(INTRO_HOLD_DURATION);
 
 // Soft at both ends: the sun eases up out of the horizon, carries through
 // the middle, and settles rather than stopping. Linear ("none") is the usual
@@ -210,6 +190,22 @@ const SUN_RISE_EASE = "power1.inOut";
 // 0.9 keeps the visible gap the design has always wanted without shrinking
 // the copy enough to look timid inside the shape.
 const OUTRO_CIRCLE_FIT = 0.9;
+
+/**
+ * A position in timeline units, as ScrollTrigger's own 0..1 progress.
+ *
+ * Worth having as a function rather than open-coded: the caller below used to
+ * divide by the pin's scroll range as though one timeline unit cost
+ * ZOOM_SCROLL_PCT of it, which was true only before the hold was appended to
+ * the timeline. After that the outro revealed about a sixth of the range
+ * early — while the sun was still two-thirds of the way up, positioned for
+ * where it was going to stop.
+ */
+const progressAt = (unit: number) => unit / TIMELINE_UNITS;
+
+// Progress at which the second-section statement reveals: exactly as the sun
+// arrives, which is the whole point of it.
+const OUTRO_REVEAL_AT = progressAt(SUN_SETTLE_AT);
 
 /**
  * Carry the hero copy's entrance across ScrollTrigger's pin swaps.
@@ -632,6 +628,10 @@ export default function Hero() {
 
       const tl = gsap.timeline({
         scrollTrigger: {
+          // The page scrolls in ScrollRoot's div, not the window — see
+          // lib/scroller.ts. Everything below (start/end, the pin, the
+          // scrub) is measured against this element instead of the viewport.
+          scroller: getScroller(),
           trigger: heroRef.current,
           start: "top top",
           end: PIN_END,
@@ -639,7 +639,9 @@ export default function Hero() {
           // stack, so neither is meaningful to tune on its own.
           scrub: heroScrub(),
           pin: true,
-          // body is display:flex, which makes ScrollTrigger skip pin-spacing by default
+          // ScrollRoot's content wrapper is display:flex, which makes
+          // ScrollTrigger skip pin-spacing by default (as body's own flex
+          // column did before the page moved inside the scroller).
           pinSpacing: true,
           anticipatePin: 1,
           // Makes the sun's function-based from-value re-measure on resize
@@ -656,10 +658,6 @@ export default function Hero() {
             syncOutro();
           },
           onUpdate: (self) => {
-            // SiteNav reads this to hold off hiding until the hero's
-            // opening beat is done (see heroProgress.ts).
-            heroIntroSettledRef.current = self.progress >= HERO_INTRO_SETTLED_PROGRESS;
-
             // Reveal the second-section statement as the zoom settles.
             // Guarded by a ref so we only re-render on an actual transition.
             const shouldShow = self.progress >= OUTRO_REVEAL_AT;

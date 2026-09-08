@@ -141,9 +141,13 @@ body {
 }
 
 body {
-  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
+  /* The page scrolls inside ScrollRoot, not here — see lib/scroller.ts.
+     Without this the document would scroll too, giving two nested scrollers
+     and a second scrollbar. */
+  overflow: hidden;
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-inter), Arial, Helvetica, sans-serif;
