@@ -14,7 +14,9 @@ const COMMUNITY_URL =
   "https://chat.whatsapp.com/KmasCJMGJ42Bqn9a4PkMw6?s=cl&p=i&ilr=4";
 
 export default function BookingExperience() {
-  const [bookedStart, setBookedStart] = useState<string | undefined>();
+  const [booking, setBooking] = useState<
+    { complete: false } | { complete: true; startTime?: string }
+  >({ complete: false });
 
   useEffect(() => {
     let active = true;
@@ -23,7 +25,7 @@ export default function BookingExperience() {
     const onBookingSuccess = (
       event: EmbedEvent<"bookingSuccessfulV2">,
     ) => {
-      setBookedStart(event.detail.data.startTime);
+      setBooking({ complete: true, startTime: event.detail.data.startTime });
     };
 
     void getCalApi({ namespace: CAL_NAMESPACE }).then((api) => {
@@ -46,11 +48,11 @@ export default function BookingExperience() {
     };
   }, []);
 
-  const bookedTime = bookedStart
+  const bookedTime = booking.complete && booking.startTime
     ? new Intl.DateTimeFormat(undefined, {
         dateStyle: "long",
         timeStyle: "short",
-      }).format(new Date(bookedStart))
+      }).format(new Date(booking.startTime))
     : null;
 
   return (
@@ -72,7 +74,7 @@ export default function BookingExperience() {
         </Link>
       </header>
 
-      {bookedStart !== undefined ? (
+      {booking.complete ? (
         <section className={styles.success} aria-labelledby="booking-success-heading">
           <div className={styles.successCopy}>
             <CheckCircle size={34} weight="fill" aria-hidden="true" />
