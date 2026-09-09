@@ -1,7 +1,6 @@
 "use client";
 
 import AdvisorCta from "@/components/AdvisorCta";
-import { CONTACT_REASONS } from "@/components/ContactModal";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
 import LogoCarousel from "@/components/LogoCarousel";
 import styles from "./GrowSection.module.css";
@@ -36,7 +35,7 @@ export default function GrowSection() {
             Participate in India&apos;s growth through professionally managed mutual
             funds, with guidance for NRIs investing from abroad.
           </p>
-          <AdvisorCta className={styles.cta} fallbackReason={CONTACT_REASONS.india}>
+          <AdvisorCta className={styles.cta}>
             Let’s talk money
           </AdvisorCta>
         </div>

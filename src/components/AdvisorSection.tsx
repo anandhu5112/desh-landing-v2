@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Button from "@/components/ui/Button";
+import AdvisorCta from "@/components/AdvisorCta";
 import styles from "./AdvisorSection.module.css";
 
 /**
@@ -42,9 +42,9 @@ export default function AdvisorSection() {
             From your first investment to your next big decision, get personal
             guidance for your goals.
           </p>
-          <Button type="button" className={styles.cta}>
+          <AdvisorCta className={styles.cta}>
             Book a Free Consultation
-          </Button>
+          </AdvisorCta>
         </div>
 
         <div className={styles.photo}>

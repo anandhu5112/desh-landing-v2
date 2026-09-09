@@ -5,13 +5,12 @@ import {
   useRef,
   useState,
   type AnimationEvent,
-  type FormEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { Check, X } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, ArrowUpRight, InstagramLogo, X } from "@phosphor-icons/react/dist/ssr";
 import Button from "@/components/ui/Button";
-import { submitContact } from "@/lib/contact";
+import { CAL_BOOKING_URL } from "@/lib/booking";
 import { getScroller } from "@/lib/scroller";
 import styles from "./ContactModal.module.css";
 
@@ -24,25 +23,6 @@ const JOIN_AVATARS = [
 
 type Stat = { value: string; label: string; caption: string };
 
-const CONTACT_STATS: Stat[] = [
-  {
-    value: "₹1 Crore+",
-    label: "Assets Guided",
-    caption: "Building wealth with a disciplined, long-term investment approach.",
-  },
-  {
-    value: "100+",
-    label: "Happy NRI Investors",
-    caption: "Trusted by NRIs worldwide to invest in India's growth.",
-  },
-  {
-    value: "Always",
-    label: "Human Support",
-    caption: "Real advisors, real conversations, whenever you need them.",
-  },
-];
-
-/** First entry is the tab's original, unchanged stat — the other two are new. */
 const JOIN_STATS: Stat[] = [
   { value: "999+", label: "Active NRI Investors", caption: "Learn. Connect. Grow together." },
   {
@@ -115,57 +95,7 @@ function StatCarousel({ items, forceHidden }: { items: Stat[]; forceHidden: bool
   );
 }
 
-/** Exported so each CTA can name the reason it should preselect without
-    re-typing a string that has to match one of these exactly. */
-export const CONTACT_REASONS = {
-  start: "Start my investment journey",
-  india: "Explore Indian mutual funds",
-  us: "Explore US stocks",
-  documentation: "I need help in NRI documentation",
-  portfolio: "Review my portfolio",
-  other: "Something else",
-} as const;
-
-const REASONS: { label: string; full?: boolean }[] = [
-  { label: CONTACT_REASONS.start, full: true },
-  { label: CONTACT_REASONS.india },
-  { label: CONTACT_REASONS.us },
-  { label: CONTACT_REASONS.documentation },
-  { label: CONTACT_REASONS.portfolio },
-  { label: CONTACT_REASONS.other, full: true },
-];
-
 export type ContactTab = "start" | "contact" | "join";
-
-type Fields = { name: string; email: string; phone: string; message: string };
-type FieldName = keyof Fields;
-type FieldErrors = Partial<Record<FieldName, string>>;
-
-const EMPTY_FIELDS: Fields = { name: "", email: "", phone: "", message: "" };
-/** Document order — used to focus the *first* thing that failed validation
-    rather than whichever key happens to come out of the errors object. */
-const FIELD_ORDER: FieldName[] = ["name", "email", "phone", "message"];
-
-/** Deliberately loose: the point is to catch a typo'd address before it
-    costs a lead, not to adjudicate RFC 5322. */
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function validate(fields: Fields): FieldErrors {
-  const errors: FieldErrors = {};
-
-  if (!fields.name.trim()) {
-    errors.name = "Please tell us your name.";
-  }
-
-  const email = fields.email.trim();
-  if (!email) {
-    errors.email = "We need an email address to reply to.";
-  } else if (!EMAIL_PATTERN.test(email)) {
-    errors.email = "That doesn't look like an email address.";
-  }
-
-  return errors;
-}
 
 /** Everything focusable the tab trap should cycle through. */
 const FOCUSABLE =
@@ -176,8 +106,6 @@ type ContactModalProps = {
   onClose: () => void;
   /** Which tab a CTA wants this opened on. */
   initialTab?: ContactTab;
-  /** Which radio option a CTA wants preselected. */
-  initialReason?: string;
 };
 
 /**
@@ -190,7 +118,6 @@ export default function ContactModal({
   open,
   onClose,
   initialTab = "start",
-  initialReason,
 }: ContactModalProps) {
   const [activeTab, setActiveTab] = useState<ContactTab>(initialTab);
   // What's actually rendered — lags one dissolve behind `activeTab` while a
@@ -199,10 +126,17 @@ export default function ContactModal({
   const [contentTab, setContentTab] = useState<ContactTab>(initialTab);
   const [tabDissolving, setTabDissolving] = useState(false);
 
+  const tabTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (tabTimer.current) clearTimeout(tabTimer.current);
+  }, [open]);
+
   function selectTab(tab: ContactTab) {
     if (tab === activeTab) return;
     // The tab button itself highlights immediately; only the content below
     // it dissolves.
+    if (tabTimer.current) clearTimeout(tabTimer.current);
     setActiveTab(tab);
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -211,19 +145,13 @@ export default function ContactModal({
     }
 
     setTabDissolving(true);
-    window.setTimeout(() => {
+    tabTimer.current = setTimeout(() => {
       setContentTab(tab);
       setTabDissolving(false);
     }, DISSOLVE_MS);
   }
 
-  const [reason, setReason] = useState<string>(initialReason ?? REASONS[0].label);
-  const [fields, setFields] = useState<Fields>(EMPTY_FIELDS);
-  const [errors, setErrors] = useState<FieldErrors>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-
   const cardRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
   // Stays "closing" through the fade-out-down animation instead of
   // unmounting the instant `open` flips false, so the exit has time to play.
@@ -240,20 +168,10 @@ export default function ContactModal({
     setPrevOpen(open);
     if (open) {
       setPhase("open");
-      // Every CTA opens this with its own intent, so an open re-seeds the
-      // tab and reason rather than resuming wherever the last one left off.
+      // Each entry point starts on its requested screen.
       setActiveTab(initialTab);
       setContentTab(initialTab);
       setTabDissolving(false);
-      if (initialReason) setReason(initialReason);
-      // A sent enquiry is finished with; anything else is a half-typed one
-      // worth keeping, since the commonest way back here is a backdrop
-      // click closing the modal by accident.
-      if (status === "sent") {
-        setFields(EMPTY_FIELDS);
-        setErrors({});
-      }
-      if (status !== "sending") setStatus("idle");
     } else {
       // No animationend ever fires once the exit animation itself is
       // suppressed by reduced-motion, so skip "closing" and unmount
@@ -330,55 +248,22 @@ export default function ContactModal({
     return () => previouslyFocused?.focus?.();
   }, [phase]);
 
+  useEffect(() => {
+    // A screen switch can remove the button that held focus.
+    if (phase === "open" && !cardRef.current?.contains(document.activeElement)) {
+      cardRef.current?.focus();
+    }
+  }, [contentTab, phase]);
+
   if (phase === "closed") return null;
 
   const closing = phase === "closing";
-  const sending = status === "sending";
+  const isBooking = contentTab === "contact";
 
   // Fires for both the backdrop's and the card's own animation (each has
   // its own listener below) — actually unmounts once the exit finishes.
   function handleAnimationEnd(event: AnimationEvent<HTMLDivElement>) {
     if (closing && event.target === event.currentTarget) setPhase("closed");
-  }
-
-  function updateField(name: FieldName, value: string) {
-    setFields((current) => ({ ...current, [name]: value }));
-    // Clear the complaint as soon as the visitor starts addressing it,
-    // rather than leaving it up until the next submit.
-    setErrors((current) => (current[name] ? { ...current, [name]: undefined } : current));
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (status === "sending") return;
-
-    const nextErrors = validate(fields);
-    setErrors(nextErrors);
-
-    const firstInvalid = FIELD_ORDER.find((name) => nextErrors[name]);
-    if (firstInvalid) {
-      formRef.current
-        ?.querySelector<HTMLElement>(`[name="${firstInvalid}"]`)
-        ?.focus();
-      return;
-    }
-
-    setStatus("sending");
-    try {
-      await submitContact({
-        reason,
-        name: fields.name.trim(),
-        email: fields.email.trim(),
-        phone: fields.phone.trim(),
-        message: fields.message.trim(),
-      });
-      setStatus("sent");
-    } catch (error) {
-      // Surfaced to the visitor as the error panel below; logged so a
-      // misconfigured endpoint is findable rather than silent.
-      console.error("Contact form submission failed", error);
-      setStatus("error");
-    }
   }
 
   return createPortal(
@@ -390,40 +275,51 @@ export default function ContactModal({
       <div
         ref={cardRef}
         tabIndex={-1}
-        className={`${styles.card} ${closing ? styles.cardClosing : ""}`}
+        className={`${styles.card} ${isBooking ? styles.bookingCard : ""} ${closing ? styles.cardClosing : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="contact-modal-heading"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className={`${styles.photo} ${contentTab === "start" ? styles.photoStart : ""}`}>
+        <div className={`${styles.photo} ${isBooking ? styles.portrait : ""} ${contentTab === "start" ? styles.photoStart : ""}`}>
           <Image
-            src="/images/contact-sky.jpg"
-            alt=""
+            src={isBooking ? "/images/aswin-portrait.jpg" : "/images/contact-sky.jpg"}
+            alt={isBooking ? "Aswin PS, co-founder of Desh" : ""}
             fill
-            sizes="322px"
+            sizes="(max-width: 900px) 100vw, 390px"
             className={styles.photoImage}
           />
-          {contentTab !== "start" && (
+          {contentTab === "join" && (
             <StatCarousel
-              items={contentTab === "contact" ? CONTACT_STATS : JOIN_STATS}
+              items={JOIN_STATS}
               forceHidden={tabDissolving}
             />
           )}
+          {isBooking && (
+            <div className={styles.profile}>
+              <p className={styles.profileName}>Aswin PS</p>
+              <p className={styles.profileRole}>Co-founder, Desh · Finance educator</p>
+              <a className={styles.instagram} href="https://www.instagram.com/aswinonfinance/" target="_blank" rel="noopener noreferrer" aria-label="Aswin on Finance on Instagram (opens in a new tab)">
+                <InstagramLogo size={22} aria-hidden="true" />
+                @aswinonfinance
+                <ArrowUpRight size={16} aria-hidden="true" />
+              </a>
+            </div>
+          )}
         </div>
 
-        <div className={`${styles.content} ${contentTab === "start" ? styles.contentStart : ""}`}>
+        <div className={`${styles.content} ${contentTab === "start" ? styles.contentStart : ""} ${isBooking ? styles.bookingContent : ""}`}>
           <div className={styles.header}>
-            <h2
+            {isBooking ? <p className={styles.eyebrow}>Let’s talk</p> : <h2
               id="contact-modal-heading"
               className={`${styles.heading} ${tabDissolving ? styles.headingHidden : ""}`}
             >
               {contentTab === "start" ? (
                 <>Home is more than one place.<br />Your future can be, too.</>
-              ) : contentTab === "contact" ? "What’s on your mind?" : "Meet the community"}
-            </h2>
+              ) : "Meet the community"}
+            </h2>}
             <div className={styles.headerActions}>
-              {contentTab !== "start" ? (
+              {contentTab === "join" ? (
                 <button type="button" className={styles.back} onClick={() => selectTab("start")}>
                   Back
                 </button>
@@ -439,10 +335,10 @@ export default function ContactModal({
             </div>
           </div>
 
-          {contentTab !== "start" && <hr className={styles.divider} />}
+          {contentTab === "join" && <hr className={styles.divider} />}
 
           {contentTab === "start" ? (
-            <div className={`${styles.startBody} ${tabDissolving ? styles.formHidden : ""}`}>
+            <div className={`${styles.startBody} ${tabDissolving ? styles.bodyHidden : ""}`}>
               <p className={styles.startCopy}>
                 Let’s talk about what you want to build in India, abroad, and wherever life takes you.
               </p>
@@ -459,153 +355,27 @@ export default function ContactModal({
               </div>
             </div>
           ) : contentTab === "contact" ? (
-            status === "sent" ? (
-              // Replaces the form rather than closing the modal: closing on
-              // success reads as "did that actually go through?".
-              <div className={styles.success} role="status">
-                <span className={styles.successIcon} aria-hidden="true">
-                  <Check size={28} weight="bold" />
-                </span>
-                <p className={styles.successHeading}>Thanks — that&apos;s with us.</p>
-                <p className={styles.successBody}>
-                  An advisor will get back to you at {fields.email.trim()} within 24–48
-                  hours.
+            <div className={`${styles.bookingBody} ${tabDissolving ? styles.bodyHidden : ""}`}>
+              <h2 id="contact-modal-heading" className={styles.bookingHeading}>
+                Your next step starts<br className={styles.desktopBreak} /> with a conversation.
+              </h2>
+              <p className={styles.bookingCopy}>
+                You may know Aswin from his finance explainers. Meet the people
+                behind Desh and explore what comes next for your money.
+              </p>
+              <div className={styles.bookingDetails}>
+                <h3>A little clarity on your next move.</h3>
+                <p className={styles.bookingCopy}>
+                  Talk through your goals, ask your questions, and see how Desh can help.
                 </p>
-                <Button type="button" onClick={onClose}>
-                  Done
-                </Button>
               </div>
-            ) : (
-              <form
-                ref={formRef}
-                className={`${styles.form} ${tabDissolving ? styles.formHidden : ""}`}
-                onSubmit={handleSubmit}
-                noValidate
-              >
-                <p className={styles.formIntro}>
-                  Choose a topic and leave your details. An advisor will reply by email
-                  within 24–48 hours.
-                </p>
-                <fieldset className={styles.fieldset} disabled={sending}>
-                  <legend className={styles.srOnly}>What can we help with?</legend>
-                  <div className={styles.options}>
-                    {REASONS.map(({ label, full }) => (
-                      <label
-                        key={label}
-                        className={`${styles.option} ${full ? styles.optionFull : ""}`}
-                      >
-                        <span className={styles.radioBox}>
-                          <input
-                            type="radio"
-                            name="reason"
-                            value={label}
-                            checked={reason === label}
-                            onChange={() => setReason(label)}
-                            className={styles.radioInput}
-                          />
-                          <span className={styles.radioDot} aria-hidden="true" />
-                        </span>
-                        {label}
-                      </label>
-                    ))}
-                  </div>
-
-                  <div className={styles.fields}>
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="contact-name">
-                        Name
-                      </label>
-                      <input
-                        id="contact-name"
-                        name="name"
-                        type="text"
-                        autoComplete="name"
-                        placeholder="Your full name"
-                        className={`${styles.input} ${errors.name ? styles.inputInvalid : ""}`}
-                        value={fields.name}
-                        onChange={(event) => updateField("name", event.target.value)}
-                        aria-invalid={errors.name ? true : undefined}
-                        aria-describedby={errors.name ? "contact-name-error" : undefined}
-                      />
-                      {errors.name && (
-                        <p id="contact-name-error" className={styles.fieldError}>
-                          {errors.name}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className={styles.field}>
-                      <label className={styles.label} htmlFor="contact-email">
-                        Email
-                      </label>
-                      <input
-                        id="contact-email"
-                        name="email"
-                        type="email"
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                        className={`${styles.input} ${errors.email ? styles.inputInvalid : ""}`}
-                        value={fields.email}
-                        onChange={(event) => updateField("email", event.target.value)}
-                        aria-invalid={errors.email ? true : undefined}
-                        aria-describedby={errors.email ? "contact-email-error" : undefined}
-                      />
-                      {errors.email && (
-                        <p id="contact-email-error" className={styles.fieldError}>
-                          {errors.email}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className={`${styles.field} ${styles.fieldFull}`}>
-                      <label className={styles.label} htmlFor="contact-phone">
-                        Phone <span className={styles.optional}>(optional)</span>
-                      </label>
-                      {/* type="tel", not a country dropdown: this audience is
-                          spread across time zones and dialling codes, and a
-                          free-text field they can paste +971… into beats a
-                          picker they have to hunt through. */}
-                      <input
-                        id="contact-phone"
-                        name="phone"
-                        type="tel"
-                        autoComplete="tel"
-                        placeholder="Include your country code, e.g. +971 50 123 4567"
-                        className={styles.input}
-                        value={fields.phone}
-                        onChange={(event) => updateField("phone", event.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className={styles.field}>
-                    <label className={styles.label} htmlFor="contact-message">
-                      Message <span className={styles.optional}>(optional)</span>
-                    </label>
-                    <textarea
-                      id="contact-message"
-                      name="message"
-                      className={styles.textarea}
-                      placeholder="What would you like help with?"
-                      rows={4}
-                      value={fields.message}
-                      onChange={(event) => updateField("message", event.target.value)}
-                    />
-                  </div>
-                </fieldset>
-
-                <div className={styles.footer}>
-                  {status === "error" && (
-                    <p className={styles.formError} role="alert">
-                      Your message couldn’t be sent. Your details are still here — please try again.
-                    </p>
-                  )}
-                  <Button type="submit" disabled={sending}>
-                    {sending ? "Sending…" : "Send to a Desh advisor"}
-                  </Button>
-                </div>
-              </form>
-            )
+              <div className={styles.bookingActions}>
+                <Button href={CAL_BOOKING_URL} target="_blank" rel="noopener noreferrer" className={styles.bookingButton}>
+                  Find a time to talk <ArrowRight size={24} aria-hidden="true" />
+                </Button>
+                <p className={styles.bookingCaption}>Choose a time on Cal.com</p>
+              </div>
+            </div>
           ) : (
             // The QR is the available community invitation.
             <div className={`${styles.joinBody} ${tabDissolving ? styles.joinBodyHidden : ""}`}>

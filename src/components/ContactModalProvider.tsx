@@ -3,13 +3,8 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import ContactModal, { type ContactTab } from "./ContactModal";
 
-/** What a CTA wants the modal to open *as* — which tab, and which of the
-    modal's reasons should already be selected when it appears. Both are
-    optional; omitting them opens the plain "Connect with us" default. */
-export type ContactIntent = {
-  tab?: ContactTab;
-  reason?: string;
-};
+/** The screen a CTA should open. */
+export type ContactIntent = { tab?: ContactTab };
 
 type ContactModalApi = {
   open: (intent?: ContactIntent) => void;
@@ -64,7 +59,6 @@ export default function ContactModalProvider({ children }: { children: ReactNode
         open={open}
         onClose={api.close}
         initialTab={intent.tab ?? "start"}
-        initialReason={intent.reason}
       />
     </ContactModalContext.Provider>
   );
