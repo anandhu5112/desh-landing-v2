@@ -1,7 +1,6 @@
 "use client";
 
 import AdvisorCta from "@/components/AdvisorCta";
-import { CONTACT_REASONS } from "@/components/ContactModal";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
 import LogoCarousel from "@/components/LogoCarousel";
 import styles from "./UsSection.module.css";
@@ -41,7 +40,7 @@ export default function UsSection() {
             Own shares in leading US companies and diversify your portfolio
             beyond India.
           </p>
-          <AdvisorCta className={styles.cta} fallbackReason={CONTACT_REASONS.us}>
+          <AdvisorCta className={styles.cta}>
             Let’s talk money
           </AdvisorCta>
         </div>

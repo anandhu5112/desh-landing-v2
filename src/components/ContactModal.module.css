@@ -315,252 +315,7 @@
   outline-offset: 4px;
 }
 
-.form {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--space-32);
-  opacity: 1;
-  transition: opacity 0.3s ease;
-}
-
-.formHidden {
-  opacity: 0;
-}
-
-.options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--space-40);
-  row-gap: var(--space-32);
-}
-
-.optionFull {
-  grid-column: 1 / -1;
-}
-
-.option {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-  font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-body);
-  line-height: 24px;
-  color: #acacac;
-  cursor: pointer;
-}
-
-.option:has(.radioInput:checked) {
-  color: #000000;
-}
-
-.radioBox {
-  position: relative;
-  flex: none;
-  width: 24px;
-  height: 24px;
-}
-
-.radioInput {
-  position: absolute;
-  inset: 0;
-  margin: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.radioDot {
-  position: absolute;
-  inset: 0;
-  border-radius: 999px;
-  border: 2px solid #dedede;
-  pointer-events: none;
-  transition: border-color 0.2s ease;
-}
-
-.radioInput:checked ~ .radioDot {
-  border-color: #000000;
-}
-
-.radioInput:checked ~ .radioDot::after {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 999px;
-  background: #000000;
-}
-
-.radioInput:focus-visible ~ .radioDot {
-  outline: 2px solid #000000;
-  outline-offset: 2px;
-}
-
-/* Screen-reader-only: the radio group needs a <legend> to be announced as
-   a named group, but the visible design has no label above it. */
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Wraps every input so a submit in flight can disable the lot in one go
-   (see ContactModal.tsx) — carries no styling of its own. */
-.fieldset {
-  display: contents;
-  border: none;
-  margin: 0;
-  padding: 0;
-}
-
-.fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: var(--space-40);
-  row-gap: var(--space-16);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
-}
-
-.fieldFull {
-  grid-column: 1 / -1;
-}
-
-.label {
-  font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-nav);
-  line-height: 20px;
-  font-weight: 500;
-  color: #000000;
-}
-
-.optional {
-  font-weight: 400;
-  color: #acacac;
-}
-
-.input {
-  width: 100%;
-  height: 44px;
-  padding-inline: 10px;
-  border: 1px solid #e5e5e5;
-  border-radius: 10px;
-  background: #ffffff;
-  font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-nav);
-  line-height: 24px;
-  color: #000000;
-}
-
-.input::placeholder {
-  color: #acacac;
-}
-
-.input:focus-visible,
-.textarea:focus-visible {
-  outline: 2px solid #000000;
-  outline-offset: 1px;
-}
-
-.inputInvalid {
-  border-color: #d92d20;
-}
-
-.fieldError {
-  margin: 0;
-  font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-caption);
-  line-height: 18px;
-  color: #d92d20;
-}
-
-.textarea {
-  width: 100%;
-  min-height: 102px;
-  padding-block: var(--space-8);
-  padding-inline: 10px;
-  border: 1px solid #e5e5e5;
-  border-radius: 10px;
-  background: #ffffff;
-  font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-nav);
-  line-height: 24px;
-  color: #000000;
-  resize: vertical;
-}
-
-.textarea::placeholder {
-  color: #acacac;
-}
-
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-16);
-}
-
-.formError {
-  margin: 0;
-  flex: 1;
-  min-width: 0;
-  font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-nav);
-  line-height: 20px;
-  color: #d92d20;
-}
-
-/* ---- Sent ---- */
-
-.success {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--space-12);
-  padding-block: var(--space-40);
-}
-
-.successIcon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  margin-bottom: var(--space-4);
-  border-radius: 999px;
-  background: #e8f7ec;
-  color: #00b531;
-}
-
-.successHeading {
-  margin: 0;
-  font-family: var(--font-heading), sans-serif;
-  font-size: var(--fs-heading-modal);
-  line-height: 1.3;
-  letter-spacing: var(--ls-heading-modal);
-  color: #000000;
-}
-
-.successBody {
-  margin: 0 0 var(--space-16);
-  font-family: var(--font-inter), sans-serif;
-  font-size: var(--fs-body);
-  line-height: 24px;
-  color: #5a5a5a;
-}
+.bodyHidden { opacity: 0; }
 
 /* ---- Join us tab ---- */
 
@@ -645,8 +400,7 @@
   color: #000000;
 }
 
-.joinInstructions,
-.formIntro {
+.joinInstructions {
   margin: 0;
   font-family: var(--font-inter), sans-serif;
   font-size: var(--fs-nav);
@@ -676,11 +430,6 @@
   .photo {
     width: 100%;
     height: 200px;
-  }
-
-  .options,
-  .fields {
-    grid-template-columns: 1fr;
   }
 
   .startBody {
@@ -715,8 +464,161 @@
   .stat,
   .startBody,
   .heading,
-  .form,
+  .bookingBody,
   .joinBody {
     transition: none;
   }
+}
+
+/* Co-founder introduction: the approved portrait / booking composition. */
+.bookingCard {
+  gap: 0;
+}
+
+.portrait {
+  width: 39%;
+  min-height: 100%;
+}
+
+.portrait .photoImage {
+  object-position: 54% center;
+}
+
+.profile {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 100px 24px 24px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.86));
+  color: white;
+  font-family: var(--font-heading), sans-serif;
+}
+
+.profileName {
+  margin: 0 0 6px;
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.profileRole {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.instagram {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 8px;
+  color: white;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.instagram:hover { text-decoration: underline; text-underline-offset: 4px; }
+.instagram:focus-visible { outline: 2px solid white; outline-offset: 4px; border-radius: 4px; }
+
+.bookingContent {
+  position: relative;
+  padding: 32px 24px 32px 44px;
+}
+
+.bookingContent .header {
+  align-items: center;
+  margin-bottom: 32px;
+  min-height: 40px;
+}
+
+.bookingContent .close { width: 40px; height: 40px; }
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 20px;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: #858585;
+}
+
+.bookingBody { transition: opacity 0.3s ease; }
+
+.bookingHeading {
+  color: #000000;
+  margin: 0 0 24px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.18;
+  letter-spacing: -1.2px;
+}
+
+.bookingCopy {
+  margin: 0;
+  font-family: var(--font-body), serif;
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: #171717;
+}
+
+.bookingDetails {
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid #dedede;
+}
+
+.bookingDetails h3 {
+  color: #000000;
+  margin: 0 0 10px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.5px;
+}
+
+.bookingActions { margin-top: 28px; }
+.bookingButton { width: 310px; max-width: 100%; height: 52px; gap: 12px; }
+.bookingCaption {
+  margin: 8px 0 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #737373;
+}
+
+@media (max-width: 900px) {
+  .bookingCard { height: auto; }
+  .portrait { width: 100%; height: 300px; min-height: 300px; }
+  .portrait .photoImage { object-position: center 28%; }
+  .profile { padding: 80px 20px 16px; }
+  .bookingContent { padding: 24px 12px 16px; }
+  .bookingContent .header { margin-bottom: 20px; }
+  .bookingHeading { font-size: 34px; }
+  .bookingDetails { margin-top: 24px; padding-top: 24px; }
+  .bookingContent .headerActions { position: absolute; top: -288px; right: 12px; }
+}
+
+@media (max-width: 480px) {
+  .backdrop:has(.bookingCard) { padding: 12px; }
+  .bookingCard { padding: 10px; max-height: calc(100dvh - 24px); border-radius: 22px; }
+  .portrait { height: 260px; min-height: 260px; }
+  .portrait .photoImage { object-position: center 25%; }
+  .profileName { font-size: 24px; }
+  .profileRole, .instagram { font-size: 13px; }
+  .profile { padding: 70px 16px 12px; }
+  .bookingContent { padding: 24px 10px 20px; }
+  .bookingContent .headerActions { top: -250px; right: 10px; }
+  .bookingHeading { font-size: 30px; line-height: 1.2; letter-spacing: -0.9px; margin-bottom: 20px; }
+  .desktopBreak { display: none; }
+  .bookingCopy { font-size: 16px; }
+  .bookingDetails h3 { font-size: 20px; }
+  .bookingButton { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bookingBody { transition: none; }
 }

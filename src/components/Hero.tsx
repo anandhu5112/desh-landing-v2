@@ -5,7 +5,6 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import AdvisorCta from "@/components/AdvisorCta";
-import { CONTACT_REASONS } from "@/components/ContactModal";
 import { getScroller } from "@/lib/scroller";
 import { heroScrub } from "@/lib/scrollTuning";
 import styles from "./Hero.module.css";
@@ -858,7 +857,6 @@ export default function Hero() {
             </p>
             <AdvisorCta
               className={styles.heroCta}
-              fallbackReason={CONTACT_REASONS.start}
             >
               Let’s talk money
             </AdvisorCta>

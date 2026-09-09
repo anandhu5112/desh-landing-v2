@@ -13,7 +13,6 @@ import Image from "next/image";
 
 import Button from "@/components/ui/Button";
 import AdvisorCta from "@/components/AdvisorCta";
-import { CONTACT_REASONS } from "@/components/ContactModal";
 import { useContactModal } from "@/components/ContactModalProvider";
 import styles from "./BloomSection.module.css";
 
@@ -162,8 +161,7 @@ const DurationPresets = memo(function DurationPresets({
 }) {
   return (
     <div className={styles.durationGroup} role="radiogroup" aria-labelledby={labelledBy}>
-      {YEARS_PRESETS.map((preset, index) => {
-        const isLast = index === YEARS_PRESETS.length - 1;
+      {YEARS_PRESETS.map((preset) => {
         const label = `${preset} yrs`;
         const isActive = years === preset;
         return (
@@ -199,7 +197,6 @@ const PortfolioBlock = memo(function PortfolioBlock() {
         </p>
         <AdvisorCta
           className={styles.portfolioCta}
-          fallbackReason={CONTACT_REASONS.portfolio}
         >
           Let’s talk money
         </AdvisorCta>
