@@ -8,9 +8,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
-import { ArrowRight, ArrowUpRight, InstagramLogo, X } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight, Clock, VideoCamera, X } from "@phosphor-icons/react/dist/ssr";
 import Button from "@/components/ui/Button";
-import { CAL_BOOKING_URL } from "@/lib/booking";
 import { getScroller } from "@/lib/scroller";
 import styles from "./ContactModal.module.css";
 
@@ -298,12 +297,7 @@ export default function ContactModal({
           {isBooking && (
             <div className={styles.profile}>
               <p className={styles.profileName}>Aswin PS</p>
-              <p className={styles.profileRole}>Co-founder, Desh · Finance educator</p>
-              <a className={styles.instagram} href="https://www.instagram.com/aswinonfinance/" target="_blank" rel="noopener noreferrer" aria-label="Aswin on Finance on Instagram (opens in a new tab)">
-                <InstagramLogo size={22} aria-hidden="true" />
-                @aswinonfinance
-                <ArrowUpRight size={16} aria-hidden="true" />
-              </a>
+              <p className={styles.profileRole}>Co-founder, Desh</p>
             </div>
           )}
         </div>
@@ -357,23 +351,20 @@ export default function ContactModal({
           ) : contentTab === "contact" ? (
             <div className={`${styles.bookingBody} ${tabDissolving ? styles.bodyHidden : ""}`}>
               <h2 id="contact-modal-heading" className={styles.bookingHeading}>
-                Your next step starts<br className={styles.desktopBreak} /> with a conversation.
+                Let’s talk about your next move.
               </h2>
               <p className={styles.bookingCopy}>
-                You may know Aswin from his finance explainers. Meet the people
-                behind Desh and explore what comes next for your money.
+                Bring your goals and questions. You’ll leave with a clearer sense
+                of what to do next—and whether Desh can help.
               </p>
-              <div className={styles.bookingDetails}>
-                <h3>A little clarity on your next move.</h3>
-                <p className={styles.bookingCopy}>
-                  Talk through your goals, ask your questions, and see how Desh can help.
-                </p>
+              <div className={styles.bookingMeta} aria-label="Call details">
+                <span><Clock size={18} aria-hidden="true" />30 minutes</span>
+                <span><VideoCamera size={18} aria-hidden="true" />Video call</span>
               </div>
               <div className={styles.bookingActions}>
-                <Button href={CAL_BOOKING_URL} target="_blank" rel="noopener noreferrer" className={styles.bookingButton}>
-                  Find a time to talk <ArrowRight size={24} aria-hidden="true" />
+                <Button href="/book" className={styles.bookingButton}>
+                  Choose a time <ArrowRight size={22} aria-hidden="true" />
                 </Button>
-                <p className={styles.bookingCaption}>Choose a time on Cal.com</p>
               </div>
             </div>
           ) : (

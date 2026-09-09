@@ -473,10 +473,13 @@
 /* Co-founder introduction: the approved portrait / booking composition. */
 .bookingCard {
   gap: 0;
+  max-width: 900px;
+  height: min(560px, calc(100vh - 48px));
+  height: min(560px, calc(100dvh - 48px));
 }
 
 .portrait {
-  width: 39%;
+  width: 42%;
   min-height: 100%;
 }
 
@@ -487,7 +490,7 @@
 .profile {
   position: absolute;
   inset: auto 0 0;
-  padding: 100px 24px 24px;
+  padding: 88px 24px 24px;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.86));
   color: white;
   font-family: var(--font-heading), sans-serif;
@@ -505,28 +508,14 @@
   line-height: 1.5;
 }
 
-.instagram {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  margin-top: 8px;
-  color: white;
-  font-size: 15px;
-  text-decoration: none;
-}
-
-.instagram:hover { text-decoration: underline; text-underline-offset: 4px; }
-.instagram:focus-visible { outline: 2px solid white; outline-offset: 4px; border-radius: 4px; }
-
 .bookingContent {
   position: relative;
-  padding: 32px 24px 32px 44px;
+  padding: 28px 24px 32px 42px;
 }
 
 .bookingContent .header {
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 46px;
   min-height: 40px;
 }
 
@@ -547,9 +536,9 @@
 
 .bookingHeading {
   color: #000000;
-  margin: 0 0 24px;
+  margin: 0 0 18px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 40px;
+  font-size: 38px;
   font-weight: 400;
   line-height: 1.18;
   letter-spacing: -1.2px;
@@ -562,33 +551,23 @@
   font-weight: 300;
   line-height: 1.55;
   color: #171717;
+  max-width: 38ch;
 }
 
-.bookingDetails {
-  margin-top: 32px;
-  padding-top: 32px;
-  border-top: 1px solid #dedede;
-}
-
-.bookingDetails h3 {
-  color: #000000;
-  margin: 0 0 10px;
-  font-family: var(--font-heading), sans-serif;
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1.3;
-  letter-spacing: -0.5px;
-}
-
-.bookingActions { margin-top: 28px; }
-.bookingButton { width: 310px; max-width: 100%; height: 52px; gap: 12px; }
-.bookingCaption {
-  margin: 8px 0 0;
+.bookingMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 28px;
   font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #737373;
+  font-size: 14px;
+  line-height: 1;
+  color: #5f5f5f;
 }
+
+.bookingMeta span { display: inline-flex; align-items: center; gap: 8px; }
+.bookingActions { margin-top: 36px; }
+.bookingButton { width: 260px; max-width: 100%; height: 52px; gap: 12px; }
 
 @media (max-width: 900px) {
   .bookingCard { height: auto; }
@@ -598,7 +577,6 @@
   .bookingContent { padding: 24px 12px 16px; }
   .bookingContent .header { margin-bottom: 20px; }
   .bookingHeading { font-size: 34px; }
-  .bookingDetails { margin-top: 24px; padding-top: 24px; }
   .bookingContent .headerActions { position: absolute; top: -288px; right: 12px; }
 }
 
@@ -608,14 +586,14 @@
   .portrait { height: 260px; min-height: 260px; }
   .portrait .photoImage { object-position: center 25%; }
   .profileName { font-size: 24px; }
-  .profileRole, .instagram { font-size: 13px; }
+  .profileRole { font-size: 13px; }
   .profile { padding: 70px 16px 12px; }
   .bookingContent { padding: 24px 10px 20px; }
   .bookingContent .headerActions { top: -250px; right: 10px; }
   .bookingHeading { font-size: 30px; line-height: 1.2; letter-spacing: -0.9px; margin-bottom: 20px; }
-  .desktopBreak { display: none; }
   .bookingCopy { font-size: 16px; }
-  .bookingDetails h3 { font-size: 20px; }
+  .bookingMeta { margin-top: 22px; }
+  .bookingActions { margin-top: 28px; }
   .bookingButton { width: 100%; }
 }
 

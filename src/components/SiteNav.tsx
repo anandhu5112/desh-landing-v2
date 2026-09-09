@@ -133,7 +133,7 @@ export default function SiteNav() {
               <button
                 type="button"
                 className={styles.contactCta}
-                onClick={() => openContact()}
+                onClick={() => openContact({ tab: "contact" })}
               >
                 Let’s talk money
               </button>
@@ -179,7 +179,7 @@ export default function SiteNav() {
                 className={styles.mobileContactCta}
                 onClick={() => {
                   setMenuOpen(false);
-                  openContact();
+                  openContact({ tab: "contact" });
                 }}
               >
                 Let’s talk money
