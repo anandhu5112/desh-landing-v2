@@ -641,10 +641,13 @@
   color: var(--booking-ink);
 }
 
+/* Inter, not the site's IBM Plex Serif body face: inside this card it was
+   the only serif among six sans elements, so it read as pasted in rather
+   than as the deliberate prose accent it is on the page sections. */
 .bookingCopy {
   margin: 0;
-  font-family: var(--font-body), serif;
-  font-weight: 300;
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 400;
   font-size: 16px;
   line-height: 1.55;
   color: var(--booking-muted);
