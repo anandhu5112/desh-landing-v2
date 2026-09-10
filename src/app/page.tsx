@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import SiteNav from "@/components/SiteNav";
 import SmoothScroll from "@/components/SmoothScroll";
 import ScrollRoot from "@/components/ScrollRoot";
+import ScrollProbe from "@/components/ScrollProbe";
 import { GlassProvider } from "@/components/GlassContext";
 
 export default function Home() {
@@ -39,6 +40,13 @@ export default function Home() {
         {/* Fixed to the viewport, not inside Hero — must survive Hero's
             pinned zoom/fade so its links stay usable the whole page down. */}
         <SiteNav />
+
+        {/* TEMPORARY — renders nothing unless the URL carries ?probe=1, and
+            comes out with ScrollProbe.tsx once the mobile judder is diagnosed.
+            Static import rather than next/dynamic only because this branch is
+            not going to merge as-is; anything that outlives the diagnosis has
+            to follow the tuner convention noted below. */}
+        <ScrollProbe />
 
         {/* Neither tuner is mounted. WordmarkTuner drives the footer
             wordmark's --wm-* properties and its values are baked into
