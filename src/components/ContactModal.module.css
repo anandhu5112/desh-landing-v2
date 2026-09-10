@@ -627,7 +627,14 @@
   color: #5a5a5a;
 }
 
-.bookingBody { transition: opacity 0.3s ease; }
+/* Fills the column so .bookingActions can be pushed to its foot, landing
+   the note on the same baseline as the portrait's Instagram row. */
+.bookingBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.3s ease;
+}
 
 .bookingHeading {
   margin: 0 0 24px;
@@ -668,7 +675,7 @@
 .bookingMeta span { display: inline-flex; align-items: center; gap: 8px; }
 .bookingMeta span + span { border-left: 1px solid #e5e5e5; padding-left: 24px; }
 .bookingMeta svg { width: 16px; height: 16px; }
-.bookingActions { margin-top: 24px; }
+.bookingActions { margin-top: auto; padding-top: 24px; }
 
 .bookingButton {
   width: 100%;
@@ -750,7 +757,7 @@
   .bookingCopy { font-size: 15px; line-height: 1.55; }
   .copyBreak { display: none; }
   .bookingMeta { margin-top: 24px; padding-block: 16px; }
-  .bookingActions { margin-top: 24px; }
+  .bookingActions { padding-top: 24px; }
   .bookingNote { font-size: 12px; }
 }
 
