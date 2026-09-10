@@ -1,60 +1,77 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 /**
  * TEMPORARY DIAGNOSTIC — delete before this branch merges.
  *
- * The hero's sunrise judders on iPhone but not on desktop, and there are two
- * candidate causes that look identical to the eye and cannot be told apart by
- * reasoning:
+ * Round one established what the judder is NOT. On an iPhone, mid-sunrise:
+ * fps 57, worst frame gap 65ms — the device is keeping up, so this was never
+ * a paint-cost or a starved-ticker problem. What it did catch was `pin drift`
+ * at 45px: the pinned hero frame, which by definition should sit at exactly
+ * the same screen position on every frame, moved 45px between two
+ * consecutive ones.
  *
- *   1. requestAnimationFrame is throttled or stalled while iOS runs a native
- *      momentum scroll. GSAP's ticker rides rAF, so the whole scrubbed
- *      timeline would freeze and then jump.
+ * Two things can throw a pinned frame that far while the renderer is healthy,
+ * and they want different fixes:
  *
- *   2. rAF is fine, but the scroll EVENTS that feed ScrollTrigger arrive
- *      coalesced. The hero is pinned with pinType "transform" (the default
- *      for a custom scroller), which means a JS-written translate is what
- *      holds the frame still — so the frame can only be as steady as the
- *      scroll position JS last heard about.
+ *   1. The browser's own toolbar collapsing. The page lives in a `position:
+ *      fixed; inset: 0` box, so the scroller's height follows the layout
+ *      viewport — when the address bar slides away the whole scroll geometry
+ *      changes underneath a pin whose start/end were measured against the old
+ *      height. SmoothScroll also fires a debounced ScrollTrigger.refresh() on
+ *      every resize, which re-measures and can move things again.
  *
- * They call for opposite fixes, so this measures which one is happening.
- * Everything is peak-held, because the interesting moment is over before
- * anyone can read a live number.
+ *   2. Scroll events arriving in lumps. The pin is held still by a transform
+ *      that JS rewrites per scroll event, so if the compositor scrolls while
+ *      JS hears nothing, the frame slides and then snaps back.
+ *
+ * `vh delta` + `refreshes` catch the first. `blind jump` catches the second:
+ * the largest distance the scroller travelled BETWEEN two consecutive scroll
+ * events, which is exactly how far the page moved while JS was blind.
+ *
+ * Round one's `scroll gap` is gone. It could not tell a real stall from the
+ * reader simply pausing between swipes, and 965ms against a 1000ms arming
+ * window is much more likely to have been the pause.
  *
  * Mounted only for ?probe=1 — see page.tsx.
  */
 
 /**
- * Peaks are only recorded while the page is actually being scrolled, and are
- * then held for the rest of the session — reload to reset.
- *
- * Both halves matter. Holding forever is what lets someone swipe through the
- * whole sunrise and read the worst moment afterwards, instead of having to
- * photograph a number that is already gone. Gating on scroll is what keeps
- * the load itself out of the reading: the first seconds of a cold page are
- * full of long tasks, and a frame gap from decoding the hero artwork would
- * otherwise be indistinguishable from one caused by the scroll.
+ * Peaks record only while the page is being scrolled, and are then held for
+ * the rest of the session — reload to reset. Holding is what lets someone
+ * swipe through the whole sunrise and read the worst moment afterwards;
+ * arming on scroll is what keeps a cold load's long tasks out of the reading.
  */
 const ARMED_AFTER_SCROLL_MS = 1000;
 
 interface Stats {
-  /** Worst gap between consecutive animation frames. >32ms means dropped frames. */
+  /** Worst gap between consecutive animation frames. */
   rafGap: number;
-  /** Worst gap between consecutive scroll events. */
-  scrollGap: number;
-  /** Worst single-frame jump of the pinned frame's top edge. Should be ~0. */
-  pinDrift: number;
-  /** Worst single-frame jump of the sun. Smooth motion is a few px. */
-  sunStep: number;
   /** Lowest one-second frame rate seen while scrolling. */
   fps: number;
-  /** Scroll events seen at all — confirms the probe is recording. */
-  scrolls: number;
+  /** Worst single-frame movement of the pinned frame. Should be ~0. */
+  pinDrift: number;
+  /** Largest change in the scroller's own height — i.e. the browser toolbar. */
+  vhDelta: number;
+  /** How many times that height changed at all. */
+  vhChanges: number;
+  /** ScrollTrigger.refresh() calls during scrolling. Each one re-measures the pin. */
+  refreshes: number;
+  /** Furthest the page travelled between two consecutive scroll events. */
+  blindJump: number;
 }
 
-const ZERO: Stats = { rafGap: 0, scrollGap: 0, pinDrift: 0, sunStep: 0, fps: 0, scrolls: 0 };
+const ZERO: Stats = {
+  rafGap: 0,
+  fps: 0,
+  pinDrift: 0,
+  vhDelta: 0,
+  vhChanges: 0,
+  refreshes: 0,
+  blindJump: 0,
+};
 
 export default function ScrollProbe() {
   const [on, setOn] = useState(false);
@@ -67,35 +84,39 @@ export default function ScrollProbe() {
 
     const scroller = document.getElementById("page-scroller");
     const frame = document.querySelector<HTMLElement>('[class*="heroFrame"]');
-    const sun = document.querySelector<HTMLElement>('[class*="__sun"]');
 
     let lastFrameAt = performance.now();
-    let lastScrollAt = performance.now();
     let lastFrameTop: number | null = null;
-    let lastSunTop: number | null = null;
+    let lastHeight = scroller?.clientHeight ?? 0;
+    let lastScrollTop = scroller?.scrollTop ?? 0;
     let frameCount = 0;
     let windowStart = performance.now();
     let armedUntil = 0;
-    let scrolls = 0;
     let raf = 0;
 
-    // Deliberately its OWN rAF loop rather than a GSAP ticker callback: if
-    // GSAP's ticker is the thing being starved, a probe living inside it
-    // would be starved in exactly the same way and would report nothing.
     const bump = (key: keyof Stats, value: number) => {
       if (value > peaks.current[key]) peaks.current[key] = value;
     };
 
     const onScroll = () => {
       const now = performance.now();
-      // Only measure gaps BETWEEN scrolls of one gesture. The idle stretch
-      // before the first touch is not a gap, it is the page sitting still.
-      if (now < armedUntil) bump("scrollGap", Math.round(now - lastScrollAt));
-      lastScrollAt = now;
+      const top = scroller?.scrollTop ?? 0;
+      // How far the page moved since JS last heard about it. Under a healthy
+      // event stream this is a handful of px; a large value means the
+      // compositor ran on without the pin's transform being told.
+      if (now < armedUntil) bump("blindJump", Math.round(Math.abs(top - lastScrollTop)));
+      lastScrollTop = top;
       armedUntil = now + ARMED_AFTER_SCROLL_MS;
-      scrolls++;
     };
     scroller?.addEventListener("scroll", onScroll, { passive: true });
+
+    // Counted from ScrollTrigger itself rather than from the resize listener,
+    // so this reflects refreshes from every source — SmoothScroll's debounced
+    // one and GSAP's own autoRefreshEvents alike.
+    const onRefresh = () => {
+      if (performance.now() < armedUntil) peaks.current.refreshes++;
+    };
+    ScrollTrigger.addEventListener("refresh", onRefresh);
 
     const tick = () => {
       const now = performance.now();
@@ -114,21 +135,26 @@ export default function ScrollProbe() {
         windowStart = now;
       }
 
-      // Both read in screen coordinates, which is the whole point: what the
-      // eye judges is where these land in the viewport, not what the timeline
-      // thinks their progress is.
-      if (frame) {
-        const top = frame.getBoundingClientRect().top;
-        if (armed && lastFrameTop !== null) bump("pinDrift", Math.round(Math.abs(top - lastFrameTop)));
-        lastFrameTop = top;
-      }
-      if (sun) {
-        const top = sun.getBoundingClientRect().top;
-        if (armed && lastSunTop !== null) bump("sunStep", Math.round(Math.abs(top - lastSunTop)));
-        lastSunTop = top;
+      // The scroller's own box, not window.innerHeight: it is what the pin's
+      // start/end were measured against, and it is what a collapsing toolbar
+      // actually changes here.
+      const height = scroller?.clientHeight ?? 0;
+      if (height !== lastHeight) {
+        if (armed) {
+          bump("vhDelta", Math.abs(height - lastHeight));
+          peaks.current.vhChanges++;
+        }
+        lastHeight = height;
       }
 
-      peaks.current.scrolls = scrolls;
+      if (frame) {
+        const top = frame.getBoundingClientRect().top;
+        if (armed && lastFrameTop !== null) {
+          bump("pinDrift", Math.round(Math.abs(top - lastFrameTop)));
+        }
+        lastFrameTop = top;
+      }
+
       setStats({ ...peaks.current });
       raf = requestAnimationFrame(tick);
     };
@@ -137,6 +163,7 @@ export default function ScrollProbe() {
     return () => {
       cancelAnimationFrame(raf);
       scroller?.removeEventListener("scroll", onScroll);
+      ScrollTrigger.removeEventListener("refresh", onRefresh);
     };
   }, []);
 
@@ -164,20 +191,20 @@ export default function ScrollProbe() {
         font: "600 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace",
         padding: "10px 12px",
         borderRadius: 10,
-        minWidth: 208,
+        minWidth: 216,
         pointerEvents: "none",
-        WebkitBackdropFilter: "none",
       }}
     >
       <div style={{ opacity: 0.55, fontSize: 11, marginBottom: 6 }}>
-        SCROLL PROBE · reload to reset
+        PROBE 2 · reload to reset
       </div>
-      {row("raf gap", stats.rafGap, "ms", stats.rafGap > 40)}
-      {row("scroll gap", stats.scrollGap, "ms", stats.scrollGap > 40)}
       {row("pin drift", stats.pinDrift, "px", stats.pinDrift > 3)}
-      {row("sun step", stats.sunStep, "px", stats.sunStep > 24)}
+      {row("vh delta", stats.vhDelta, "px", stats.vhDelta > 0)}
+      {row("vh changes", stats.vhChanges, "", stats.vhChanges > 0)}
+      {row("refreshes", stats.refreshes, "", stats.refreshes > 0)}
+      {row("blind jump", stats.blindJump, "px", stats.blindJump > 40)}
+      {row("raf gap", stats.rafGap, "ms", stats.rafGap > 40)}
       {row("fps", stats.fps, "", stats.fps < 45)}
-      {row("scrolls", stats.scrolls, "", false)}
     </div>
   );
 }
