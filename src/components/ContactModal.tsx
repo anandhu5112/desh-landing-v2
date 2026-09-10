@@ -305,6 +305,11 @@ export default function ContactModal({
         ref={cardRef}
         tabIndex={-1}
         className={`${styles.card} ${isBooking ? styles.bookingCard : ""} ${closing ? styles.cardClosing : ""}`}
+        // Lenis intercepts touchmove wholesale when it drives touch scrolling
+        // itself (see judderExperiment), and would swallow this card's own
+        // overflow-y: auto with it. The wheel path already honours this
+        // attribute; touch needs it stated on the element too.
+        data-lenis-prevent
         role="dialog"
         aria-modal="true"
         aria-labelledby={isCalendar ? undefined : "contact-modal-heading"}
@@ -315,6 +320,7 @@ export default function ContactModal({
         <div
           ref={stepLayerRef}
           className={styles.stepLayer}
+          data-lenis-prevent
           inert={isCalendar}
           aria-hidden={isCalendar || undefined}
         >
@@ -496,6 +502,7 @@ export default function ContactModal({
         {isBooking && (
           <div
             className={`${styles.calendarStage} ${isCalendar ? styles.calendarStageActive : ""}`}
+            data-lenis-prevent
             inert={!isCalendar}
             aria-hidden={!isCalendar || undefined}
           >
