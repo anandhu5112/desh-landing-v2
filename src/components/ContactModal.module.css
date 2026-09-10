@@ -614,25 +614,20 @@
   /* Matches the wordmark's rendered height across the seam, so the two
      things at the top of the two columns sit on one line. */
   min-height: 21px;
-  margin: 0;
-  padding-right: 24px;
+  margin: 0 0 24px;
+  /* Keeps clear of the close button, which overlaps this column. */
+  padding-right: 32px;
   font-size: 11px;
   font-weight: 500;
   line-height: 1.5;
-  letter-spacing: 0.12em;
+  /* 0.12em put this line within a pixel of wrapping at the desktop column
+     width; it has to stay on one line to read as a rule above the headline. */
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #5a5a5a;
 }
 
 .bookingBody { transition: opacity 0.3s ease; }
-
-.bookingSupporting {
-  margin: 8px 0 24px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--booking-muted);
-}
 
 .bookingHeading {
   margin: 0 0 24px;
@@ -749,8 +744,8 @@
   .profileSocial { margin-top: 8px; min-height: 32px; padding-top: 8px; border: none; font-size: 10px; }
   .bookingContent { padding: 24px 20px; }
   .bookingContent .header { min-height: 0; margin-bottom: 0; }
+  .eyebrow { margin-bottom: 16px; padding-right: 44px; }
   .bookingContent .close { top: 20px; right: 20px; background: #ffffff; border-color: transparent; width: 38px; height: 38px; }
-  .bookingSupporting { margin: 8px 0 20px; font-size: 12px; }
   .bookingHeading { font-size: 34px; letter-spacing: -0.045em; margin-bottom: 16px; }
   .bookingCopy { font-size: 15px; line-height: 1.55; }
   .copyBreak { display: none; }

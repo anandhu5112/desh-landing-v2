@@ -385,8 +385,7 @@ export default function ContactModal({
             </div>
           ) : contentTab === "contact" ? (
             <div className={`${styles.bookingBody} ${tabDissolving ? styles.bodyHidden : ""}`}>
-              <p className={styles.eyebrow}>A conversation with</p>
-              <p className={styles.bookingSupporting}>your favourite financial advisor.</p>
+              <p className={styles.eyebrow}>A conversation with your favourite financial advisor</p>
               <h2 id="contact-modal-heading" className={styles.bookingHeading}>
                 A familiar face.<br />A clearer next step.
               </h2>
