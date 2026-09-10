@@ -25,7 +25,7 @@ Indian mutual funds and US stocks, with a dedicated human advisor.
 Fixed black pill, always visible; hides on scroll-down, returns on scroll-up.
 
 - **Logo:** "Desh" wordmark → `/`
-- **Links:** `Services` (→ `#services`) · `SIP Calculator` (→ `#wealth-bloom`)
+- **Links:** `Company` (→ `#services`) · `Community` (→ `#community`, the WhatsApp card)
 - **Primary CTA:** `Contact us` → opens Contact modal
 - Mobile: same three items collapsed behind a hamburger.
 
@@ -36,7 +36,7 @@ Fixed black pill, always visible; hides on scroll-down, returns on scroll-up.
 **Beat 1 — statement + CTA over a sunrise landscape**
 
 - H1: **"Invest like a true global citizen"** (animates in word-by-word)
-- Subtext: "Crafted specifically for NRIs to help them grow their wealth in top global asset classes."
+- Subtext: "With roots in India and a life abroad, NRIs deserve a world of possibilities for their wealth."
 - CTA: **Talk to an Advisor**
 
 **Beat 2 — zoom out, hero copy fades, outro statement appears**
@@ -50,12 +50,11 @@ Fixed black pill, always visible; hides on scroll-down, returns on scroll-up.
 Three sub-sections wrapped as ONE continuous scroll unit (one snap stop, shared
 parallax rise). Anchor target: `#services`. Order on the page is US → Advisor → India.
 
-### 3a. US investing (`UsSection`) — media left, text right
+### 3a. Global investing (`UsSection`) — media left, text right
 
 - Trust row: logo carousel — Apple, Accenture, Amazon, FedEx, Google, Meta, Microsoft, Walmart
 - H2: **"Hedge against the depreciating rupee"**
-- Body: "Own shares in the world's leading companies and build long term wealth through global diversification all from one seamless platform."
-- CTA: **Talk to an Advisor**
+- Body: "Own a slice of the world's biggest companies through USD funds regulated in GIFT City. No US brokerage account, no US tax filing."
 - Media: `us-dollar.mp4` (scroll-revealed video)
 
 ### 3b. Advisor (`AdvisorSection`) — full-bleed sky image
@@ -75,7 +74,6 @@ parallax rise). Anchor target: `#services`. Order on the page is US → Advisor 
 - Trust row: logo carousel — four fund-partner badges
 - H2: **"Grow wealth beyond FDs"**
 - Body: "Access professionally managed mutual funds that help NRIs participate in India's long term growth with confidence and convenience."
-- CTA: **Talk to an Advisor**
 - Media: `indian-ruppee.mp4` (scroll-revealed video)
 
 ---
@@ -96,9 +94,8 @@ One continuous dark panel. Anchor target: `#wealth-bloom`.
 - Disclaimer: "Illustrative projection at an assumed 12% annual return. Investments are subject to market risk; past performance does not predict future results."
 
 **Portfolio CTA**
-- H2: **"Let's build your / portfolio together"**
+- H2: **"Invest like a true / global citizen"**
 - Body: "Get expert advice when you need it, or connect with fellow investors for ideas, updates, and learning."
-- CTA: **Talk to an Advisor**
 
 **WhatsApp community card** (straddles the panel's bottom edge)
 - QR code + stacked avatars
@@ -113,20 +110,20 @@ One continuous dark panel. Anchor target: `#wealth-bloom`.
 H2: **"Frequently Asked Questions"** — accordion, one open at a time.
 
 1. **Who can invest through Desh?**
-   NRIs, OCIs, and PIOs holding a valid passport can invest with Desh. We support investors across the US, UK, UAE, Singapore, Australia, and most other jurisdictions.
+   Desh supports NRIs and OCIs in most countries. We do not currently serve residents of the United States or Canada. Eligibility may also vary by country and product.
 2. **Do I need to be in India to start investing?**
-   No. You can complete the entire onboarding process remotely and manage your investments from anywhere in the world.
+   No. You can complete onboarding remotely without visiting India, provided you have an NRE or NRO account.
 3. **What investment options do you offer?**
-   Indian mutual funds and US stocks, alongside curated portfolios built around your goals, time horizon, and risk appetite.
+   Indian mutual funds, and global markets through USD funds regulated in GIFT City, alongside curated portfolios built around your goals, time horizon, and risk appetite.
 4. **Will I get a dedicated advisor?**
-   Yes. Every investor is paired with a dedicated advisor you can reach whenever you need guidance — not a rotating support queue.
+   Yes. Every investor is paired with a dedicated advisor you can reach whenever you need guidance, not a rotating support queue.
 5. **Can I start a SIP from overseas?**
-   Yes. You can set up and manage a SIP entirely online from your NRE or NRO account, with contributions debited automatically each month.
+   Yes. You can set up and manage a SIP online from your NRE or NRO account, with contributions debited automatically each month.
 6. **Is my money held by Desh?**
-   No. Your money never sits with us — investments are held directly with SEBI-regulated fund houses and custodians in your own name.
+   No. Desh does not hold your money. Your investments are made through your own accounts.
 
 **Closing tagline (below the accordion):**
-"A modern investing experience built for NRIs who want a clean, credible path into Indian mutual funds & US stocks without getting buried in paperwork, confusion, or bad advice."
+"A modern investing experience built for NRIs who want a clean, credible path into Indian mutual funds & global markets without getting buried in paperwork, confusion, or bad advice."
 
 ---
 
@@ -169,7 +166,7 @@ Rotating stats:
 | Value | Label | Caption |
 |---|---|---|
 | 999+ | Active NRI Investors | Learn. Connect. Grow together. |
-| 100% | Personalized Guidance | No generic recommendations—every portfolio is tailored to your goals. |
+| 100% | Personalized Guidance | No generic recommendations. Every portfolio is tailored to your goals. |
 | 24–48 hrs | Response Time | Quick assistance for investments, documentation, and portfolio reviews. |
 
 Avatar stack + `+999` badge · QR code · Heading "Join our exclusive NRI WhatsApp community." · CTA **Join Our Community** (also non-functional).

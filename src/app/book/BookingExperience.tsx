@@ -6,17 +6,28 @@ import Link from "next/link";
 import Cal, { getCalApi, type EmbedEvent } from "@calcom/embed-react";
 import { ArrowLeft, ArrowUpRight, CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { CAL_BOOKING_URL } from "@/lib/booking";
+import { COMMUNITY_URL } from "@/lib/contact";
 import styles from "./page.module.css";
 
 const CAL_LINK = CAL_BOOKING_URL.replace(/^https?:\/\/(?:www\.)?cal\.com\//, "").split(/[?#]/)[0];
-const CAL_NAMESPACE = "desh-booking";
-const COMMUNITY_URL =
-  "https://chat.whatsapp.com/KmasCJMGJ42Bqn9a4PkMw6?s=cl&p=i&ilr=4";
 
-export default function BookingExperience() {
+export default function BookingExperience({
+  embedded = false,
+  initialSuccess = false,
+}: {
+  embedded?: boolean;
+  initialSuccess?: boolean;
+}) {
+  const namespace = embedded ? "desh-modal-booking" : "desh-booking";
+  const Container = embedded ? "div" : "main";
+  const Heading = embedded ? "h2" : "h1";
   const [booking, setBooking] = useState<
     { complete: false } | { complete: true; startTime?: string }
-  >({ complete: false });
+  >(
+    initialSuccess
+      ? { complete: true, startTime: "2026-09-11T06:00:00.000Z" }
+      : { complete: false },
+  );
 
   useEffect(() => {
     let active = true;
@@ -28,13 +39,13 @@ export default function BookingExperience() {
       setBooking({ complete: true, startTime: event.detail.data.startTime });
     };
 
-    void getCalApi({ namespace: CAL_NAMESPACE }).then((api) => {
+    void getCalApi({ namespace }).then((api) => {
       if (!active) return;
       calApi = api;
       api("ui", {
         theme: "light",
         layout: "month_view",
-        hideEventTypeDetails: false,
+        hideEventTypeDetails: embedded,
       });
       api("on", { action: "bookingSuccessfulV2", callback: onBookingSuccess });
     });
@@ -46,7 +57,7 @@ export default function BookingExperience() {
         callback: onBookingSuccess,
       });
     };
-  }, []);
+  }, [namespace, embedded]);
 
   const bookedTime = booking.complete && booking.startTime
     ? new Intl.DateTimeFormat(undefined, {
@@ -56,13 +67,23 @@ export default function BookingExperience() {
     : null;
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
+    <Container className={embedded ? styles.embedded : styles.page}>
+      {!embedded && <header className={styles.header}>
         <Link href="/" className={styles.backLink}>
           <ArrowLeft size={18} aria-hidden="true" />
           Back to Desh
         </Link>
-        <Link href="/" aria-label="Desh home">
+        <Link href="/" aria-label="Desh home" className={styles.brand}>
+          {/* Decorative: the logotype beside it already carries the name. */}
+          <Image
+            src="/images/desh-logo-symbol.svg"
+            alt=""
+            width={62}
+            height={58}
+            className={styles.logoSymbol}
+            aria-hidden="true"
+            priority
+          />
           <Image
             src="/images/desh-logo-mark.svg"
             alt="Desh"
@@ -72,14 +93,14 @@ export default function BookingExperience() {
             priority
           />
         </Link>
-      </header>
+      </header>}
 
       {booking.complete ? (
         <section className={styles.success} aria-labelledby="booking-success-heading">
           <div className={styles.successCopy}>
             <CheckCircle size={34} weight="fill" aria-hidden="true" />
             <p className={styles.eyebrow}>You’re booked</p>
-            <h1 id="booking-success-heading">See you soon.</h1>
+            <Heading id="booking-success-heading">See you soon.</Heading>
             <p className={styles.lede}>
               {bookedTime ? `Your conversation is set for ${bookedTime}. ` : "Your conversation is set. "}
               We’ve sent the details to your inbox.
@@ -108,12 +129,15 @@ export default function BookingExperience() {
             rel="noopener noreferrer"
             aria-label="Open the Desh WhatsApp community invite"
           >
-            <Image
-              src="/images/qr-code.png"
-              alt="QR code for the Desh WhatsApp community"
-              width={280}
-              height={280}
-            />
+            <div className={styles.qrWrap}>
+              <Image
+                src="/images/qr-code.svg"
+                alt="QR code for the Desh WhatsApp community"
+                width={280}
+                height={280}
+                className={styles.qrImage}
+              />
+            </div>
             <span>Scan with your phone</span>
           </a>
         </section>
@@ -121,22 +145,21 @@ export default function BookingExperience() {
         <section className={styles.booking} aria-labelledby="booking-heading">
           <div className={styles.intro}>
             <p className={styles.eyebrow}>30-minute conversation</p>
-            <h1 id="booking-heading">Choose a time that works for you.</h1>
+            <Heading id="booking-heading">Let’s find a time to connect.</Heading>
             <p>
-              Share a few details, including your WhatsApp number, and your slot
-              is yours.
+              Pick a slot that works for you, share a few details, and we’ll send the invitation your way.
             </p>
           </div>
           <div className={styles.calShell}>
             <Cal
-              namespace={CAL_NAMESPACE}
+              namespace={namespace}
               calLink={CAL_LINK}
-              config={{ layout: "month_view", "ui.color-scheme": "light" }}
+              config={{ layout: "month_view", theme: "light", "ui.color-scheme": "light" }}
               className={styles.cal}
             />
           </div>
         </section>
       )}
-    </main>
+    </Container>
   );
 }

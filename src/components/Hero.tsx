@@ -4,7 +4,9 @@ import { Fragment, useRef, useState, type CSSProperties } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import AdvisorCta from "@/components/AdvisorCta";
+import { useContactModal } from "./ContactModalProvider";
+import navStyles from "./SiteNav.module.css";
+import { lenisRef } from "@/lib/lenis";
 import { getScroller } from "@/lib/scroller";
 import { heroScrub } from "@/lib/scrollTuning";
 import styles from "./Hero.module.css";
@@ -117,10 +119,15 @@ const MOBILE_QUERY = "(max-width: 767px)";
 const ZOOM_SCALE_MOBILE = ZOOM_SCALE;
 const ZOOM_Y_PERCENT_MOBILE = ZOOM_Y_PERCENT;
 
-// Split so the entrance can stagger word by word. The first word's opening
-// letter becomes the script drop cap (see the render below), so this must
-// stay in reading order and the first entry must be the one that carries it.
-const HEADING_WORDS = ["Invest", "like", "a", "true", "global", "citizen"];
+// Split so the entrance can stagger word by word, and must stay in reading
+// order.
+const HEADING_WORDS = ["NRIs", "deserve", "a", "world", "of", "possibilities"];
+
+// Where the heading breaks: after each of these indices. Set rather than a
+// single index because the line is long enough to want more than one break,
+// and the breaks are chosen to keep each phrase whole rather than to even
+// out the character counts.
+const HEADING_BREAK_AFTER = new Set([1]);
 
 // The rise: one continuous climb from outside the frame to the sun's settled
 // position, filling the slot between the zoom landing and the sun arriving.
@@ -502,6 +509,10 @@ function syncOutroToSun(
       ? { width: baseImg.naturalWidth, height: baseImg.naturalHeight }
       : { width: HERO_ART_ASPECT, height: 1 };
   const geometry = heroArtGeometry(frame, art, zoomScale, zoomYPercent);
+  // The glow shares the landscape's untransformed coordinates and follows
+  // its camera move. Re-measure on image load and viewport refresh.
+  const localGeometry = heroArtGeometry(frame, art, 1, 0);
+  hero.style.setProperty("--dawn-horizon", `${localGeometry.horizonAt(frameWidth / 2)}px`);
 
   const radius = (sun.offsetHeight * zoomScale) / 2;
   const centreX = frameWidth / 2;
@@ -542,19 +553,20 @@ function syncOutroToSun(
   // where the block actually sits rather than at the centre. Centring on the
   // visible sun moves the block up by `bias`, and a circle is narrower the
   // further you get from its middle, so the corners that bind are the top
-  // pair, at bias + half the block's height. With line-height: 1 a block of
-  // n lines is n * size tall, so for half-width a = widthPerPx / 2 and
-  // half-height b = n / 2:
+  // pair, at bias + half the block's height. With line-height: 1.15 a block of
+  // n lines is n * 1.15 * size tall, so for half-width a = widthPerPx / 2 and
+  // half-height b = (n * 1.15) / 2:
   //
   //   (a * size)^2 + (bias + b * size)^2 <= r^2
   //
   // which is a quadratic in size with one positive root. At bias 0 it
-  // reduces to 2r / hypot(widthPerPx, n) — the centred case. Fitting width
+  // reduces to 2r / hypot(widthPerPx, n * 1.15) — the centred case. Fitting width
   // alone is what let earlier versions overhang the curve.
   const fitRadius = radius * OUTRO_CIRCLE_FIT;
   const bias = Math.min(Math.abs(centreY - visibleCentre), fitRadius);
   const a = widthPerPx / 2;
-  const b = lines.length / 2;
+  const lineHeight = 1.15;
+  const b = (lines.length * lineHeight) / 2;
   const square = a * a + b * b;
   const fitted =
     (Math.sqrt(bias * bias * b * b + square * (fitRadius * fitRadius - bias * bias)) - bias * b) /
@@ -571,19 +583,24 @@ function syncOutroToSun(
   hero.style.setProperty("--outro-font-size", `${size}px`);
   // The chord at the block's furthest edge: the width genuinely available
   // inside the circle at the height the copy occupies.
-  const reach = bias + (lines.length * size) / 2;
+  const reach = bias + (lines.length * lineHeight * size) / 2;
   const chord = 2 * Math.sqrt(Math.max(0, fitRadius * fitRadius - reach * reach));
   hero.style.setProperty("--sun-fit-width", `${chord}px`);
 }
 
 export default function Hero() {
+  const { open: openContact } = useContactModal();
   const heroRef = useRef<HTMLElement>(null);
   const zoomWrapRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
   const sunRef = useRef<HTMLDivElement>(null);
+  const dawnGlowRef = useRef<HTMLDivElement>(null);
+  const dawnShadeRef = useRef<HTMLDivElement>(null);
+  const dawnWarmthRef = useRef<HTMLDivElement>(null);
   const outroTextRef = useRef<HTMLHeadingElement>(null);
   const baseImgRef = useRef<HTMLImageElement>(null);
   const outroShownRef = useRef(false);
+  const exploreRef = useRef<(() => void) | null>(null);
   const [showOutro, setShowOutro] = useState(false);
 
   useGSAP(
@@ -778,7 +795,101 @@ export default function Hero() {
         // scrolling.
         .to({}, { duration: HOLD_DURATION });
 
+      // Light arrives before the disc. Opacity and transforms keep the
+      // painted textures intact without animating expensive blur filters.
+      tl.to(dawnGlowRef.current, {
+        opacity: 0.8, scaleX: 1.05, scaleY: 1.1,
+        duration: SUN_RISE_STARTS_AT - ZOOM_STARTS_AT, ease: "sine.inOut",
+      }, ZOOM_STARTS_AT)
+        .to(dawnGlowRef.current, {
+          opacity: 0.55, scaleX: 1.35, scaleY: 1.6,
+          duration: SUN_RISE_DURATION, ease: "sine.inOut",
+        }, SUN_RISE_STARTS_AT)
+        .to(dawnShadeRef.current, {
+          opacity: 0, duration: SUN_RISE_DURATION, ease: "sine.inOut",
+        }, SUN_RISE_STARTS_AT)
+        .to(dawnWarmthRef.current, {
+          opacity: 0.18, duration: SUN_RISE_DURATION, ease: "sine.inOut",
+        }, SUN_RISE_STARTS_AT);
+
+      // Move the actual scroller so the cinematic shortcut and manual scroll
+      // always share the same position in the pinned sequence.
+      let travel: gsap.core.Timeline | null = null;
+      let cancelTravel: (() => void) | null = null;
+      exploreRef.current = () => {
+        const trigger = tl.scrollTrigger;
+        const scroller = getScroller();
+        if (!trigger || !scroller) return;
+        cancelTravel?.();
+        const destination = trigger.start + (trigger.end - trigger.start) *
+          progressAt(SUN_SETTLE_AT + HOLD_DURATION / 2);
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const position = { y: scroller.scrollTop };
+        const move = () => {
+          if (lenisRef.current) {
+            lenisRef.current.scrollTo(position.y, { immediate: true });
+          } else {
+            scroller.scrollTop = position.y;
+          }
+          ScrollTrigger.update();
+          // The click supplies its own pacing; flush scrub's extra lag so
+          // the authored beats and their lighting stay on the same clock.
+          trigger.getTween()?.progress(1);
+        };
+        const cancel = () => {
+          travel?.kill();
+          travel = null;
+          window.removeEventListener("wheel", cancel);
+          window.removeEventListener("touchstart", cancel);
+          window.removeEventListener("keydown", cancel);
+          cancelTravel = null;
+        };
+        const finish = () => {
+          cancel();
+          trigger.getTween()?.progress(1);
+          // Focus follows the activated control into the revealed scene.
+          outroShownRef.current = true;
+          setShowOutro(true);
+          requestAnimationFrame(() => outroTextRef.current?.focus({ preventScroll: true }));
+        };
+        cancelTravel = cancel;
+        if (reduced) {
+          position.y = destination;
+          move();
+          finish();
+          return;
+        }
+        window.addEventListener("wheel", cancel, { passive: true });
+        window.addEventListener("touchstart", cancel, { passive: true });
+        window.addEventListener("keydown", cancel);
+        const scrollAt = (time: number) =>
+          trigger.start + (trigger.end - trigger.start) * progressAt(time);
+        // Separate the anticipation from the climb. A single eased scroll
+        // rushed through the sunrise in the fast middle of its 1.8 seconds.
+        // Linear travel during the climb lets SUN_RISE_EASE shape the sun
+        // exactly once, starting slowly and easing into its resting position.
+        travel = gsap.timeline({ onUpdate: move, onComplete: finish });
+        travel
+          .to(position, {
+            y: Math.max(position.y, scrollAt(SUN_RISE_STARTS_AT)),
+            duration: 1.25,
+            ease: "sine.inOut",
+          })
+          .to(position, {
+            y: scrollAt(SUN_SETTLE_AT),
+            duration: 2.8,
+            ease: "none",
+          })
+          .to(position, {
+            y: destination,
+            duration: 0.45,
+            ease: "sine.out",
+          });
+      };
+
       return () => {
+        cancelTravel?.();
+        exploreRef.current = null;
         disposed = true;
         baseImg?.removeEventListener("load", onArtLoad);
       };
@@ -798,6 +909,7 @@ export default function Hero() {
             sun both sit in front of. */}
         <div className={styles.heroSky} />
         <div ref={zoomWrapRef} className={styles.zoomWrap}>
+          <div ref={dawnGlowRef} className={styles.dawnGlow} aria-hidden="true" />
           <div ref={sunRef} className={styles.sun} />
           {/* A real <img>, not a CSS background: the preload scanner finds
               it in the HTML and starts the download before the stylesheet
@@ -816,6 +928,8 @@ export default function Hero() {
               decoding="async"
             />
           </picture>
+          <div ref={dawnShadeRef} className={styles.dawnShade} aria-hidden="true" />
+          <div ref={dawnWarmthRef} className={styles.dawnWarmth} aria-hidden="true" />
         </div>
         <div ref={heroContentRef} className={styles.heroContent}>
           <div className={styles.heroInner}>
@@ -841,25 +955,39 @@ export default function Hero() {
                     {i === 0 ? (
                       <>
                         <span className={styles.dropCap}>{word.slice(0, 1)}</span>
-                        {word.slice(1)}
+                        {/* Three spans, one word. All of them script — the
+                            plural s stays in the same face as the rest, or
+                            the typeface changes inside a single word. It gets
+                            its own class only to be smaller and tucked in
+                            tight against the acronym. Real capitals stay in
+                            the text throughout: "NRIs" is what the DOM,
+                            search, and a screen reader get. */}
+                        <span className={styles.smallCaps}>{word.slice(1, 3)}</span>
+                        <span className={styles.plural}>{word.slice(3)}</span>
                       </>
                     ) : (
                       word
                     )}
                   </span>
-                  {i < HEADING_WORDS.length - 1 ? " " : null}
+                  {HEADING_BREAK_AFTER.has(i) ? (
+                    <br />
+                  ) : i < HEADING_WORDS.length - 1 ? (
+                    " "
+                  ) : null}
                 </Fragment>
               ))}
             </h1>
-            <p className={styles.heroSubtext}>
-              Crafted specifically for NRIs to help them grow their wealth in top global
-              asset classes.
-            </p>
-            <AdvisorCta
-              className={styles.heroCta}
-            >
-              Let’s talk money
-            </AdvisorCta>
+            <div className={styles.heroActions}>
+              <button type="button" className={`${styles.heroCta} ${styles.exploreCta}`} onClick={() => exploreRef.current?.()}>
+                Explore
+                <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 4v16m-6-6 6 6 6-6" />
+                </svg>
+              </button>
+              <button type="button" className={`${navStyles.contactCta} ${styles.heroCta}`} onClick={() => openContact({ tab: "contact" })}>
+                Let’s talk money
+              </button>
+            </div>
           </div>
         </div>
         {/* Always mounted, not conditionally rendered — a fade/rise needs the
@@ -874,10 +1002,12 @@ export default function Hero() {
             <div
               className={`${styles.heroOutroInner} ${showOutro ? styles.heroOutroInnerVisible : ""}`}
             >
-              <h2 ref={outroTextRef} className={styles.heroOutroText}>
+              <h2 ref={outroTextRef} tabIndex={-1} className={styles.heroOutroText}>
                 <span className={styles.heroOutroLine}>
-                  For the life you crossed oceans to build.
+                  <span className={styles.dropCap}>F</span>or the life
                 </span>
+                <span className={styles.heroOutroLine}>you crossed oceans</span>
+                <span className={styles.heroOutroLine}>to build.</span>
               </h2>
             </div>
           </div>

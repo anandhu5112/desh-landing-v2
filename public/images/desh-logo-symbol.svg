@@ -1,0 +1,8 @@
+<!-- The Desh symbol on its own: the bridge mast, deck and two cables that sit
+     to the right of the logotype in the full lockup (public/images/desh-logo.png).
+     Traced from that master at 16x and simplified, so it stays crisp at the
+     ~24px the nav renders it at. White, like desh-logo-mark.svg — surfaces that
+     need it dark invert it (see book/page.module.css). -->
+<svg width="62.38" height="58" viewBox="0 0 62.38 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path fill-rule="evenodd" clip-rule="evenodd" fill="white" d="M28.44 0L34.25 0L34.25 31.75L34.63 32.56L43.06 33L45.31 32.69L45.06 32.13L44.19 31.81L40.75 28.94L39.75 27.63L39.69 20.13L40.13 19.75L44.75 24.88L51.38 29.75L55.69 31.81L59.06 32.94L62.38 33.44L62.38 39.63L61.19 39.94L55.13 39.19L38.94 38.31L34.69 38.44L34.25 39.25L34.25 58L28.44 58L28.44 39.56L28.06 38.44L22.94 38.31L8.81 39.13L1.56 39.94L0.63 39.19L0 34.81L0.31 33.81L1.13 33.31L4 32.88L6.94 31.88L12.63 28.88L17.94 24.75L21 21.5L24.25 16.75L27.19 9.75L28.19 5.19ZM27.88 21.5L24.88 25.63L22 28.69L17.69 32.19L17.63 32.81L28.13 32.56L28.44 31.5L28.44 22.31Z"/>
+</svg>

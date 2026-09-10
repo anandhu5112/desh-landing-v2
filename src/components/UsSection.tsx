@@ -1,6 +1,5 @@
 "use client";
 
-import AdvisorCta from "@/components/AdvisorCta";
 import ScrollRevealVideo from "@/components/ScrollRevealVideo";
 import LogoCarousel from "@/components/LogoCarousel";
 import styles from "./UsSection.module.css";
@@ -37,12 +36,9 @@ export default function UsSection() {
             <span className={styles.dropCap}>H</span>edge against the depreciating rupee
           </h2>
           <p className={styles.subtext}>
-            Own shares in leading US companies and diversify your portfolio
-            beyond India.
+            Own a slice of the world’s biggest companies through USD funds
+            regulated in GIFT City. No US brokerage account, no US tax filing.
           </p>
-          <AdvisorCta className={styles.cta}>
-            Let’s talk money
-          </AdvisorCta>
         </div>
       </div>
     </section>

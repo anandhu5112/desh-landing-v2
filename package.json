@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "npm@11.12.1",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 7474",
     "build": "next build",
     "start": "next start",
     "test": "vitest run",

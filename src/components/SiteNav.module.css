@@ -1,7 +1,7 @@
 /*
  * Persistent site header — deliberately NOT part of Hero's zoomWrap/
  * heroContent. Those layers get scaled and faded by the pinned GSAP
- * timeline; a nav with real links (SIP Calculator jumps to Wealth Bloom,
+ * timeline; a nav with real links (Community jumps to the WhatsApp card,
  * far down the page) has to survive that, or it disappears after the
  * first sliver of scroll. Fixed to the viewport instead, above every
  * other layer including the third/fourth section overlays.
@@ -68,7 +68,16 @@
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
+  gap: var(--space-8);
   flex: none;
+}
+
+/* Source is 62.4x58 (~1.08:1). Set a touch taller than the logotype so the
+   lockup keeps the master's proportions, where the symbol overshoots the
+   cap height. */
+.brandSymbol {
+  height: 24px;
+  width: auto;
 }
 
 /* Source is 63x20.5 (~3.07:1). Height-constrained, width auto, so it scales
@@ -109,6 +118,7 @@
   padding-inline: var(--space-16);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   background: #efefef;
   color: #000000;
   font-family: var(--font-inter), sans-serif;
@@ -118,12 +128,34 @@
   border-radius: 10px;
   text-decoration: none;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.22s ease,
+    opacity 0.2s ease;
+  will-change: transform;
 }
 
-.contactCta:hover,
+.contactCta:hover {
+  background-color: #ffffff;
+  transform: translateY(-1.5px) scale(1.02);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  opacity: 1;
+}
+
+.contactCta:active {
+  transform: translateY(0.5px) scale(0.97);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition-duration: 0.08s;
+  opacity: 1;
+}
+
 .contactCta:focus-visible {
-  opacity: 0.85;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
 }
 
 /* Mobile stand-in for .links — hidden above 640px alongside .links' own
@@ -294,12 +326,34 @@
   border: none;
   border-radius: 10px;
   cursor: pointer;
-  /* Transition likewise lives on `.mobileMenu > *` — see .mobileLink. */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition:
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.22s ease,
+    opacity 0.2s ease;
+  will-change: transform;
 }
 
-.mobileContactCta:hover,
+.mobileContactCta:hover {
+  background-color: #ffffff;
+  transform: translateY(-1.5px) scale(1.02);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  opacity: 1;
+}
+
+.mobileContactCta:active {
+  transform: translateY(0.5px) scale(0.97);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition-duration: 0.08s;
+  opacity: 1;
+}
+
 .mobileContactCta:focus-visible {
-  opacity: 0.85;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
 }
 
 /* .links comes back at 641px, so the panel has no job here. */
@@ -345,8 +399,19 @@
   .pill,
   .mobileMenuWrap,
   .mobileMenu > *,
-  .menuBar {
+  .menuBar,
+  .contactCta,
+  .mobileContactCta {
     transition-duration: 0.01ms;
+  }
+
+  .contactCta,
+  .contactCta:hover,
+  .contactCta:active,
+  .mobileContactCta,
+  .mobileContactCta:hover,
+  .mobileContactCta:active {
+    transform: none !important;
   }
 
   .pillOpen .mobileMenu > * {

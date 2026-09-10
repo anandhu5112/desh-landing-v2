@@ -83,16 +83,6 @@
   margin: 0;
 }
 
-/* Local override on the shared Button — Figma specs this CTA smaller than
-   Button's own default (48px/12px/16px), same override pattern Hero's
-   .heroCta already uses rather than touching Button.module.css itself. */
-.cta {
-  height: 40px;
-  padding-inline: var(--space-16);
-  border-radius: 10px;
-  font-size: var(--fs-nav);
-}
-
 .media {
   grid-column: 7 / span 6;
   display: flex;

@@ -7,13 +7,11 @@ import {
   useId,
   useRef,
   useState,
-  type CSSProperties,
 } from "react";
 import Image from "next/image";
 
 import Button from "@/components/ui/Button";
-import AdvisorCta from "@/components/AdvisorCta";
-import { useContactModal } from "@/components/ContactModalProvider";
+import { COMMUNITY_URL } from "@/lib/contact";
 import styles from "./BloomSection.module.css";
 
 /** Also used by ContactModal/GrowSection/UsSection — same four faces.
@@ -116,17 +114,14 @@ function inr(value: number): string {
 }
 
 function compact(value: number): string {
-  if (value >= 1e7) return `≈ ₹${(value / 1e7).toFixed(2)} Cr`;
-  if (value >= 1e5) return `≈ ₹${(value / 1e5).toFixed(2)} L`;
-  if (value >= 1e3) return `≈ ₹${(value / 1e3).toFixed(1)} K`;
+  if (value >= 1e7) return `₹${(value / 1e7).toFixed(2)} Cr`;
+  if (value >= 1e5) return `₹${(value / 1e5).toFixed(2)} L`;
+  if (value >= 1e3) return `₹${(value / 1e3).toFixed(1)} K`;
   return "";
 }
 
-/** Track fill is a CSS custom property, so it has to go through a cast. */
-function fillStyle(value: number, min: number, max: number): CSSProperties {
-  const pct = ((value - min) / (max - min)) * 100;
-  return { "--fill": `${pct}%` } as CSSProperties;
-}
+/** Diameter of the silver rupee coin slider thumb (px). */
+const THUMB_SIZE = 40;
 
 /* ── Memoised blocks ──────────────────────────────────────────────────────
    Everything below is independent of the slider. Dragging used to re-render
@@ -187,69 +182,73 @@ const PortfolioBlock = memo(function PortfolioBlock() {
       <div className={styles.portfolio}>
         <h2 className={styles.portfolioHeading}>
           <span className={styles.headingLine}>
-            <span className={styles.dropCap}>L</span>et&apos;s build your
+            <span className={styles.dropCap}>I</span>nvest like a true
           </span>
-          <span className={styles.headingLine}>portfolio together</span>
+          <span className={styles.headingLine}>global citizen</span>
         </h2>
         <p className={styles.portfolioSubtext}>
           Talk through your goals with an advisor and plan your next investment with
           clarity.
         </p>
-        <AdvisorCta
-          className={styles.portfolioCta}
-        >
-          Let’s talk money
-        </AdvisorCta>
       </div>
     </div>
   );
 });
 
 /* Straddles .darkBox's bottom edge — in Figma the card's lower third
-   hangs past the dark panel onto the page background below it. */
+   hangs past the dark panel onto the page background below it. Also the
+   id target for SiteNav's "Community" link (#community). */
 const WhatsappRow = memo(function WhatsappRow() {
-  // Read from context here rather than taking a prop: the context value is
-  // stable (ContactModalProvider memoises it), so this stays memoised.
-  const { open: openContact } = useContactModal();
   return (
-    <div className={styles.whatsappRow}>
+    <div id="community" className={styles.whatsappRow}>
       <div className={styles.whatsappCard}>
-        <div className={styles.qrWrap}>
-          <Image
-            src="/images/qr-code.svg"
-            alt="QR code to join the Desh WhatsApp community"
-            width={286}
-            height={286}
-            className={styles.qrImage}
-          />
-        </div>
         <div className={styles.whatsappTextCol}>
-          <div className={styles.avatarStack}>
-            {AVATARS.map((src) => (
-              <Image
-                key={src}
-                src={src}
-                alt=""
-                width={30}
-                height={30}
-                className={styles.avatarImg}
-              />
-            ))}
+          <div className={styles.communityEyebrow}>
+            <span className={styles.communityDot} aria-hidden="true" />
+            THE DESH COMMUNITY
           </div>
-          <p className={styles.whatsappHeading}>
-            Join our NRI community on WhatsApp.
-          </p>
+          <h2 className={styles.whatsappHeading}>
+            A little closer<br />to home.
+          </h2>
           <p className={styles.whatsappSubtext}>
-            Connect with fellow NRIs, share questions, and learn more about investing
-            back home.
+            Meet fellow NRIs, ask your questions, and find your footing investing back home.
           </p>
+          <div className={styles.communityPeople}>
+            <div className={styles.avatarStack}>
+              {AVATARS.map((src) => (
+                <Image
+                  key={src}
+                  src={src}
+                  alt=""
+                  width={30}
+                  height={30}
+                  className={styles.avatarImg}
+                />
+              ))}
+            </div>
+            <span className={styles.communityCaption}>Across borders. On WhatsApp.</span>
+          </div>
           <Button
-            type="button"
+            href={COMMUNITY_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className={styles.ctaGreen}
-            onClick={() => openContact({ tab: "join" })}
           >
-            View community QR
+            Join community <span aria-hidden="true">↗</span>
           </Button>
+        </div>
+        <div className={styles.qrPanel}>
+          <div className={styles.qrWrap}>
+            <Image
+              src="/images/qr-code.svg"
+              alt="QR code to join the Desh WhatsApp community"
+              width={164}
+              height={164}
+              className={styles.qrImage}
+            />
+          </div>
+          <p className={styles.qrLabel}>Your people, one scan away.</p>
+          <p className={styles.qrHint}>Scan with your phone camera</p>
         </div>
       </div>
     </div>
@@ -258,6 +257,8 @@ const WhatsappRow = memo(function WhatsappRow() {
 
 export default function BloomSection() {
   const [monthly, setMonthly] = useState<number>(AMOUNT.initial);
+  const [amountDraft, setAmountDraft] = useState<string | null>(null);
+  const amountInputRef = useRef<HTMLInputElement>(null);
   const [years, setYears] = useState<number>(YEARS_INITIAL);
   const [bloomVisible, setBloomVisible] = useState(false);
 
@@ -272,6 +273,10 @@ export default function BloomSection() {
   const yearsLabelId = `${ids}-years-label`;
 
   const corpus = futureValue(monthly, ASSUMED_ANNUAL_RATE, years);
+  const amountRatio = monthlyFraction(monthly);
+  const amountPct = amountRatio * 100;
+  const amountOffset = (0.5 - amountRatio) * THUMB_SIZE;
+  const sliderPosition = `calc(${amountPct}% + ${amountOffset}px)`;
 
   // Both monthly investment and investment duration move the bloom.
   useEffect(() => {
@@ -359,6 +364,15 @@ export default function BloomSection() {
     };
   }, []);
 
+  const commitAmount = () => {
+    const parsed = Number((amountDraft ?? "").replace(/[₹,\s]/g, ""));
+    if (amountDraft?.trim() && Number.isFinite(parsed)) {
+      setMonthly(Math.min(AMOUNT.max, Math.max(AMOUNT.min,
+        Math.round(parsed / AMOUNT.step) * AMOUNT.step)));
+    }
+    setAmountDraft(null);
+  };
+
   const selectYears = useCallback((preset: number) => setYears(preset), []);
 
   return (
@@ -381,29 +395,80 @@ export default function BloomSection() {
           <div className={styles.controls}>
             <div className={styles.control}>
               <div className={styles.controlHead}>
-                <label className={styles.controlLabel} htmlFor={amountId}>
+                <label className={styles.controlLabel} htmlFor={`${amountId}-edit`}>
                   Monthly investment
                 </label>
-                <span className={styles.controlValue}>{inr(monthly)}</span>
+                <div className={styles.amountRow}>
+                  <input
+                    ref={amountInputRef}
+                    id={`${amountId}-edit`}
+                    className={styles.controlValue}
+                    type="text"
+                    inputMode="numeric"
+                    value={amountDraft ?? inr(monthly)}
+                    onFocus={(event) => {
+                      setAmountDraft(String(monthly));
+                      event.currentTarget.select();
+                    }}
+                    onChange={(event) => setAmountDraft(event.target.value)}
+                    onBlur={commitAmount}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") event.currentTarget.blur();
+                      if (event.key === "Escape") setAmountDraft(null);
+                    }}
+                  />
+                  <button type="button" className={styles.editAmount}
+                    aria-label="Edit monthly investment"
+                    onClick={() => amountInputRef.current?.focus()}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                      <path d="m16 3 5 5M3 21l5-1L21 7a2.1 2.1 0 0 0-5-5L3 15z" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-              <input
-                id={amountId}
-                className={styles.slider}
-                type="range"
-                min={AMOUNT.min}
-                max={AMOUNT.max}
-                step={AMOUNT.step}
-                value={monthly}
-                onChange={(event) => setMonthly(Number(event.target.value))}
-                style={fillStyle(monthly, AMOUNT.min, AMOUNT.max)}
-                aria-label="Monthly investment amount in rupees"
-                aria-valuetext={`${inr(monthly)} per month`}
-              />
+              <div className={styles.sliderWrap}>
+                <div className={styles.sliderTrack} aria-hidden="true">
+                  <div
+                    className={styles.sliderFill}
+                    style={{ width: sliderPosition }}
+                  />
+                </div>
+                <input
+                  id={amountId}
+                  className={styles.sliderInput}
+                  type="range"
+                  min={AMOUNT.min}
+                  max={AMOUNT.max}
+                  step={AMOUNT.step}
+                  value={monthly}
+                  onChange={(event) => setMonthly(Number(event.target.value))}
+                  aria-label="Monthly investment amount in rupees"
+                  aria-valuetext={`${inr(monthly)} per month`}
+                />
+                <div
+                  className={styles.sliderThumb}
+                  style={{ left: sliderPosition }}
+                  aria-hidden="true"
+                >
+                  <Image
+                    src="/images/slider-coin.webp"
+                    alt=""
+                    width={40}
+                    height={40}
+                    className={styles.coinImg}
+                    draggable={false}
+                    priority
+                  />
+                </div>
+              </div>
+              <div className={styles.sliderLimits} aria-hidden="true">
+                <span>{inr(AMOUNT.min)}</span><span>{inr(AMOUNT.max)}</span>
+              </div>
             </div>
 
             <div className={styles.durationControl}>
               <p id={yearsLabelId} className={styles.controlLabel}>
-                Select Investment Duration
+                Investment duration
               </p>
               <DurationPresets
                 years={years}
@@ -413,21 +478,20 @@ export default function BloomSection() {
             </div>
           </div>
 
-          {/* Plain div, not <dl>: with the breakdown rows gone there are no
-              term/description pairs left to describe. */}
           <div className={styles.readout}>
-            <div className={styles.final}>
-              <div>
-                <p className={styles.finalLabel}>Estimated value</p>
-                <p className={styles.finalValue}>{inr(corpus)}</p>
-              </div>
-              <span className={styles.finalCompact}>{compact(corpus)}</span>
+            <div>
+              <p className={styles.finalLabel}>Estimated value in {years} years</p>
+              <p className={styles.finalValue}>{compact(corpus)}</p>
+              <p className={styles.finalCompact}>{inr(corpus)}</p>
+            </div>
+            <div className={styles.returnAssumption}>
+              <span>Assumed annual return</span><span>{ASSUMED_ANNUAL_RATE}%</span>
             </div>
           </div>
 
             <p className={styles.note}>
-              Illustrative projection at an assumed 12% annual return. Investments are
-              subject to market risk; past performance does not predict future results.
+              Illustrative projection. Investments are subject to market risk;
+              past performance does not predict future results.
             </p>
           </div>
         </div>

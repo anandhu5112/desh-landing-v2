@@ -12,6 +12,11 @@
  */
 const ENDPOINT = process.env.NEXT_PUBLIC_CONTACT_ENDPOINT;
 
+/** Desh NRI WhatsApp community invite URL. */
+export const COMMUNITY_URL =
+  process.env.NEXT_PUBLIC_COMMUNITY_URL?.trim() ||
+  "https://chat.whatsapp.com/KmasCJMGJ42Bqn9a4PkMw6?s=cl&p=i&ilr=4";
+
 export type ContactPayload = {
   /** Which of the modal's radio options the visitor picked. */
   reason: string;
@@ -32,7 +37,7 @@ export type ContactPayload = {
 export async function submitContact(payload: ContactPayload): Promise<void> {
   if (!ENDPOINT) {
     throw new Error(
-      "NEXT_PUBLIC_CONTACT_ENDPOINT is not set — the contact form has nowhere to submit to.",
+      "NEXT_PUBLIC_CONTACT_ENDPOINT is not set: the contact form has nowhere to submit to.",
     );
   }
 

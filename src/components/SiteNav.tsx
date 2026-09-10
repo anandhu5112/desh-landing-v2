@@ -65,8 +65,8 @@ export default function SiteNav() {
       // Drop back to the max-content fallback so the read below is the
       // content width and not the value we last wrote. The panel has to come
       // out of flow for it too: collapsed it is zero-height, but its widest
-      // row ("SIP Calculator", the CTA) still drives the pill's max-content
-      // width, which would measure well wider than the toggle row.
+      // row (the "Let's talk money" CTA) still drives the pill's
+      // max-content width, which would measure well wider than the toggle row.
       pill.style.removeProperty("--pill-w");
       if (wrap) wrap.style.display = "none";
       const width = pill.getBoundingClientRect().width;
@@ -111,6 +111,16 @@ export default function SiteNav() {
         >
           <div className={styles.pillRow}>
             <Link href="/" className={styles.brand}>
+              {/* Decorative: the logotype beside it already carries the name. */}
+              <Image
+                src="/images/desh-logo-symbol.svg"
+                alt=""
+                width={62}
+                height={58}
+                className={styles.brandSymbol}
+                aria-hidden="true"
+                priority
+              />
               {/* Source is 63x20.5 (~3.07:1). Height-constrained, width auto, so
                   it scales proportionally regardless of the intrinsic width/
                   height next/image needs. */}
@@ -125,10 +135,10 @@ export default function SiteNav() {
             </Link>
             <nav className={styles.links} aria-label="Primary">
               <a href="#services" className={styles.link}>
-                Services
+                Company
               </a>
-              <a href="#wealth-bloom" className={styles.link}>
-                SIP Calculator
+              <a href="#community" className={styles.link}>
+                Community
               </a>
               <button
                 type="button"
@@ -169,10 +179,10 @@ export default function SiteNav() {
           >
             <nav id="mobile-nav-menu" className={styles.mobileMenu} aria-label="Mobile">
               <a href="#services" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-                Services
+                Company
               </a>
-              <a href="#wealth-bloom" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-                SIP Calculator
+              <a href="#community" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+                Community
               </a>
               <button
                 type="button"

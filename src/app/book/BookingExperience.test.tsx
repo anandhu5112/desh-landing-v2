@@ -70,14 +70,16 @@ afterEach(() => {
   cal.reset();
 });
 
-describe("BookingExperience", () => {
+describe.each([false, true])("BookingExperience (embedded: %s)", (embedded) => {
   it("shows the embedded calendar before a booking is completed", async () => {
-    render(<BookingExperience />);
+    render(<BookingExperience embedded={embedded} />);
 
     expect(
-      screen.getByRole("heading", { name: "Choose a time that works for you." }),
+      screen.getByRole("heading", { name: "Let’s find a time to connect." }),
     ).toBeInTheDocument();
     expect(screen.getByTestId("cal-embed")).toBeInTheDocument();
+    expect(screen.queryByRole("main") !== null).toBe(!embedded);
+    expect(screen.queryByRole("link", { name: "Back to Desh" }) !== null).toBe(!embedded);
 
     await waitFor(() =>
       expect(cal.api).toHaveBeenCalledWith(
@@ -88,7 +90,7 @@ describe("BookingExperience", () => {
   });
 
   it("replaces the calendar with the community invitation after booking", async () => {
-    render(<BookingExperience />);
+    render(<BookingExperience embedded={embedded} />);
     await waitFor(() => expect(cal.api).toHaveBeenCalledWith("on", expect.anything()));
 
     act(() => cal.emitSuccess("2026-09-14T11:00:00.000Z"));
@@ -102,7 +104,7 @@ describe("BookingExperience", () => {
   });
 
   it("still confirms a successful booking when Cal omits the start time", async () => {
-    render(<BookingExperience />);
+    render(<BookingExperience embedded={embedded} />);
     await waitFor(() => expect(cal.api).toHaveBeenCalledWith("on", expect.anything()));
 
     act(() => cal.emitSuccess());
@@ -112,7 +114,7 @@ describe("BookingExperience", () => {
   });
 
   it("removes the Cal event listener when the page unmounts", async () => {
-    const { unmount } = render(<BookingExperience />);
+    const { unmount } = render(<BookingExperience embedded={embedded} />);
     await waitFor(() => expect(cal.api).toHaveBeenCalledWith("on", expect.anything()));
 
     unmount();

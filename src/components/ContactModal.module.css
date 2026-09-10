@@ -336,13 +336,25 @@
   opacity: 0;
 }
 
-.qrLarge {
+.qrLargeWrap {
   flex: none;
   width: 100%;
-  max-width: 380px;
+  max-width: 320px;
   height: auto;
   aspect-ratio: 1 / 1;
-  border-radius: 8px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e5e5;
+}
+
+.qrLarge {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -408,6 +420,26 @@
   color: #5a5a5a;
 }
 
+.joinInstructionsMobile {
+  display: none;
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 1.6;
+  color: #5a5a5a;
+}
+
+.joinButton {
+  background: #00b531;
+  color: #ffffff;
+  border-radius: 10px;
+  height: 40px;
+  padding-inline: var(--space-20);
+  font-size: var(--fs-nav);
+  box-shadow: none;
+  margin-top: var(--space-8);
+}
+
 @media (max-width: 900px) {
   .joinBody {
     flex-direction: column;
@@ -417,6 +449,25 @@
   .joinTextCol {
     padding-block: 0;
     gap: var(--space-24);
+  }
+}
+
+@media (max-width: 767px) {
+  .qrLargeWrap {
+    display: none;
+  }
+
+  .joinInstructions {
+    display: none;
+  }
+
+  .joinInstructionsMobile {
+    display: block;
+  }
+
+  .joinButton {
+    width: 100%;
+    height: 44px;
   }
 }
 
@@ -482,7 +533,17 @@
   --booking-muted: #5a5a5a;
   gap: 0;
   max-width: 960px;
-  height: auto;
+  /* One frame for both booking steps. It is the height the invitation
+     settles at on its own — the portrait's 560px plus this card's 8px
+     padding and 1px border, top and bottom — written down so the calendar
+     stacked over it gets the same box and the card never resizes mid-flow.
+     Fixed rather than auto for a second reason: the calendar layer is
+     absolutely positioned, so the card must not be the thing that scrolls
+     (a scrolled card would slide the layer off its own frame). .stepLayer
+     scrolls instead. */
+  height: min(578px, calc(100vh - 48px));
+  height: min(578px, calc(100dvh - 48px));
+  overflow: hidden;
   padding: 8px;
   border: 1px solid rgb(255 255 255 / 55%);
   border-radius: 22px;
@@ -496,6 +557,19 @@
 
 .bookingCard.cardClosing { animation-duration: 200ms; }
 .backdropClosing:has(.bookingCard) { animation-duration: 200ms; }
+
+/* Nothing at all on the tabs that don't stack — the photo and content go on
+   being the card's own flex children there. */
+.stepLayer { display: contents; }
+
+.bookingCard .stepLayer {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 
 .portrait {
   width: 38%;
@@ -527,6 +601,18 @@
   flex-direction: column;
   gap: 12px;
   color: #fff;
+}
+
+.portraitLockup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A touch taller than the logotype, as the symbol is in the master lockup. */
+.portraitSymbol {
+  height: 25px;
+  width: auto;
 }
 
 .portraitBrand span {
@@ -694,12 +780,14 @@
   outline-offset: 4px;
 }
 
+/* Sits directly under the call-details row, so it is read before the
+   button rather than after it. Left-aligned with that row, not centred. */
 .bookingNote {
-  margin-top: 16px;
+  margin: 16px 0 0;
   font-size: 12px;
   line-height: 1.6;
-  text-align: center;
   color: var(--booking-muted);
+  max-width: 42ch;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -728,8 +816,13 @@
   .backdrop:has(.bookingCard) { padding: 12px; }
   .bookingCard {
     max-width: 440px;
+    /* Both, and in this order: the base card's max-height is the tighter
+       desktop inset and would otherwise cap the frame short of the phone's
+       12px backdrop padding. */
     max-height: calc(100vh - 24px);
     max-height: calc(100dvh - 24px);
+    height: calc(100vh - 24px);
+    height: calc(100dvh - 24px);
     flex-direction: column;
     padding: 8px;
     border-radius: 20px;
@@ -769,19 +862,53 @@
 @media (prefers-reduced-motion: reduce) {
   .bookingBody, .bookingContent .close, .bookingButton, .bookingButton svg { transition: none; }
   .bookingContent .close:active, .bookingButton:active { transform: none; }
+  .calendarStage, .calendarStage > div { transition: none; }
+  .calendarStage > div { transform: none; }
 }
 
-.calendarCard { height: min(680px, calc(100dvh - 48px)); display: block; padding: 0; overflow: hidden; }
-.calendarStage { position: relative; height: 100%; display: flex; flex-direction: column; padding: 64px 24px 24px; }
-.calendarStage > div { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+/* The calendar isn't a screen the card navigates to — it is a second layer of
+   the same card, sitting on the invitation at the same size and place and
+   crossfading over it. Opaque, so one fade does the whole dissolve: no need
+   to fade the invitation out underneath and risk the two washing each other
+   out at the halfway point. */
+.calendarStage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 38px 18px 12px;
+  border-radius: inherit;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.calendarStageActive { opacity: 1; pointer-events: auto; }
+
+/* The calendar itself settles up into place a beat behind the fade, which is
+   what keeps the change from reading as a hard cut between two screens. */
+.calendarStage > div {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateY(8px);
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.calendarStageActive > div { transform: none; }
 .calendarBack {
   position: absolute;
-  top: 14px;
-  left: 24px;
+  top: 10px;
+  left: 20px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 32px;
   border: 0;
   background: transparent;
   color: #5a5a5a;
@@ -789,11 +916,14 @@
   font-size: 14px;
   cursor: pointer;
 }
-.calendarClose { position: absolute; top: 12px; right: 16px; width: 40px; height: 40px; }
+.calendarClose { position: absolute; top: 10px; right: 12px; width: 32px; height: 32px; }
 .calendarLoading { padding: 48px 24px; color: #5a5a5a; font-size: 16px; }
 .calendarBack:focus-visible { outline: 2px solid #171717; outline-offset: 2px; }
 @media (max-width: 700px) {
-  .calendarCard { height: calc(100dvh - 24px); }
-  .calendarStage { padding: 66px 12px 12px; }
-  .calendarBack { left: 20px; }
+  .bookingCard .stepLayer { flex-direction: column; }
+  /* The card is full-height on a phone, so the chrome can keep a proper
+     touch target here — it is only the desktop frame that is tight. */
+  .calendarStage { padding: 56px 12px 12px; }
+  .calendarBack { top: 8px; left: 16px; min-height: 44px; }
+  .calendarClose { top: 8px; right: 8px; width: 44px; height: 44px; }
 }

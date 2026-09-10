@@ -28,8 +28,8 @@ export default function Home() {
               pinned stages. Then plain full-viewport sections the rest of the
               way down. */}
           <ServicesSection />
-          {/* One continuous dark panel: SIP calculator, the "build your
-              portfolio together" CTA, and the WhatsApp card straddling its
+          {/* One continuous dark panel: SIP calculator, the "Invest like a true
+              global citizen" CTA, and the WhatsApp card straddling its
               bottom edge (Figma node 379:15555). */}
           <BloomSection />
           <FaqSection />
@@ -40,7 +40,20 @@ export default function Home() {
             pinned zoom/fade so its links stay usable the whole page down. */}
         <SiteNav />
 
-        {/* GlassTuner is deliberately NOT mounted here. The glass values it
+        {/* Neither tuner is mounted. WordmarkTuner drives the footer
+            wordmark's --wm-* properties and its values are baked into
+            Footer.module.css; to tune again, add it back for the session:
+              import dynamic from "next/dynamic";
+              const WordmarkTuner = dynamic(() => import("@/components/WordmarkTuner"));
+              <WordmarkTuner />
+            then press Copy CSS, paste the block over the --wm-* defaults in
+            Footer.module.css, update WORDMARK_DEFAULTS to match — a test
+            holds the two together — and take the mount back out. Keep it
+            behind next/dynamic: a static import would leave the panel in the
+            production bundle whatever a NODE_ENV branch evaluates to, which
+            is the same trap the note below describes.
+
+            GlassTuner is deliberately NOT mounted here either. The glass values it
             produced are baked into GlassProvider, and a NODE_ENV guard was
             not enough — the component still landed in the production bundle,
             because the import keeps it in the module graph whatever the

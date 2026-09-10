@@ -11,6 +11,7 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 import { ArrowRight, ArrowUpRight, Clock, InstagramLogo, VideoCamera, X } from "@phosphor-icons/react/dist/ssr";
 import Button from "@/components/ui/Button";
+import { COMMUNITY_URL } from "@/lib/contact";
 import { getScroller } from "@/lib/scroller";
 import styles from "./ContactModal.module.css";
 
@@ -33,7 +34,7 @@ const JOIN_STATS: Stat[] = [
   {
     value: "100%",
     label: "Personalized Guidance",
-    caption: "No generic recommendations—every portfolio is tailored to your goals.",
+    caption: "No generic recommendations. Every portfolio is tailored to your goals.",
   },
   {
     value: "24–48 hrs",
@@ -144,7 +145,17 @@ export default function ContactModal({
     if (tabTimer.current) clearTimeout(tabTimer.current);
     setActiveTab(tab);
 
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    // The invitation and the calendar are two layers of the same card, stacked
+    // on top of each other and crossfaded in CSS (see .stepLayer and
+    // .calendarStage). Committing `contentTab` right away is what starts that
+    // fade, so this pair must not wait out the swap-while-invisible dissolve
+    // the other tabs use — waiting would fade the invitation to nothing and
+    // only then begin fading the calendar in.
+    const stacked =
+      (tab === "calendar" && activeTab === "contact") ||
+      (tab === "contact" && activeTab === "calendar");
+
+    if (stacked || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       setContentTab(tab);
       setTabDissolving(false);
       return;
@@ -158,6 +169,9 @@ export default function ContactModal({
   }
 
   const cardRef = useRef<HTMLDivElement>(null);
+  // In the booking flow the card is a fixed frame and this layer is what
+  // scrolls, so a step change has to rewind it and not just the card.
+  const stepLayerRef = useRef<HTMLDivElement>(null);
 
   // Stays "closing" through the fade-out-down animation instead of
   // unmounting the instant `open` flips false, so the exit has time to play.
@@ -209,7 +223,11 @@ export default function ContactModal({
       const card = cardRef.current;
       if (!card) return;
 
-      const focusable = Array.from(card.querySelectorAll<HTMLElement>(FOCUSABLE));
+      // Both step layers stay mounted through the crossfade, so the one that
+      // isn't showing is marked inert — the browser keeps it out of the tab
+      // order, and the trap has to agree or Tab lands on an invisible control.
+      const focusable = Array.from(card.querySelectorAll<HTMLElement>(FOCUSABLE))
+        .filter((element) => !element.closest("[inert]"));
       if (focusable.length === 0) return;
 
       const first = focusable[0];
@@ -256,6 +274,7 @@ export default function ContactModal({
 
   useEffect(() => {
     cardRef.current?.scrollTo?.({ top: 0 });
+    stepLayerRef.current?.scrollTo?.({ top: 0 });
     // A screen switch can remove the button that held focus.
     if (phase === "open" && !cardRef.current?.contains(document.activeElement)) {
       cardRef.current?.focus();
@@ -265,8 +284,10 @@ export default function ContactModal({
   if (phase === "closed") return null;
 
   const closing = phase === "closing";
-  const isBooking = contentTab === "contact";
+  // The calendar is layered over the invitation rather than replacing it, so
+  // the invitation stays rendered (and keeps the card its size) on both steps.
   const isCalendar = contentTab === "calendar";
+  const isBooking = contentTab === "contact" || isCalendar;
 
   // Fires for both the backdrop's and the card's own animation (each has
   // its own listener below) — actually unmounts once the exit finishes.
@@ -283,26 +304,20 @@ export default function ContactModal({
       <div
         ref={cardRef}
         tabIndex={-1}
-        className={`${styles.card} ${isBooking || isCalendar ? styles.bookingCard : ""} ${isCalendar ? styles.calendarCard : ""} ${closing ? styles.cardClosing : ""}`}
+        className={`${styles.card} ${isBooking ? styles.bookingCard : ""} ${closing ? styles.cardClosing : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={isCalendar ? undefined : "contact-modal-heading"}
         aria-label={isCalendar ? "Book a conversation with Desh" : undefined}
-        aria-describedby={isBooking ? "contact-modal-description" : undefined}
+        aria-describedby={isBooking && !isCalendar ? "contact-modal-description" : undefined}
         onClick={(event) => event.stopPropagation()}
       >
-        {isCalendar ? (
-          <div className={styles.calendarStage}>
-            <button type="button" className={styles.calendarBack} onClick={() => selectTab("contact")}>
-              <ArrowRight size={16} style={{ transform: "rotate(180deg)" }} aria-hidden="true" /> Back
-            </button>
-            <BookingExperience embedded />
-            <button type="button" className={`${styles.close} ${styles.calendarClose}`} onClick={onClose} aria-label="Close">
-              <X size={16} weight="bold" />
-            </button>
-          </div>
-        ) : (
-        <>
+        <div
+          ref={stepLayerRef}
+          className={styles.stepLayer}
+          inert={isCalendar}
+          aria-hidden={isCalendar || undefined}
+        >
         <div className={`${styles.photo} ${isBooking ? styles.portrait : ""} ${contentTab === "start" ? styles.photoStart : ""}`}>
           <Image
             src={isBooking ? "/images/aswin-portrait.jpg" : "/images/contact-sky.jpg"}
@@ -320,7 +335,20 @@ export default function ContactModal({
           {isBooking && (
             <>
               <div className={styles.portraitBrand}>
-                <Image src="/images/desh-logo-mark.svg" alt="Desh" width={63} height={21} />
+                {/* A div, not a span: .portraitBrand span styles (and hides,
+                    on mobile) the tagline underneath. */}
+                <div className={styles.portraitLockup}>
+                  {/* Decorative: the logotype beside it already carries the name. */}
+                  <Image
+                    src="/images/desh-logo-symbol.svg"
+                    alt=""
+                    width={62}
+                    height={58}
+                    className={styles.portraitSymbol}
+                    aria-hidden="true"
+                  />
+                  <Image src="/images/desh-logo-mark.svg" alt="Desh" width={63} height={21} />
+                </div>
                 <span>A little closer to what’s next.</span>
               </div>
               <div className={styles.profile}>
@@ -383,7 +411,7 @@ export default function ContactModal({
                 </p>
               </div>
             </div>
-          ) : contentTab === "contact" ? (
+          ) : isBooking ? (
             <div className={`${styles.bookingBody} ${tabDissolving ? styles.bodyHidden : ""}`}>
               <p className={styles.eyebrow}>A conversation with your favourite financial advisor</p>
               <h2 id="contact-modal-heading" className={styles.bookingHeading}>
@@ -396,23 +424,30 @@ export default function ContactModal({
                 <span><Clock size={18} aria-hidden="true" />30 minutes</span>
                 <span><VideoCamera size={18} aria-hidden="true" />Video call</span>
               </div>
+              {/* Said before the booking, not after it: Desh can't onboard
+                  residents of these two countries, so the call would be a
+                  dead end. */}
+              <p className={styles.bookingNote}>
+                Desh does not currently serve residents of the United&nbsp;States or Canada.
+              </p>
               <div className={styles.bookingActions}>
                 <Button type="button" className={styles.bookingButton} onClick={() => selectTab("calendar")}>
                   Choose a time <ArrowRight size={21} aria-hidden="true" />
                 </Button>
-                <p className={styles.bookingNote}>Your goals. Your questions. Our undivided attention.</p>
               </div>
             </div>
           ) : (
             // The QR is the available community invitation.
             <div className={`${styles.joinBody} ${tabDissolving ? styles.joinBodyHidden : ""}`}>
-              <Image
-                src="/images/qr-code.png"
-                alt="QR code to join the Desh NRI community"
-                width={380}
-                height={380}
-                className={styles.qrLarge}
-              />
+              <div className={styles.qrLargeWrap}>
+                <Image
+                  src="/images/qr-code.svg"
+                  alt="QR code to join the Desh NRI community"
+                  width={380}
+                  height={380}
+                  className={styles.qrLarge}
+                />
+              </div>
               <div className={styles.joinTextCol}>
                 <div className={styles.avatarsRow}>
                   <div className={styles.avatarStack}>
@@ -436,11 +471,42 @@ export default function ContactModal({
                   Scan this code with your phone camera to open the community invite
                   in WhatsApp.
                 </p>
+                <p className={styles.joinInstructionsMobile}>
+                  Connect with fellow NRIs, share questions, and learn more about investing
+                  back home.
+                </p>
+                <Button
+                  href={COMMUNITY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.joinButton}
+                >
+                  Join community
+                </Button>
               </div>
             </div>
           )}
         </div>
-        </>
+        </div>
+
+        {/* Mounted as soon as the invitation is (not only once it is asked
+            for), so Cal has loaded its month by the time anyone crosses over
+            — arriving at an empty white panel is the one thing no amount of
+            easing can smooth over. */}
+        {isBooking && (
+          <div
+            className={`${styles.calendarStage} ${isCalendar ? styles.calendarStageActive : ""}`}
+            inert={!isCalendar}
+            aria-hidden={!isCalendar || undefined}
+          >
+            <button type="button" className={styles.calendarBack} onClick={() => selectTab("contact")}>
+              <ArrowRight size={16} style={{ transform: "rotate(180deg)" }} aria-hidden="true" /> Back
+            </button>
+            <BookingExperience embedded />
+            <button type="button" className={`${styles.close} ${styles.calendarClose}`} onClick={onClose} aria-label="Close">
+              <X size={16} weight="bold" />
+            </button>
+          </div>
         )}
       </div>
     </div>,
