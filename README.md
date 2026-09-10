@@ -20,6 +20,8 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+Run `npm test` to execute the component tests with Vitest and React Testing Library in jsdom. Tests live in `src/**/*.test.{ts,tsx}`; the calculator suite covers amount editing, slider updates, and duration presets. Run `npm test -- src/components/BloomSection.test.tsx` to check the calculator alone.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
