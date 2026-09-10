@@ -32,3 +32,36 @@
   flex-direction: column;
   min-height: 100%;
 }
+
+/*
+ * Phones do not get the refraction.
+ *
+ * <LiquidGlass> is a `filter` on a viewport-sized element that the entire
+ * page scrolls inside, so ANY pixel that changes anywhere on the page makes
+ * the browser re-run an feDisplacementMap + feGaussianBlur + chromatic
+ * aberration chain over the whole viewport. On a desktop GPU that is
+ * affordable; on a phone at devicePixelRatio 3 it is ~1200x2500px of SVG
+ * filter per frame, and mobile engines commonly rasterise SVG filters on the
+ * CPU. The hero is the one part of the page that repaints every frame, which
+ * is why the sunrise in particular juddered — the sun's own motion is cheap,
+ * the full-screen refraction it drags behind it is not.
+ *
+ * Nothing visible is lost that a phone can resolve: the lens is only ever
+ * the nav pill's own box, and .pill (see SiteNav.module.css) draws its
+ * frosting with its own backdrop-filter, independently of this. What goes is
+ * the sub-pixel displacement of the content behind a ~340x56 pill.
+ *
+ * !important because the library writes both properties inline, and the
+ * will-change has to go with the filter — left on its own it keeps the
+ * element promoted and re-rastered for a filter that no longer exists.
+ *
+ * 767px is the site's "true phone" breakpoint, the same one Hero.module.css
+ * and the section stylesheets use. Tablets keep the refraction; revisit if
+ * an iPad shows the same judder.
+ */
+@media (max-width: 767px) {
+  .glass > :first-child {
+    filter: none !important;
+    will-change: auto !important;
+  }
+}

@@ -207,6 +207,16 @@
      figure at setup (see sunClearanceFor); both are below the frame, so the
      correction is invisible. */
   transform: translateY(calc(100% + 100vh));
+  /* The rise is the one tween that runs for the whole pin, and without this
+     every frame of it repaints .zoomWrap — which is the full frame, and
+     contains both the landscape and a disc that is 95vw across on a phone.
+     Its own layer means the sun's travel is a compositor transform and the
+     landscape underneath is rasterised once.
+
+     Left on permanently rather than toggled around the tween: .sun exists
+     only for this animation, it is on screen from first paint (parked below
+     the frame), and the layer is one texture the size of the disc. */
+  will-change: transform;
 }
 
 /* Content overlay — sibling of .zoomWrap so it is never scaled by the zoom */
@@ -690,6 +700,10 @@
   transform-origin: center;
   opacity: 0;
   pointer-events: none;
+  /* Same reason as .sun: this scales and fades across the whole rise, and a
+     radial gradient 130% of the frame wide is re-rasterised on every frame it
+     changes size unless it has somewhere of its own to be drawn. */
+  will-change: transform, opacity;
 }
 
 .dawnShade,
@@ -698,6 +712,10 @@
   inset: 0;
   z-index: 6;
   pointer-events: none;
+  /* Opacity-only, but over the frame's full area — composited it is a layer
+     alpha, uncomposited it is a full-frame gradient repainted every frame of
+     the rise. */
+  will-change: opacity;
 }
 
 .dawnShade {
