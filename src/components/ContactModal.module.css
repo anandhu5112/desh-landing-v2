@@ -522,7 +522,7 @@
 .portraitBrand {
   position: absolute;
   z-index: 2;
-  inset: 25px 24px auto;
+  inset: 24px 24px auto;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -538,7 +538,7 @@
 .profile {
   position: absolute;
   z-index: 2;
-  inset: auto 26px 27px;
+  inset: auto 24px 24px;
   color: #fff;
 }
 
@@ -584,7 +584,7 @@
 
 .bookingContent {
   position: static;
-  padding: 25px 36px 24px 44px;
+  padding: 24px 36px 24px 44px;
 }
 
 /* Booking's header row carries no content of its own: the eyebrow now sits
@@ -611,6 +611,9 @@
 .eyebrow {
   display: inline-flex;
   align-items: center;
+  /* Matches the wordmark's rendered height across the seam, so the two
+     things at the top of the two columns sit on one line. */
+  min-height: 21px;
   margin: 0;
   padding-right: 24px;
   font-size: 11px;
