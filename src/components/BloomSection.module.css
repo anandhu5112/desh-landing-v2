@@ -178,10 +178,11 @@
 /* Right half of the calculator row, opposite .media. */
 .controlsCol {
   grid-column: 8 / span 4;
-  align-self: center;
+  align-self: start;
+  padding-top: 10px;
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 24px;
   align-items: stretch;
   min-width: 0;
 }
@@ -198,152 +199,195 @@
   position: relative;
 }
 
-/* Figma node 501:8569: label, then the preset row, 32px apart — a looser
-   rhythm than .controlHead's 12px, since there's no value to sit flush
-   against the label here (the buttons carry their own value as text). */
 .durationControl {
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 16px;
 }
 
 .controlHead {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #1c1c1c;
 }
 
-/* House body size. */
 .controlLabel {
-  font-family: var(--font-inter), sans-serif;
+  margin: 0;
   font-size: 16px;
-  line-height: 1.5;
   font-weight: 400;
-  color: var(--bloom-muted);
+  color: #dedede;
+}
+
+.amountRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .controlValue {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  font-weight: 400;
-  color: var(--bloom-ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.slider {
-  -webkit-appearance: none;
-  appearance: none;
-  display: block;
   width: 100%;
-  height: 22px;
-  margin: 0;
+  min-width: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
+  color: #fff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: clamp(32px, 3.3vw, 48px);
+  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.editAmount {
+  display: grid;
+  place-items: center;
+  flex: 0 0 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #aaa;
   cursor: pointer;
-  outline: none;
 }
 
-/* --fill is written per-slider as an inline custom property from the
-   component. Figma node 501:8564 (Group 1000011170): a #212121 track with
-   a white fill and a black-on-white "target" thumb — inverted from the
-   old all-white treatment. */
-.slider::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(
-    to right,
-    #ffffff 0 var(--fill, 0%),
-    #212121 var(--fill, 0%) 100%
-  );
+.controlValue:focus-visible,
+.editAmount:focus-visible,
+.durationButton:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
 }
 
-/* Figma's thumb is an SVG circle, r 7.5 with a centered 3px stroke — the
-   stroke straddles the path, so the black fill disk is really 12px across
-   (r − half the stroke) inside an 18px outer ring (r + half the stroke).
-   content-box (the default) reproduces that exactly: a 15px black box plus
-   a 3px border each side is 21px overall — sized up a bit from Figma's
-   literal 12px/18px per design feedback (the exported ring read as too
-   small next to the track).
-   margin-top centers the thumb ring on the 4px track: not the naive
-   -(total − track)/2 (that measured visibly high in-browser — Chrome
-   doesn't vertically center a webkit-slider-thumb on the track the way
-   that formula assumes), but that value plus an empirically-measured +4px
-   correction, confirmed by zooming into a live render. Re-verify visually
-   if either the thumb or track size changes again. */
-.slider::-webkit-slider-thumb {
+.sliderLimits {
+  display: flex;
+  justify-content: space-between;
+  color: #999;
+  font-size: 12px;
+}
+
+/* Custom coin slider container — 44px tall for comfortable touch targets.
+   Contains the background track, progress fill, coin thumb, and an
+   accessible full-area range input overlay. */
+.sliderWrap {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Thin track centered in a comfortable 44px touch target. */
+.sliderTrack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Progress fill bar — brand green (#008a25) filling up to the coin center. */
+.sliderFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: #008a25;
+  pointer-events: none;
+}
+
+/* Silver rupee coin thumb — 40px circle centered on the track. */
+.sliderThumb {
+  position: absolute;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+  border-radius: 50%;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6))
+    drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+  transition:
+    transform 120ms cubic-bezier(0.23, 1, 0.32, 1),
+    filter 120ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.coinImg {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+/* Accessible range input overlay: transparent, spans the entire 44px touch
+   target so all drag and click gestures hit it seamlessly. */
+.sliderInput {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: grab;
+  z-index: 3;
   -webkit-appearance: none;
   appearance: none;
-  width: 15px;
-  height: 15px;
-  margin-top: -4.5px;
-  border-radius: 50%;
-  background: #000000;
-  border: 3px solid #ffffff;
-  outline: 0 solid rgba(255, 255, 255, 0.6);
+}
+
+.sliderInput:active {
+  cursor: grabbing;
+}
+
+/* Interactive thumb feedback during drag */
+.sliderWrap:has(.sliderInput:active) .sliderThumb,
+.sliderInput:active ~ .sliderThumb {
+  transform: translate(-50%, -50%) scale(1.08);
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.7))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Keyboard focus ring on the coin thumb */
+.sliderWrap:has(.sliderInput:focus-visible) .sliderThumb,
+.sliderInput:focus-visible ~ .sliderThumb {
+  outline: 2px solid #ffffff;
   outline-offset: 3px;
-  transition: outline-width 120ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-/* Keyboard focus only — a plain outline the exact thumb size, not the old
-   0→10px box-shadow bloom. That bloom was tuned for the previous 15px
-   solid-white thumb; against the new small black/white-ring one (Figma
-   node 501:8564) it rendered as a large, muddy gray halo baked permanently
-   onto the resting thumb after any drag (WebKit keeps :focus-visible set
-   post-drag on a range input) — this is the bug the fix targets. */
-.slider:focus-visible::-webkit-slider-thumb {
-  outline-width: 2px;
 }
 
-.slider::-moz-range-track {
-  height: 4px;
-  border-radius: 2px;
-  background: #212121;
-}
-
-.slider::-moz-range-progress {
-  height: 4px;
-  border-radius: 2px;
-  background: #ffffff;
-}
-
-.slider::-moz-range-thumb {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: #000000;
-  border: 3px solid #ffffff;
-  outline: 0 solid rgba(255, 255, 255, 0.6);
-  outline-offset: 3px;
-  transition: outline-width 120ms cubic-bezier(0.23, 1, 0.32, 1);
-}
-.slider:focus-visible::-moz-range-thumb {
-  outline-width: 2px;
-}
-
-/* ---------- INVESTMENT DURATION PRESETS ----------
-   Figma node 501:8571: six equal-width pills, active one inverted to a
-   white fill/black text. flex: 1 0 0 (not shorthand "1") so a longer label
-   like "30+ yrs" can't grow its own pill wider than its neighbours. */
+/* ---------- INVESTMENT DURATION PRESETS ---------- */
 .durationGroup {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 4px;
   width: 100%;
 }
 
 .durationButton {
   flex: 1 0 0;
   min-width: 0;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid #212121;
-  background: var(--bloom-surface);
-  color: var(--bloom-ink);
-  font-family: var(--font-heading), sans-serif;
+  padding: 12px 2px;
+  min-height: 44px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #aaa;
+  font-family: var(--font-inter), sans-serif;
   font-size: 16px;
   line-height: 1.2;
   letter-spacing: -0.48px;
@@ -356,80 +400,67 @@
 }
 
 .durationButtonActive {
-  background: #ffffff;
-  color: #000000;
+  background: #008a25;
+  color: #ffffff;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .durationButton:not(.durationButtonActive):hover {
-    border-color: #ffffff;
+    background: #161616;
+    color: #fff;
   }
 }
 
 /* ---------- READOUT ---------- */
 
-/* Hairline separating the sliders from the headline figure. */
 .readout {
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--bloom-hairline);
-}
-
-
-.final {
-  padding-top: 32px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
+  border-top: 1px solid #1c1c1c;
+  padding-top: 28px;
 }
 
 .finalLabel {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
-  line-height: 1.5;
-  letter-spacing: 0.18em;
+  margin: 0 0 16px;
+  color: #b8b8b8;
+  font-size: 11px;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--bloom-faint);
-  margin: 0 0 8px;
 }
 
-/* The one number the section exists for. Between house body (16) and
-   heading (64) so it reads as the answer without outshouting the title. */
 .finalValue {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 48px;
-  font-weight: 400;
-  line-height: 1;
-  color: #ffffff;
-  font-variant-numeric: tabular-nums;
   margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: clamp(36px, 3.5vw, 52px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
 }
 
 .finalCompact {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
-  font-weight: 400;
-  color: #ffc400;
+  margin: 10px 0 0;
+  color: #999;
+  font-size: 18px;
   font-variant-numeric: tabular-nums;
-  padding-bottom: 6px;
-  white-space: nowrap;
 }
 
-/* House caption size, matching GrowSection's logo caption.
-   margin-top: auto pins .note to .controlsCol's bottom edge — level with
-   .tagline — without spreading .controls/.readout apart from each other;
-   they keep their normal gap-based rhythm and stay put at the top. */
+.returnAssumption {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.returnAssumption span:last-child { color: #ddd; }
+
 .note {
   margin: 0;
-  margin-top: auto;
-  font-family: var(--font-inter), sans-serif;
+  padding-top: 20px;
+  border-top: 1px solid #1c1c1c;
   font-size: 12px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.24);
-  max-width: 56ch;
+  line-height: 1.6;
+  color: #999;
 }
 
 /* ---------- PORTFOLIO CTA ----------
@@ -656,16 +687,14 @@
     font-size: 40px;
   }
 
-  /* Six equal pills in one row get too narrow once .controlsCol goes
-     full-width on a phone-size viewport — wraps to two rows of three
-     instead of squeezing "30+ yrs" down to nothing. */
+  /* Keep the compact duration choices in one row. */
   .durationGroup {
-    flex-wrap: wrap;
-    row-gap: 12px;
+    flex-wrap: nowrap;
   }
 
   .durationButton {
-    flex: 1 1 calc(33.333% - 8px);
+    flex: 1 0 0;
+    font-size: 14px;
   }
 
   /* Stacked: the bloom becomes a banner between the two text columns
