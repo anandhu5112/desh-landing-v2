@@ -153,7 +153,37 @@
   margin-top: calc(var(--sun-size) / -2);
   margin-left: calc(var(--sun-size) / -2);
   border-radius: 50%;
-  background: #ffc400;
+  /* Painted artwork rather than a flat fill: hero-sun.png is a mottled disc,
+     pale at the top and deepening to orange at the rim, cropped to the disc's
+     own bounds so nothing but the disc is in the file. That crop is what
+     keeps Hero.tsx's geometry honest — it treats this element as the circle
+     (radius = offsetHeight / 2) when it works out where the visible sun's
+     centre is, so any transparent margin baked into the artwork would
+     silently offset the outro statement.
+
+     background-size is 100% 100% rather than `contain` because the source is
+     1152x1140 — the painted disc is a hair wider than it is tall — and this
+     element is square. `contain` would letterbox it and leave a sliver of
+     flat fallback along the top and bottom edges; stretching the last 1%
+     instead is invisible on a texture this soft.
+
+     The colour stays underneath as the pre-decode and no-image fallback. It
+     is sampled from the artwork's own rim, and border-radius clips it to the
+     same circle, so nothing changes shape or hue when the file lands.
+
+     image-set + type() picks WebP (256KB) over the PNG (601KB) — same
+     fallback pattern as .heroSky above. Both are large for their dimensions
+     because the surface texture is fine-grained noise, which is exactly what
+     lossy encoders spend bits on. Regenerate with
+     `npm run optimize:images`. */
+  background-color: #fbae01;
+  background-image: url("/images/hero-sun.png");
+  background-image: image-set(
+    url("/images/hero-sun.webp") type("image/webp"),
+    url("/images/hero-sun.png") type("image/png")
+  );
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
   pointer-events: none;
   /* Resting state, declared here and not left to GSAP's fromTo alone. The
      tween's from-values only land once the client bundle has hydrated and
@@ -204,11 +234,7 @@
   will-change: opacity, transform;
 }
 
-/* Centred column: heading, subtext, CTA — one common 40px gap between all
-   three, not a tighter inner group. Wide enough that the heading (nowrap
-   below) fits on one line at its 64px desktop size (~851px) with room to
-   spare; narrows back down at the 1024px breakpoint where the heading
-   wraps again. */
+/* Center the two-line headline above the paired actions. */
 .heroInner {
   display: flex;
   flex-direction: column;
@@ -270,7 +296,6 @@
 }
 
 .heroWord,
-.heroSubtext,
 .heroCta {
   /* `both` matters: it holds the from-state through the delay, so a later
      beat cannot flash at full opacity before its turn. */
@@ -283,12 +308,6 @@
 .heroWord {
   display: inline-block;
   animation-delay: calc(var(--copy-delay) + var(--word-index) * var(--word-stagger));
-}
-
-/* Follows the last word rather than overlapping the line, so the heading
-   reads as finished before the supporting copy starts. */
-.heroSubtext {
-  animation-delay: calc(var(--copy-delay) + 6 * var(--word-stagger));
 }
 
 .heroCta {
@@ -304,7 +323,7 @@
 .heroHeading {
   font-family: var(--font-heading), sans-serif;
   font-size: 56px;
-  line-height: 1;
+  line-height: 1.12;
   font-weight: 400;
   letter-spacing: -1.68px;
   color: var(--color-ink);
@@ -325,25 +344,119 @@
   vertical-align: -0.06em;
 }
 
-/* Own dedicated size too, not var(--fs-body) — same "Hero only" scoping
-   as .heroHeading above. -0.14px keeps --ls-body's own ~-1%-of-size
-   tracking ratio at this smaller size instead of carrying over its flat
-   -0.16px (fitted for 16px) unchanged. */
-.heroSubtext {
-  font-family: var(--font-body), serif;
-  font-size: 14px;
-  line-height: 1.4;
-  font-weight: 300;
-  letter-spacing: -0.14px;
-  color: var(--color-ink);
+/* Everything in "NRIs" after the initial N. Same face AND same size as the
+   drop cap before it — this is literally .dropCap's rule with one addition,
+   so the word is one typeface at one size rather than a script flourish
+   with the rest of the letters fitted to it.
+
+   The plural s belongs in here too. It used to sit outside and render in
+   Mona Sans, which put a typeface change inside a single word, landing
+   exactly where the script i hands over. Whatever the two faces are doing
+   individually, a word set half in one and half in the other reads as a
+   mistake.
+
+   text-transform is what makes the letters small. Petit Formal Script's
+   capitals are ornate swash forms whose bodies sit low and whose tops never
+   line up, so shrinking them by any amount reads as shrunken capitals,
+   never as small caps; its lowercase are the plain small forms, drawn to
+   sit at the script's own x-height under exactly this capital. Letting the
+   typeface set that relationship is why there is no ratio here to tune.
+
+   The transform is presentational only: the DOM, the accessible name, and
+   anything crawling this page still get "NRIs", which is the whole reason
+   for doing it this way instead of typing lowercase letters into Hero.tsx.
+
+   Tracking is reset because the heading's -1.68px exists to tighten Mona
+   Sans; on a face whose letters are drawn to join, it pulls the strokes
+   into each other. No trailing pad: the gap after this span is now an
+   ordinary word space, and the script s's exit stroke fills it. */
+.smallCaps {
+  display: inline-block;
+  font-family: var(--font-script), cursive;
+  font-size: 1.4em;
+  font-weight: 400;
+  line-height: 0;
+  vertical-align: -0.06em;
+  text-transform: lowercase;
+  letter-spacing: 0;
+}
+
+/* The plural s. Same script face as the acronym it hangs off — a smaller
+   size is a change of degree, a different typeface mid-word is a change of
+   kind, and only the second one reads as a mistake. Sized down and pulled
+   in so it reads as an ending attached to "NRI" rather than a fourth letter
+   of equal standing. The negative margin is the tuck: the script i's exit
+   stroke sweeps right across empty space, and this lets the s sit inside
+   that sweep instead of waiting behind its advance width. */
+.plural {
+  display: inline-block;
+  font-family: var(--font-script), cursive;
+  font-size: 0.65em;
+  font-weight: 400;
+  line-height: 0;
+  vertical-align: -0.06em;
+  text-transform: lowercase;
+  letter-spacing: 0;
+  margin-left: -0.1em;
+}
+
+/* Keep both actions in reading order, with the booking CTA on the right. */
+.heroActions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  max-width: 100%;
   pointer-events: auto;
 }
 
-/* Visuals come from the shared Button component; this only opts back into
-   clicks inside heroContent's otherwise pointer-events:none layer —
-   spacing from the text above comes from .heroInner's own gap. */
-.heroCta {
-  pointer-events: auto;
+/* The primary action shares SiteNav's contactCta class directly. */
+.heroCta:focus-visible {
+  outline: 2px solid #172d38;
+  outline-offset: 4px;
+}
+
+.exploreCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #172d38;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  font-weight: 500;
+  line-height: 24px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.exploreCta:hover {
+  color: #000000;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.exploreCta svg {
+  transition: transform 0.2s ease;
+}
+
+.exploreCta:hover svg {
+  transform: translateY(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .exploreCta svg {
+    transition: none;
+  }
+
+  .exploreCta:hover svg {
+    transform: none;
+  }
 }
 
 /* Second-section statement — also a sibling of .zoomWrap, so it is never
@@ -434,7 +547,7 @@
      longer does — the copy staying inside the sun is the rule this block is
      now built around. */
   font-size: var(--outro-font-size, var(--outro-font-size-max));
-  line-height: 1;
+  line-height: 1.15;
   font-weight: 400;
   /* em, not a calc() off --ls-heading: keeps the same -3% tracking ratio
      this codebase's headings all use, but self-coupled to whatever
@@ -474,20 +587,13 @@
     white-space: normal;
   }
 
-  /* .dropCap's line-height: 0 (see its base rule) only stays safe on a
-     single, never-wrapping line — the glyph paints taller than its own
-     zeroed line-box contribution, and desktop's heading never wraps so
-     there's no second line for it to paint over. Here, white-space:
-     normal above means the heading CAN wrap, and with line-height still
-     0 the oversized "I" bled down into whatever line followed it —
-     reported as the heading looking broken/overlapping on phone, and
-     reading as uncentered since an overlapping line doesn't look like a
-     clean centered block. line-height: 1 makes the drop cap's own line
-     grow to fit it for real, so a wrapped second line starts clear of it
-     — this is scoped to this breakpoint precisely because desktop's
-     tight, unwrapped rhythm (verified everywhere else on the site) must
-     stay exactly as-is. */
-  .dropCap {
+  /* Give the decorative initials room above the second headline line —
+     every span in the lockup carries the zeroed line box, so all of them
+     need it back once the heading wraps and there is a line underneath to
+     bleed onto. */
+  .dropCap,
+  .smallCaps,
+  .plural {
     line-height: 1;
   }
 }
@@ -513,9 +619,33 @@
   }
 }
 
+@media (max-width: 767px) {
+  /* Sized off the longer line, not picked by eye. The heading is nowrap and
+     .heroInner is content-width, so the line sets its own box: "a world of
+     possibilities" measures ~9.5em, and 9vw x 9.5em is ~85% of the viewport
+     — a hero-sized line with real margin either side at every phone width,
+     with the 28px floor covering 320px screens and the 44px ceiling keeping
+     it under desktop's own 56px as this breakpoint runs out.
+
+     Was clamp(27px, 7.2vw, 54px), which resolved to 27px on a 375px phone —
+     barely above the 24px section headings and no larger than the nav
+     wordmark sitting right above it, so the headline had no dominance at
+     the one width where it is the only thing on screen. */
+  .heroHeading {
+    font-size: clamp(28px, 9vw, 44px);
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+
+  .heroActions {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .heroHeading:hover,
-  .heroSubtext:hover {
+  .heroHeading:hover {
     animation: none;
   }
 
@@ -528,10 +658,62 @@
      go too — otherwise the words would still appear in sequence, which is
      the very pacing the preference asks us to drop. */
   .heroWord,
-  .heroSubtext,
   .heroCta {
     animation: none;
     opacity: 1;
     filter: none;
+  }
+
+  .heroCta,
+  .heroCta:hover,
+  .heroCta:active {
+    transform: none !important;
+    transition: opacity 0.15s ease, background-color 0.15s ease !important;
+  }
+}
+
+/* Dawn light sits behind the opaque hills; the atmospheric washes sit over
+   the art but below all copy. Gradients supply softness without blur. */
+.dawnGlow {
+  position: absolute;
+  z-index: 3;
+  left: -15%;
+  top: calc(var(--dawn-horizon, 60%) - 32%);
+  width: 130%;
+  height: 64%;
+  background: radial-gradient(ellipse at center,
+    rgb(255 203 111 / 0.95) 0%,
+    rgb(255 184 103 / 0.65) 24%,
+    rgb(247 164 127 / 0.25) 48%,
+    rgb(247 164 127 / 0) 72%);
+  transform: scale(0.85, 0.7);
+  transform-origin: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dawnShade,
+.dawnWarmth {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.dawnShade {
+  background: linear-gradient(180deg, #334566 0%, #34475b 55%, #152c32 100%);
+  opacity: 0.16;
+}
+
+.dawnWarmth {
+  background: linear-gradient(180deg, rgb(255 216 149 / 0) 15%, #ffd895 65%, #e9b762 100%);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dawnGlow,
+  .dawnShade,
+  .dawnWarmth {
+    display: none;
   }
 }

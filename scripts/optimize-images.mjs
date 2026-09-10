@@ -63,6 +63,17 @@ const PLAN = {
   "join-avatar-2.png": [90],
   "join-avatar-3.png": [90],
   "join-avatar-4.png": [90],
+  // Silver rupee coin for Wealth Bloom slider (40x40px). 120px covers 3x retina.
+  "slider-coin.png": [120],
+  // The hero's sun (Hero.module.css .sun). Widest it ever renders is 95vw on
+  // a phone — ~1224px on a 3x 430px viewport — so native (1152) is already
+  // the right size and there is nothing to downscale to.
+  "hero-sun.png": [null],
+  // Founder portrait in the manifesto's signature lockup, and nowhere else
+  // — a 56px circle, so 168 covers a 3x phone. (aswin-portrait has no entry
+  // because ContactModal also renders it as a full-height panel image, where
+  // native width is the right size.)
+  "vinayak-portrait.jpg": [168],
 };
 
 // Only convert unplanned files above this size — below it a WebP rarely wins

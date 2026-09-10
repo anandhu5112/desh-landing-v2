@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import ContactModal, { type ContactTab } from "./ContactModal";
 
 /** The screen a CTA should open. */
@@ -36,6 +36,28 @@ export function useContactModal(): ContactModalApi {
 export default function ContactModalProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [intent, setIntent] = useState<ContactIntent>({});
+
+  // Preload the Cal.com iframe in the background shortly after the site loads
+  // so that when the user opens the modal, the calendar appears instantly.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      import("@calcom/embed-react").then(({ getCalApi }) => {
+        getCalApi({ namespace: "desh-modal-booking" }).then((api) => {
+          import("@/lib/booking").then(({ CAL_BOOKING_URL }) => {
+            const calLink = CAL_BOOKING_URL.replace(/^https?:\/\/(?:www\.)?cal\.com\//, "").split(/[?#]/)[0];
+            // Preload with the same config as the embed so the iframe URL matches
+            // and we don't accidentally cache the default dark mode.
+            api("ui", {
+              theme: "light",
+              layout: "month_view",
+            });
+            api("preload", { calLink });
+          });
+        });
+      });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Stable identity: every CTA on the page consumes this, and the object
   // being new on each render would invalidate them all on any state change.

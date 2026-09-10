@@ -13,11 +13,10 @@
   width: 100%;
   background: #ffffff;
   padding-top: var(--space-section-padding-block);
-  /* Flat, not the fluid top value — sized to match the gap above
-     .closingTagline exactly (see its own margin-top below), so the tagline
-     sits centred in equal whitespace rather than a bigger gap underneath
-     it than above. */
-  padding-bottom: 100px;
+  /* Sits flush against the Footer below — the footer scene's transparent sky
+     already supplies the natural white space beneath .closingTagline before
+     the hills begin, avoiding double-stacked whitespace. */
+  padding-bottom: 0;
 }
 
 .panel {
@@ -74,11 +73,6 @@
   align-self: center;
   width: min(620px, 100%);
   margin: 0;
-  /* .container's own 72px gap already opens space above this; flexbox gap
-     and a child's own margin stack rather than collapse, so this adds the
-     remainder needed to reach a flat 100px — matching .section's own
-     padding-bottom exactly, so the tagline sits in equal space top/bottom. */
-  margin-top: 28px;
   font-family: var(--font-body), serif;
   font-size: 20px;
   line-height: 1.4;

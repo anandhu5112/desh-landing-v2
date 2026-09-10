@@ -4,9 +4,11 @@
   "private": true,
   "packageManager": "npm@11.12.1",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 7474",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
     "lint": "eslint",
     "optimize:images": "node scripts/optimize-images.mjs",
     "measure:skyline": "node scripts/measure-skyline.mjs",
@@ -14,6 +16,7 @@
     "prebuild": "node scripts/verify-glass-patch.mjs"
   },
   "dependencies": {
+    "@calcom/embed-react": "^1.5.3",
     "@gsap/react": "^2.1.2",
     "@phosphor-icons/react": "^2.1.10",
     "@tabler/icons-react": "^3.46.0",
@@ -29,14 +32,19 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.11",
+    "jsdom": "^26.1.0",
     "playwright": "^1.62.1",
     "sharp": "^0.34.5",
     "typescript": "^5",
+    "vitest": "^3.2.7",
     "wrangler": "^4.114.0"
   }
 }

@@ -1,0 +1,305 @@
+.page {
+  width: 100%;
+  min-height: 100dvh;
+  overflow-y: auto;
+  padding: 24px;
+  background: #f3f1eb;
+  color: #111111;
+}
+
+.header {
+  width: min(1180px, 100%);
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.backLink:hover { opacity: 0.65; }
+.backLink:active { transform: translateY(1px); }
+.backLink:focus-visible,
+.qrCard:focus-visible { outline: 2px solid #111111; outline-offset: 4px; }
+.communityButton:focus-visible { outline: 2px solid #00b531; outline-offset: 3px; }
+
+/* Both halves of the lockup ship white, so the cream page inverts them. The
+   symbol sits a touch taller than the logotype, as it does in the master. */
+.brand { display: inline-flex; align-items: center; gap: 8px; }
+.logo { display: block; filter: invert(1); }
+.logoSymbol { display: block; height: 25px; width: auto; filter: invert(1); }
+
+.booking,
+.success {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  border: 1px solid rgba(17, 17, 17, 0.09);
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 20px 70px rgba(38, 33, 22, 0.08);
+}
+
+.booking { padding: 42px; }
+
+.intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+  gap: 48px;
+  align-items: end;
+  margin-bottom: 32px;
+}
+
+.eyebrow {
+  grid-column: 1 / -1;
+  margin: 0 0 -34px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 2.2px;
+  text-transform: uppercase;
+  color: #77736a;
+}
+
+.intro h1,
+.success h1 {
+  margin: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-size: clamp(36px, 5vw, 58px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+}
+
+.intro > p:last-child,
+.lede,
+.communityCopy p {
+  margin: 0;
+  font-family: var(--font-body), serif;
+  font-size: 17px;
+  font-weight: 300;
+  line-height: 1.6;
+  color: #504d47;
+}
+
+.calShell {
+  min-height: 680px;
+  overflow: hidden;
+  border: 1px solid #e7e4de;
+  border-radius: 16px;
+  background: #ffffff;
+}
+
+.cal { width: 100%; min-height: 680px; }
+
+.success {
+  min-height: min(680px, calc(100dvh - 112px));
+  padding: clamp(32px, 6vw, 72px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 80px;
+  align-items: center;
+}
+
+.successCopy { max-width: 560px; }
+.successCopy > svg { margin-bottom: 24px; color: #00b531; }
+.success .eyebrow { margin: 0 0 14px; color: #737373; }
+.success h1 { margin-bottom: 20px; }
+
+.communityCopy {
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.communityCopy h2 {
+  margin: 0 0 8px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: #111111;
+}
+
+.communityButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 48px;
+  margin-top: 24px;
+  padding: 0 24px;
+  border-radius: 10px;
+  background: #00b531;
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: background-color 180ms ease, opacity 180ms ease, transform 180ms ease;
+}
+
+.communityButton:hover {
+  background: #00a02b;
+  opacity: 0.95;
+}
+.communityButton:active { transform: translateY(1px); }
+
+.qrCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 20px;
+  border-radius: 20px;
+  background: #f8f8f8;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: #737373;
+  text-align: center;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.qrCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.qrWrap {
+  width: 100%;
+  aspect-ratio: 1;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.qrImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 760px) {
+  .page { padding: 12px; }
+  .header { margin-bottom: 12px; }
+  .booking { padding: 24px 14px 14px; border-radius: 20px; }
+  .intro { display: block; margin: 0 8px 24px; }
+  .intro .eyebrow { margin: 0 0 12px; }
+  .intro h1 { margin-bottom: 16px; font-size: 38px; }
+  .calShell,
+  .cal { min-height: 760px; }
+  .success { min-height: calc(100dvh - 80px); grid-template-columns: 1fr; gap: 36px; border-radius: 20px; }
+  .qrCard { display: none; }
+  .communityButton { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backLink:active,
+  .communityButton:active { transform: none; }
+  .communityButton { transition: none; }
+}
+
+/* The calendar and confirmation can also live inside ContactModal. */
+.embedded { width: 100%; color: #171717; }
+.embedded .booking, .embedded .success { width: 100%; border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+.embedded .intro { display: block; margin: 0 8px 10px; flex: none; }
+.embedded .eyebrow { margin: 0 0 12px; color: #5a5a5a; }
+.embedded .intro h2, .embedded .successCopy > h2 {
+  margin: 0 0 14px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: var(--ls-heading-modal);
+  line-height: 1.2;
+}
+.embedded .intro > p:last-child { font-size: 16px; color: #5a5a5a; }
+.embedded .calShell { border-color: #e5e5e5; min-height: 440px; }
+.embedded .cal { min-height: 440px; }
+
+/* Inside the modal the calendar has to fit the same frame the step before it
+   used (see ContactModal's .calendarCard), so the step column owns the height
+   and the embed takes whatever is left rather than setting it. The intro is
+   trimmed to earn that room: the eyebrow only repeats the "30 minutes · Video
+   call" line the previous step already showed, and the heading comes down a
+   size. */
+.embedded .booking { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.embedded .booking .eyebrow { display: none; }
+.embedded .booking .intro h2 { font-size: 24px; margin-bottom: 2px; }
+.embedded .booking .intro > p:last-child { font-size: 14px; line-height: 1.4; }
+.embedded .booking .calShell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.embedded .booking .calShell :global(cal-inline) {
+  display: block;
+  width: 100%;
+  min-height: 100%;
+  height: auto !important;
+}
+.embedded .booking .cal { flex: 1 0 auto; min-height: 100%; width: 100%; }
+.embedded .success {
+  min-height: 460px;
+  gap: 40px;
+  padding: 16px 20px 24px;
+  grid-template-columns: minmax(0, 1fr) 230px;
+  align-items: center;
+}
+.embedded .successCopy > svg { margin-bottom: 18px; }
+.embedded .communityCopy {
+  margin-top: 28px;
+  padding-top: 20px;
+}
+.embedded .communityCopy h2 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+.embedded .communityCopy p {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.embedded .communityButton {
+  min-height: 44px;
+  margin-top: 20px;
+  font-size: 14px;
+  padding: 0 20px;
+}
+.embedded .qrCard {
+  background: #f8f8f8;
+  border: 1px solid #e5e5e5;
+  padding: 16px;
+  border-radius: 18px;
+}
+.embedded .qrWrap {
+  padding: 12px;
+  border-radius: 12px;
+}
+@media (max-width: 700px) {
+  .embedded .intro h2, .embedded .successCopy > h2 { font-size: 28px; }
+  .embedded .success { grid-template-columns: 1fr; padding: 12px; gap: 28px; }
+  .embedded .qrCard { display: none; }
+  .embedded .communityButton { width: 100%; font-size: 14px; }
+}
+

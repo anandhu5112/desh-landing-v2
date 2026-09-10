@@ -8,7 +8,7 @@
    "Desh" wordmark composited into the artwork, a hairline rule, and a
    five-item closing row.
 
-   The "build your portfolio together" CTA and the WhatsApp card that once
+   The "Invest like a true global citizen" CTA and the WhatsApp card that once
    lived here now sit inside BloomSection's dark panel. The tagline that
    used to overlay the hill line now lives in FaqSection's own white space
    instead — legible black-on-white rather than white text over a photo.
@@ -29,6 +29,11 @@
      under prefers-color-scheme: dark and would show a hard seam. */
   background: #ffffff;
   overflow: hidden;
+  /* Makes this the query container the glass wordmark measures itself
+     against — see THE GLASS WORDMARK below. Size containment is safe here:
+     the section's height comes from its aspect-ratio and min-height, never
+     from its contents. */
+  container-type: size;
 }
 
 /* No darkening overlay: sampling Figma's own render against the raw artwork
@@ -44,6 +49,201 @@
      floor above crops the scene. */
   object-position: center bottom;
   pointer-events: none;
+}
+
+/* ============================================================
+   THE GLASS WORDMARK
+
+   The scene arrives with "Desh" already composited in as a flat white veil.
+   That veil is not removed — it can't be, it's baked into the raster — so
+   instead the glass is laid exactly over it and the veil becomes the frosted
+   body of the letters. Everything below therefore hangs on one thing:
+   landing on the baked letters to the pixel. Anything else double-prints
+   the wordmark.
+
+   Where the baked letters are, measured off footer-scene.webp (2880x1598):
+   the "D" stem's left edge at x=899, the "h"'s right edge at x=1981, cap
+   height starting at y=818, baseline at y=1166. That box is 1082 wide, and
+   1082 / 63.0098 (the viewBox width of desh-logo-mark.svg) = 17.172 px per
+   unit — which puts the logotype's own baseline at y=1165.4. Within a pixel
+   of the measurement, so the artwork's wordmark *is* desh-logo-mark.svg, and
+   that file can be used as the mask.
+
+   As fractions of the rendered artwork, which is what the rules below use:
+     left    899 / 2880              = 0.312153  (so the box is centred: the
+                                       wordmark's midpoint is the scene's)
+     width   1082 / 2880             = 0.375694
+     height  20.5117 * 17.172 / 1598 = 0.220414
+     bottom  1 - 1170.2 / 1598       = 0.267697
+     centre  (818 + 176.1) / 1598    = 0.622096  (the point magnification
+                                       happens about, in scene coordinates)
+
+   Those are fractions of the *artwork*, not of the section, and the two part
+   company as soon as min-height makes the section taller than the scene's
+   aspect: object-fit: cover then scales the artwork to the section's height
+   and crops it horizontally. --scene-w / --scene-h reproduce exactly what
+   cover does, so the numbers above stay true at every width.
+   ============================================================ */
+
+.wordmark {
+  /* Without masks every layer below is a full rectangle of blurred scene,
+     which is far worse than no glass at all — so nothing paints until the
+     browser can both cut the letters out and measure the container. */
+  display: none;
+  /* The rendered artwork under object-fit: cover — the larger of the two
+     fits, exactly as cover picks it. 1.8022528 is 2880 / 1598. */
+  --scene-w: max(100cqw, 100cqh * 1.8022528);
+  --scene-h: max(100cqh, 100cqw / 1.8022528);
+  --wordmark-h: calc(var(--scene-h) * 0.220414);
+
+  /* Everything about how the glass looks, and nothing about where it sits.
+     Kept as custom properties so WordmarkTuner can drive them live — it
+     writes these same names onto this element. Tune, copy, paste back here,
+     unmount the tuner. Blur and offset are fractions of the wordmark's own
+     height, never px, so they hold at every viewport width. */
+  --wm-body-scale: 1.00;
+  --wm-body-blur: 0.012;
+  --wm-body-saturate: 1.50;
+  --wm-body-brightness: 1.00;
+
+  --wm-edge-scale: 1.45;
+  --wm-edge-blur: 0.004;
+  --wm-edge-saturate: 1.50;
+  --wm-edge-brightness: 1.04;
+
+  --wm-light-angle: 153deg;
+  --wm-tint: 0.00;
+  --wm-bevel: 0.20;
+
+  --wm-shadow: 0.52;
+  --wm-shadow-blur: 0.100;
+  --wm-shadow-offset: 0.046;
+
+  position: absolute;
+  /* object-position is center bottom, so the artwork's horizontal midpoint
+     is always the section's, and its bottom edge is always the section's. */
+  left: 50%;
+  margin-left: calc(var(--scene-w) * -0.187847);
+  bottom: calc(var(--scene-h) * 0.267697);
+  width: calc(var(--scene-w) * 0.375694);
+  height: var(--wordmark-h);
+  /* Keeps the bevel's screen blend inside the glass instead of letting it
+     blend against the rest of the page. */
+  isolation: isolate;
+  pointer-events: none;
+}
+
+@supports (mask-image: url("#m")) and (width: 1cqw) {
+  .wordmark {
+    display: block;
+  }
+}
+
+/* Each layer is the wordmark's box cut to the letters. Content larger than
+   the box (the scene copies are the whole artwork) is cut away by the mask
+   itself — outside the mask image, mask-repeat: no-repeat leaves nothing. */
+.wordmarkLayer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* Longhands, not the `mask` shorthand: WebKit's -webkit-mask shorthand
+     does not take the `/ <size>` syntax, and the size is load-bearing. */
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.maskFill {
+  -webkit-mask-image: url("/images/desh-logo-mark.svg");
+  mask-image: url("/images/desh-logo-mark.svg");
+}
+
+/* The same four paths stroked and clipped to themselves — a band lying just
+   inside the letter edges. See public/images/desh-wordmark-rim.svg. */
+.maskRim {
+  -webkit-mask-image: url("/images/desh-wordmark-rim.svg");
+  mask-image: url("/images/desh-wordmark-rim.svg");
+}
+
+/* A copy of the artwork, positioned so it lines up with the real one behind:
+   same size, same horizontal centre, same bottom edge. Scaling it about the
+   wordmark's own centre is the refraction — what shows through the letters
+   is the scene magnified, so it no longer meets the scene outside them. */
+.wordmarkScene {
+  position: absolute;
+  left: calc(50% - var(--scene-w) / 2);
+  bottom: calc(var(--scene-h) * -0.267697);
+  width: var(--scene-w);
+  height: var(--scene-h);
+  transform-origin: 50% 62.2096%;
+}
+
+/* The body of the glass. Not magnified at all, as it turns out — every bit
+   of the refraction is carried by the edge, and the middle earns its read
+   from softening and saturation alone. Nudging the scale off 1 here reads as
+   a printing error rather than as depth, because the letters are wide enough
+   that a magnified interior visibly fails to meet the scene at the far side.
+   The blur is a fraction of the wordmark's own height, never px, so it holds
+   at every viewport width. */
+.wordmarkSceneBody {
+  transform: scale(var(--wm-body-scale));
+  filter: blur(calc(var(--wordmark-h) * var(--wm-body-blur)))
+    saturate(var(--wm-body-saturate)) brightness(var(--wm-body-brightness));
+}
+
+/* The edge does all of the bending, and is the only place the scene is
+   displaced at all. Kept close to the body's own brightness: a rim markedly
+   lighter than what it surrounds stops reading as depth and starts reading
+   as an outline drawn round the letters. */
+.wordmarkSceneRim {
+  transform: scale(var(--wm-edge-scale));
+  filter: blur(calc(var(--wordmark-h) * var(--wm-edge-blur)))
+    saturate(var(--wm-edge-saturate)) brightness(var(--wm-edge-brightness));
+}
+
+/* A flat wash over the whole letter. Dialled to nothing in the standard —
+   the glass reads better with no body tint at all — but kept, and kept
+   tunable, because it is the one control that makes the wordmark carry in
+   front of a lighter crop of the artwork. */
+.wordmarkTint {
+  background: linear-gradient(
+    var(--wm-light-angle),
+    rgb(255 255 255 / var(--wm-tint)),
+    rgb(255 255 255 / calc(var(--wm-tint) * 0.25)) 45%,
+    rgb(255 255 255 / calc(var(--wm-tint) * 0.75))
+  );
+}
+
+/* The lit edge — and only the lit edge. The mask traces every contour, so
+   any value carried the whole way along this gradient becomes a line drawn
+   round each letter. It therefore runs to nothing well before the far side,
+   leaving a highlight where the scene's own sun would strike the glass and
+   the merest return where the light leaves it. */
+.wordmarkBevel {
+  background: linear-gradient(
+    var(--wm-light-angle),
+    rgb(255 255 255 / var(--wm-bevel)),
+    rgb(255 255 255 / calc(var(--wm-bevel) * 0.16)) 26%,
+    rgb(255 255 255 / 0) 46%,
+    rgb(255 255 255 / 0) 78%,
+    rgb(255 255 255 / calc(var(--wm-bevel) * 0.44))
+  );
+  mix-blend-mode: screen;
+}
+
+/* The shadow is blurred by an ancestor, not by the masked layer itself: a
+   filter runs before the mask does, so blurring the layer would only have
+   its own mask crop the blur straight back to a hard letter edge. */
+.wordmarkShadowWrap {
+  position: absolute;
+  inset: 0;
+  filter: blur(calc(var(--wordmark-h) * var(--wm-shadow-blur)));
+}
+
+.wordmarkShadow {
+  background: rgb(0 0 0 / var(--wm-shadow));
+  transform: translateY(calc(var(--wordmark-h) * var(--wm-shadow-offset)));
 }
 
 .content {
@@ -66,7 +266,6 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* Five items, evenly distributed: icon / © / icon / rights / icon. */
 .bottom {
   display: flex;
   align-items: center;
@@ -101,8 +300,6 @@
   height: 18px;
 }
 
-/* Below this the five-item row runs out of room, so it becomes two rows:
-   the three icons together, the two text items under them. */
 @media (max-width: 767px) {
   .section {
     min-height: 520px;
@@ -114,9 +311,6 @@
     gap: var(--space-16) var(--space-24);
   }
 
-  /* Icons together on the first row, then each text item on its own
-     full-width row — interleaving them only reads as deliberate when the
-     row is wide enough to space all five out. */
   .social {
     order: 1;
   }

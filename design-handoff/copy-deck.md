@@ -14,8 +14,8 @@ in India, in US markets, or both.
 ## Navigation
 
 [Logo] Desh
-[Link] Services
-[Link] SIP Calculator
+[Link] Company
+[Link] Community
 [Button] Contact us
 
 ---
@@ -24,7 +24,7 @@ in India, in US markets, or both.
 
 [H1] Invest like a true global citizen
 
-[Body] Crafted specifically for NRIs to help them grow their wealth in top global asset classes.
+[Body] With roots in India and a life abroad, NRIs deserve a world of possibilities for their wealth.
 
 [Button] Talk to an Advisor
 
@@ -35,13 +35,11 @@ in India, in US markets, or both.
 
 ---
 
-## Section 1 — US stocks
+## Section 1 — Global investing (GIFT City outbound)
 
 [H2] Hedge against the depreciating rupee
 
-[Body] Own shares in the world's leading companies and build long term wealth through global diversification all from one seamless platform.
-
-[Button] Talk to an Advisor
+[Body] Own a slice of the world's biggest companies through USD funds regulated in GIFT City. No US brokerage account, no US tax filing.
 
 ---
 
@@ -91,8 +89,8 @@ in India, in US markets, or both.
 
 ## Section 5 — Portfolio CTA
 
-[H2] Let's build your
-     portfolio together
+[H2] Invest like a true
+     global citizen
 
 [Body] Get expert advice when you need it, or connect with fellow investors for ideas, updates, and learning.
 
@@ -115,24 +113,24 @@ in India, in US markets, or both.
 [H2] Frequently Asked Questions
 
 [Q] Who can invest through Desh?
-[A] NRIs, OCIs, and PIOs holding a valid passport can invest with Desh. We support investors across the US, UK, UAE, Singapore, Australia, and most other jurisdictions.
+[A] Desh supports NRIs and OCIs in most countries. We do not currently serve residents of the United States or Canada. Eligibility may also vary by country and product.
 
 [Q] Do I need to be in India to start investing?
-[A] No. You can complete the entire onboarding process remotely and manage your investments from anywhere in the world.
+[A] No. You can complete onboarding remotely without visiting India, provided you have an NRE or NRO account.
 
 [Q] What investment options do you offer?
-[A] Indian mutual funds and US stocks, alongside curated portfolios built around your goals, time horizon, and risk appetite.
+[A] Indian mutual funds, and global markets through USD funds regulated in GIFT City, alongside curated portfolios built around your goals, time horizon, and risk appetite.
 
 [Q] Will I get a dedicated advisor?
-[A] Yes. Every investor is paired with a dedicated advisor you can reach whenever you need guidance — not a rotating support queue.
+[A] Yes. Every investor is paired with a dedicated advisor you can reach whenever you need guidance, not a rotating support queue.
 
 [Q] Can I start a SIP from overseas?
-[A] Yes. You can set up and manage a SIP entirely online from your NRE or NRO account, with contributions debited automatically each month.
+[A] Yes. You can set up and manage a SIP online from your NRE or NRO account, with contributions debited automatically each month.
 
 [Q] Is my money held by Desh?
-[A] No. Your money never sits with us — investments are held directly with SEBI-regulated fund houses and custodians in your own name.
+[A] No. Desh does not hold your money. Your investments are made through your own accounts.
 
-[Closing tagline] A modern investing experience built for NRIs who want a clean, credible path into Indian mutual funds & US stocks without getting buried in paperwork, confusion, or bad advice.
+[Closing tagline] A modern investing experience built for NRIs who want a clean, credible path into Indian mutual funds & global markets without getting buried in paperwork, confusion, or bad advice.
 
 ---
 
@@ -185,7 +183,7 @@ in India, in US markets, or both.
        Learn. Connect. Grow together.
 
 [Stat] 100% — Personalized Guidance
-       No generic recommendations—every portfolio is tailored to your goals.
+       No generic recommendations. Every portfolio is tailored to your goals.
 
 [Stat] 24–48 hrs — Response Time
        Quick assistance for investments, documentation, and portfolio reviews.

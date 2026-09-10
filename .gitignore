@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/test-results/
 
 # next.js
 /.next/
@@ -45,3 +46,14 @@ yarn.lock
 
 # static export output
 /out/
+
+# Local working artifacts — QA screenshots, browser-driver logs, scratch scripts.
+# None of these are built or served; they exist only on the machine that made them.
+/output/
+/.playwright-cli/
+/screenshot.js
+
+# Business and GTM material. Deliberately never committed: this repo is public,
+# and these are internal decks and client-facing documents that have nothing to
+# do with the site build. Keep them in Dropbox, not in git history.
+/GTM/

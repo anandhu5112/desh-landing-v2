@@ -18,3 +18,11 @@ and mobile `@media (max-width: 767px)` blocks for the Faq/Grow/Us sections.
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
+
+## Testing
+
+- Run component tests with `npm test`.
+- Run the production booking journey with `npm run test:e2e`.
+- See `TESTING.md` for test layers and conventions.
+- Aim for complete coverage of new behavior. Add tests with new functions, regression fixes, error handling, and both sides of conditionals.
+- Never commit code that makes existing tests fail.

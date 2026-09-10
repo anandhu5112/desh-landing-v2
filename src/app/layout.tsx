@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, IBM_Plex_Serif, Petit_Formal_Script } from "next/font/google";
+import {
+  IBM_Plex_Serif,
+  Inter,
+  Petit_Formal_Script,
+} from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 

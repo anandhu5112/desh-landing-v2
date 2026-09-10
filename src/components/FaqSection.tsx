@@ -12,7 +12,7 @@ const FAQS = [
   {
     question: "Who can invest through Desh?",
     answer:
-      "Desh supports NRIs and OCIs in most countries, except the United States. Eligibility may vary by country and product.",
+      "Desh supports NRIs and OCIs in most countries. We do not currently serve residents of the United States or Canada. Eligibility may also vary by country and product.",
   },
   {
     question: "Do I need to be in India to start investing?",
@@ -22,12 +22,12 @@ const FAQS = [
   {
     question: "What investment options do you offer?",
     answer:
-      "Indian mutual funds and US stocks, alongside curated portfolios built around your goals, time horizon, and risk appetite.",
+      "Indian mutual funds, and global markets through USD funds regulated in GIFT City, alongside curated portfolios built around your goals, time horizon, and risk appetite.",
   },
   {
     question: "Will I get a dedicated advisor?",
     answer:
-      "Yes. Every investor is paired with a dedicated advisor you can reach whenever you need guidance — not a rotating support queue.",
+      "Yes. Every investor is paired with a dedicated advisor you can reach whenever you need guidance, not a rotating support queue.",
   },
   {
     question: "Can I start a SIP from overseas?",
@@ -115,8 +115,8 @@ export default function FaqSection() {
               white text sitting on the hill artwork. */}
           <p className={styles.closingTagline}>
             A modern investing experience built for NRIs who want a clean, credible path
-            into Indian mutual funds &amp; US stocks without getting buried in paperwork,
-            confusion, or bad advice.
+            into Indian mutual funds &amp; global markets without getting buried in
+            paperwork, confusion, or bad advice.
           </p>
         </div>
       </div>

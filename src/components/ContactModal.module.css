@@ -336,13 +336,25 @@
   opacity: 0;
 }
 
-.qrLarge {
+.qrLargeWrap {
   flex: none;
   width: 100%;
-  max-width: 380px;
+  max-width: 320px;
   height: auto;
   aspect-ratio: 1 / 1;
-  border-radius: 8px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e5e5e5;
+}
+
+.qrLarge {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 
@@ -408,6 +420,26 @@
   color: #5a5a5a;
 }
 
+.joinInstructionsMobile {
+  display: none;
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-nav);
+  line-height: 1.6;
+  color: #5a5a5a;
+}
+
+.joinButton {
+  background: #00b531;
+  color: #ffffff;
+  border-radius: 10px;
+  height: 40px;
+  padding-inline: var(--space-20);
+  font-size: var(--fs-nav);
+  box-shadow: none;
+  margin-top: var(--space-8);
+}
+
 @media (max-width: 900px) {
   .joinBody {
     flex-direction: column;
@@ -417,6 +449,25 @@
   .joinTextCol {
     padding-block: 0;
     gap: var(--space-24);
+  }
+}
+
+@media (max-width: 767px) {
+  .qrLargeWrap {
+    display: none;
+  }
+
+  .joinInstructions {
+    display: none;
+  }
+
+  .joinInstructionsMobile {
+    display: block;
+  }
+
+  .joinButton {
+    width: 100%;
+    height: 44px;
   }
 }
 
@@ -470,155 +521,409 @@
   }
 }
 
-/* Co-founder introduction: the approved portrait / booking composition. */
+/* Booking uses the site’s white surfaces, Mona Sans headings, and shared button. */
+.backdrop:has(.bookingCard) {
+  background: rgb(0 0 0 / 55%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
 .bookingCard {
+  --booking-ink: #171717;
+  --booking-muted: #5a5a5a;
   gap: 0;
+  max-width: 960px;
+  /* One frame for both booking steps. It is the height the invitation
+     settles at on its own — the portrait's 560px plus this card's 8px
+     padding and 1px border, top and bottom — written down so the calendar
+     stacked over it gets the same box and the card never resizes mid-flow.
+     Fixed rather than auto for a second reason: the calendar layer is
+     absolutely positioned, so the card must not be the thing that scrolls
+     (a scrolled card would slide the layer off its own frame). .stepLayer
+     scrolls instead. */
+  height: min(578px, calc(100vh - 48px));
+  height: min(578px, calc(100dvh - 48px));
+  overflow: hidden;
+  padding: 8px;
+  border: 1px solid rgb(255 255 255 / 55%);
+  border-radius: 22px;
+  background: #ffffff;
+  color: var(--booking-ink);
+  color-scheme: light;
+  box-shadow: 0 32px 100px rgb(0 0 0 / 24%);
+  overscroll-behavior: contain;
+  animation-duration: 280ms;
+}
+
+.bookingCard.cardClosing { animation-duration: 200ms; }
+.backdropClosing:has(.bookingCard) { animation-duration: 200ms; }
+
+/* Nothing at all on the tabs that don't stack — the photo and content go on
+   being the card's own flex children there. */
+.stepLayer { display: contents; }
+
+.bookingCard .stepLayer {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .portrait {
-  width: 39%;
-  min-height: 100%;
+  width: 38%;
+  min-height: 560px;
+  border-radius: 14px;
+  background: #171717;
+  isolation: isolate;
 }
 
 .portrait .photoImage {
-  object-position: 54% center;
+  object-position: 57% center;
+  filter: saturate(0.78) contrast(1.03) sepia(0.06);
+}
+
+.portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 48%), transparent 27%, transparent 44%, rgb(0 0 0 / 70%) 70%, #171717 91%);
+}
+
+.portraitBrand {
+  position: absolute;
+  z-index: 2;
+  inset: 24px 24px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: #fff;
+}
+
+.portraitLockup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* A touch taller than the logotype, as the symbol is in the master lockup. */
+.portraitSymbol {
+  height: 25px;
+  width: auto;
+}
+
+.portraitBrand span {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
 }
 
 .profile {
   position: absolute;
-  inset: auto 0 0;
-  padding: 100px 24px 24px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.86));
-  color: white;
-  font-family: var(--font-heading), sans-serif;
+  z-index: 2;
+  inset: auto 24px 24px;
+  color: #fff;
+}
+
+.profileEyebrow {
+  margin-bottom: 14px;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: #d4d4d4;
 }
 
 .profileName {
-  margin: 0 0 6px;
-  font-size: 28px;
-  line-height: 1.2;
+  margin: 0 0 8px;
+  font-family: var(--font-heading), sans-serif;
+  font-size: 31px;
+  font-weight: 400;
+  letter-spacing: -0.8px;
+  line-height: 1.15;
 }
 
 .profileRole {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #e5e5e5;
 }
 
-.instagram {
-  display: inline-flex;
+.profileSocial {
+  display: flex;
   align-items: center;
   gap: 8px;
+  width: fit-content;
   min-height: 44px;
-  margin-top: 8px;
-  color: white;
-  font-size: 15px;
-  text-decoration: none;
+  margin-top: 16px;
+  border-top: 1px solid rgb(255 255 255 / 24%);
+  padding-top: 16px;
+  font-size: 11px;
+  color: #ffffff;
 }
 
-.instagram:hover { text-decoration: underline; text-underline-offset: 4px; }
-.instagram:focus-visible { outline: 2px solid white; outline-offset: 4px; border-radius: 4px; }
+.profileSocial > svg:last-of-type { margin-left: 12px; }
 
 .bookingContent {
-  position: relative;
-  padding: 32px 24px 32px 44px;
+  position: static;
+  padding: 24px 40px;
 }
 
+/* Booking's header row carries no content of its own: the eyebrow now sits
+   with the sentence it starts, and the close button is positioned. */
 .bookingContent .header {
   align-items: center;
-  margin-bottom: 32px;
-  min-height: 40px;
+  min-height: 0;
+  margin-bottom: 0;
 }
 
-.bookingContent .close { width: 40px; height: 40px; }
+.bookingContent .close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e5e5;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--booking-ink);
+  transition: transform 160ms ease, background 160ms ease;
+}
 
 .eyebrow {
-  margin: 0;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  /* Matches the wordmark's rendered height across the seam, so the two
+     things at the top of the two columns sit on one line. */
+  min-height: 21px;
+  margin: 0 0 24px;
+  /* Keeps clear of the close button, which overlaps this column. */
+  padding-right: 32px;
+  font-size: 11px;
   font-weight: 500;
-  line-height: 20px;
-  letter-spacing: 2.4px;
+  line-height: 1.5;
+  /* 0.12em put this line within a pixel of wrapping at the desktop column
+     width; it has to stay on one line to read as a rule above the headline. */
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #858585;
+  color: #5a5a5a;
 }
 
-.bookingBody { transition: opacity 0.3s ease; }
+/* Fills the column so .bookingActions can be pushed to its foot, landing
+   the note on the same baseline as the portrait's Instagram row. */
+.bookingBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.3s ease;
+}
 
 .bookingHeading {
-  color: #000000;
   margin: 0 0 24px;
   font-family: var(--font-heading), sans-serif;
-  font-size: 40px;
+  font-size: clamp(34px, 3.4vw, 43px);
   font-weight: 400;
-  line-height: 1.18;
-  letter-spacing: -1.2px;
+  line-height: 1.08;
+  letter-spacing: -0.045em;
+  color: var(--booking-ink);
 }
 
+/* Inter, not the site's IBM Plex Serif body face: inside this card it was
+   the only serif among six sans elements, so it read as pasted in rather
+   than as the deliberate prose accent it is on the page sections. */
 .bookingCopy {
   margin: 0;
-  font-family: var(--font-body), serif;
-  font-size: 17px;
-  font-weight: 300;
-  line-height: 1.55;
-  color: #171717;
-}
-
-.bookingDetails {
-  margin-top: 32px;
-  padding-top: 32px;
-  border-top: 1px solid #dedede;
-}
-
-.bookingDetails h3 {
-  color: #000000;
-  margin: 0 0 10px;
-  font-family: var(--font-heading), sans-serif;
-  font-size: 22px;
-  font-weight: 400;
-  line-height: 1.3;
-  letter-spacing: -0.5px;
-}
-
-.bookingActions { margin-top: 28px; }
-.bookingButton { width: 310px; max-width: 100%; height: 52px; gap: 12px; }
-.bookingCaption {
-  margin: 8px 0 0;
   font-family: var(--font-inter), sans-serif;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--booking-muted);
+  max-width: 39ch;
+}
+
+.bookingMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 32px;
+  padding-block: 16px;
+  border-top: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
   font-size: 12px;
   line-height: 1.5;
-  color: #737373;
+  color: #5a5a5a;
 }
 
-@media (max-width: 900px) {
-  .bookingCard { height: auto; }
-  .portrait { width: 100%; height: 300px; min-height: 300px; }
-  .portrait .photoImage { object-position: center 28%; }
-  .profile { padding: 80px 20px 16px; }
-  .bookingContent { padding: 24px 12px 16px; }
-  .bookingContent .header { margin-bottom: 20px; }
-  .bookingHeading { font-size: 34px; }
-  .bookingDetails { margin-top: 24px; padding-top: 24px; }
-  .bookingContent .headerActions { position: absolute; top: -288px; right: 12px; }
+.bookingMeta span { display: inline-flex; align-items: center; gap: 8px; }
+.bookingMeta span + span { border-left: 1px solid #e5e5e5; padding-left: 24px; }
+.bookingMeta svg { width: 16px; height: 16px; }
+.bookingActions { margin-top: auto; padding-top: 24px; }
+
+.bookingButton {
+  width: 100%;
+  height: 44px;
+  gap: 12px;
 }
 
-@media (max-width: 480px) {
+.bookingButton svg {
+  transition: transform 160ms ease;
+}
+
+.bookingButton:focus-visible,
+.profileSocial:focus-visible,
+.bookingContent .close:focus-visible {
+  outline: 2px solid #171717;
+  outline-offset: 4px;
+}
+
+/* Sits directly under the call-details row, so it is read before the
+   button rather than after it. Left-aligned with that row, not centred. */
+.bookingNote {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--booking-muted);
+  max-width: 42ch;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bookingContent .close:hover { background: #f1f1f1; opacity: 1; }
+  .profileSocial:hover { color: #ffffff; }
+  .bookingButton:hover svg,
+  .bookingButton:focus-visible svg { transform: translateX(3px); }
+}
+
+@media (pointer: coarse) {
+  .bookingButton:active { transform: scale(0.985); }
+}
+
+@media (min-width: 701px) and (max-width: 900px) {
+  .bookingCard { flex-direction: row; }
+  .portrait { height: auto; width: 36%; }
+  .bookingContent { padding-inline: 24px; }
+  .bookingHeading { font-size: 35px; }
+  .profile { inset-inline: 20px; }
+  .profileRole { max-width: 19ch; }
+  .eyebrow { font-size: 8px; }
+  .copyBreak { display: none; }
+}
+
+@media (max-width: 700px) {
   .backdrop:has(.bookingCard) { padding: 12px; }
-  .bookingCard { padding: 10px; max-height: calc(100dvh - 24px); border-radius: 22px; }
-  .portrait { height: 260px; min-height: 260px; }
-  .portrait .photoImage { object-position: center 25%; }
-  .profileName { font-size: 24px; }
-  .profileRole, .instagram { font-size: 13px; }
-  .profile { padding: 70px 16px 12px; }
-  .bookingContent { padding: 24px 10px 20px; }
-  .bookingContent .headerActions { top: -250px; right: 10px; }
-  .bookingHeading { font-size: 30px; line-height: 1.2; letter-spacing: -0.9px; margin-bottom: 20px; }
-  .desktopBreak { display: none; }
-  .bookingCopy { font-size: 16px; }
-  .bookingDetails h3 { font-size: 20px; }
-  .bookingButton { width: 100%; }
+  .bookingCard {
+    max-width: 440px;
+    /* Both, and in this order: the base card's max-height is the tighter
+       desktop inset and would otherwise cap the frame short of the phone's
+       12px backdrop padding. */
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    height: calc(100vh - 24px);
+    height: calc(100dvh - 24px);
+    flex-direction: column;
+    padding: 8px;
+    border-radius: 20px;
+  }
+  .portrait {
+    width: 100%;
+    height: auto;
+    min-height: 300px;
+    aspect-ratio: 0.82;
+    border-radius: 13px;
+  }
+  .portrait .photoImage { object-position: center 34%; }
+  .portrait::after { background: linear-gradient(180deg, rgb(0 0 0 / 42%), transparent 30%, transparent 48%, rgb(0 0 0 / 72%) 78%, #171717 100%); }
+  .portraitBrand { inset: 20px auto auto 20px; }
+  .portraitBrand span { display: none; }
+  .profile { inset: auto 20px 20px; }
+  .profileName { font-size: 26px; }
+  .profileRole { max-width: 20ch; font-size: 10px; }
+  .profileSocial { margin-top: 8px; min-height: 32px; padding-top: 8px; border: none; font-size: 10px; }
+  .bookingContent { padding: 24px 20px; }
+  .bookingContent .header { min-height: 0; margin-bottom: 0; }
+  .eyebrow { margin-bottom: 16px; padding-right: 44px; }
+  .bookingContent .close { top: 20px; right: 20px; background: #ffffff; border-color: transparent; width: 38px; height: 38px; }
+  .bookingHeading { font-size: 34px; letter-spacing: -0.045em; margin-bottom: 16px; }
+  .bookingCopy { font-size: 15px; line-height: 1.55; }
+  .copyBreak { display: none; }
+  .bookingMeta { margin-top: 24px; padding-block: 16px; }
+  .bookingActions { padding-top: 24px; }
+  .bookingNote { font-size: 12px; }
+}
+
+@media (max-width: 359px) {
+  .bookingContent { padding-inline: 14px; }
+  .bookingHeading { font-size: 29px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bookingBody { transition: none; }
+  .bookingBody, .bookingContent .close, .bookingButton, .bookingButton svg { transition: none; }
+  .bookingContent .close:active, .bookingButton:active { transform: none; }
+  .calendarStage, .calendarStage > div { transition: none; }
+  .calendarStage > div { transform: none; }
+}
+
+/* The calendar isn't a screen the card navigates to — it is a second layer of
+   the same card, sitting on the invitation at the same size and place and
+   crossfading over it. Opaque, so one fade does the whole dissolve: no need
+   to fade the invitation out underneath and risk the two washing each other
+   out at the halfway point. */
+.calendarStage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 38px 18px 12px;
+  border-radius: inherit;
+  background: #ffffff;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
+.calendarStageActive { opacity: 1; pointer-events: auto; }
+
+/* The calendar itself settles up into place a beat behind the fade, which is
+   what keeps the change from reading as a hard cut between two screens. */
+.calendarStage > div {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateY(8px);
+  transition: transform 380ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.calendarStageActive > div { transform: none; }
+.calendarBack {
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: #5a5a5a;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.calendarClose { position: absolute; top: 10px; right: 12px; width: 32px; height: 32px; }
+.calendarLoading { padding: 48px 24px; color: #5a5a5a; font-size: 16px; }
+.calendarBack:focus-visible { outline: 2px solid #171717; outline-offset: 2px; }
+@media (max-width: 700px) {
+  .bookingCard .stepLayer { flex-direction: column; }
+  /* The card is full-height on a phone, so the chrome can keep a proper
+     touch target here — it is only the desktop frame that is tight. */
+  .calendarStage { padding: 56px 12px 12px; }
+  .calendarBack { top: 8px; left: 16px; min-height: 44px; }
+  .calendarClose { top: 8px; right: 8px; width: 44px; height: 44px; }
 }
