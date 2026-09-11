@@ -30,7 +30,7 @@ export default function SiteNav() {
   const [menuOpen, setMenuOpen] = useState(false);
   // The modal itself is mounted once by ContactModalProvider — the nav is no
   // longer the only way in, so it no longer owns the open state either.
-  const { open: openContact } = useContactModal();
+  const { open: openContact, prefetchBooking } = useContactModal();
   const navRef = useRef<HTMLElement>(null);
   const pillRef = useRef<HTMLDivElement>(null);
   const menuWrapRef = useRef<HTMLDivElement>(null);
@@ -150,6 +150,8 @@ export default function SiteNav() {
             type="button"
             className={styles.contactCta}
             onClick={() => openContact({ tab: "contact" })}
+            onMouseEnter={prefetchBooking}
+            onFocus={prefetchBooking}
           >
             Let’s talk money
           </button>
@@ -197,6 +199,7 @@ export default function SiteNav() {
               setMenuOpen(false);
               openContact({ tab: "contact" });
             }}
+            onFocus={prefetchBooking}
           >
             Let’s talk money
           </button>
