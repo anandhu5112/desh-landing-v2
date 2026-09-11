@@ -3,21 +3,26 @@
 import { useEffect, useRef, useState } from "react";
 import { getScroller } from "@/lib/scroller";
 
-/** Fires as soon as a third of the clip is on screen — near enough to
-    the old "it's clearly visible now" point that nothing reads differently. */
-export const PLAY_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0.3 };
+/** Fire as soon as any pixel of the clip enters the scrollport. Waiting for
+ *  30% left the poster up while the section was already clearly on screen —
+ *  the lag the dollar illustration was showing on cold phone loads. */
+export const PLAY_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0 };
 
 /**
- * Start fetching the clip once it is within ~1.5 scrollports of the screen.
- * Far enough that a typical scroll through the hero finishes the download
- * before play, close enough that the hero's own images still win the first
- * network slot on a cold mobile load.
+ * Start fetching the clip once it is within ~2.5 scrollports of the screen.
+ *
+ * Must clear the hero sticky range (~186% of the scroller — see
+ * `HERO_PIN_EXTRA_PCT` in Hero.tsx) plus ServicesSection's rise offset
+ * (120px). A 150% margin left the dollar clip just past the warm zone at
+ * scrollTop=0, so the 600KB file only started mid-hero and was still
+ * buffering when the section arrived. 250% warms it on/near first paint
+ * without also pulling the further-down rupee clip.
  *
  * `root` is set at observe-time to `#page-scroller` (see `observerRoot()`):
  * a viewport root makes this margin a no-op under the nested overflow clip.
  */
 export const WARM_OBSERVER_OPTIONS: IntersectionObserverInit = {
-  rootMargin: "150% 0px",
+  rootMargin: "250% 0px",
   threshold: 0,
 };
 
