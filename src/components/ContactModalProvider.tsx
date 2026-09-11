@@ -1,7 +1,16 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import ContactModal, { type ContactTab } from "./ContactModal";
+import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
+import type { ContactTab } from "./ContactModal";
+
+// Dynamically loaded: nothing here is needed to render the page itself, only
+// to open the modal, so its implementation shouldn't sit in the initial
+// bundle. It's still mounted (closed) as soon as the provider is, so its own
+// chunk starts fetching in the background right away — closed, it renders
+// nothing and touches nothing Cal.com-related; only actually entering the
+// booking tab (see ContactModal's own BookingExperience) does that.
+const ContactModal = dynamic(() => import("./ContactModal"), { ssr: false });
 
 /** The screen a CTA should open. */
 export type ContactIntent = { tab?: ContactTab };
@@ -9,6 +18,11 @@ export type ContactIntent = { tab?: ContactTab };
 type ContactModalApi = {
   open: (intent?: ContactIntent) => void;
   close: () => void;
+  /** Warm the Cal.com embed ahead of an `open()` call — call on hover/focus
+      of a booking CTA so the calendar is ready by the time the visitor
+      actually clicks. Safe to call repeatedly; only the first call (per
+      successful load) does any work. */
+  prefetchBooking: () => void;
 };
 
 const ContactModalContext = createContext<ContactModalApi | null>(null);
@@ -37,27 +51,12 @@ export default function ContactModalProvider({ children }: { children: ReactNode
   const [open, setOpen] = useState(false);
   const [intent, setIntent] = useState<ContactIntent>({});
 
-  // Preload the Cal.com iframe in the background shortly after the site loads
-  // so that when the user opens the modal, the calendar appears instantly.
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      import("@calcom/embed-react").then(({ getCalApi }) => {
-        getCalApi({ namespace: "desh-modal-booking" }).then((api) => {
-          import("@/lib/booking").then(({ CAL_BOOKING_URL }) => {
-            const calLink = CAL_BOOKING_URL.replace(/^https?:\/\/(?:www\.)?cal\.com\//, "").split(/[?#]/)[0];
-            // Preload with the same config as the embed so the iframe URL matches
-            // and we don't accidentally cache the default dark mode.
-            api("ui", {
-              theme: "light",
-              layout: "month_view",
-            });
-            api("preload", { calLink });
-          });
-        });
-      });
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Guards against duplicate work: a visitor can hover/focus several CTAs
+  // (or the same one repeatedly) before ever opening the modal, and the
+  // click that follows a hover shouldn't kick off the warm-up a second time.
+  // Reset on failure so a later hover/focus/click gets a real retry instead
+  // of silently never loading the calendar.
+  const prefetchState = useRef<"idle" | "pending" | "done">("idle");
 
   // Stable identity: every CTA on the page consumes this, and the object
   // being new on each render would invalidate them all on any state change.
@@ -68,6 +67,34 @@ export default function ContactModalProvider({ children }: { children: ReactNode
         setOpen(true);
       },
       close: () => setOpen(false),
+      prefetchBooking: () => {
+        if (prefetchState.current !== "idle") return;
+        prefetchState.current = "pending";
+
+        Promise.all([
+          import("@calcom/embed-react").then(({ getCalApi }) =>
+            getCalApi({ namespace: "desh-modal-booking" }),
+          ),
+          import("@/lib/booking"),
+        ])
+          .then(([calApi, { CAL_BOOKING_URL }]) => {
+            const calLink = CAL_BOOKING_URL.replace(/^https?:\/\/(?:www\.)?cal\.com\//, "").split(/[?#]/)[0];
+            // Preload with the same config as the embed so the iframe URL matches
+            // and we don't accidentally cache the default dark mode.
+            calApi("ui", {
+              theme: "light",
+              layout: "month_view",
+            });
+            calApi("preload", { calLink });
+            prefetchState.current = "done";
+          })
+          .catch(() => {
+            // A CTA left hovered/focused won't retry on its own, but the
+            // next hover/focus/click will — and `open()` never depended on
+            // this succeeding in the first place.
+            prefetchState.current = "idle";
+          });
+      },
     }),
     [],
   );

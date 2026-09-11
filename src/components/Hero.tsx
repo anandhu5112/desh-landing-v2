@@ -593,7 +593,7 @@ function syncOutroToSun(
 }
 
 export default function Hero() {
-  const { open: openContact } = useContactModal();
+  const { open: openContact, prefetchBooking } = useContactModal();
   const pinRangeRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const zoomWrapRef = useRef<HTMLDivElement>(null);
@@ -1010,7 +1010,13 @@ export default function Hero() {
                   <path d="M12 4v16m-6-6 6 6 6-6" />
                 </svg>
               </button>
-              <button type="button" className={`${navStyles.contactCta} ${styles.heroCta}`} onClick={() => openContact({ tab: "contact" })}>
+              <button
+                type="button"
+                className={`${navStyles.contactCta} ${styles.heroCta}`}
+                onClick={() => openContact({ tab: "contact" })}
+                onMouseEnter={prefetchBooking}
+                onFocus={prefetchBooking}
+              >
                 Let’s talk money
               </button>
             </div>
