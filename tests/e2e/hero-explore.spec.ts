@@ -103,3 +103,16 @@ test("Explore gives the sunrise time to unfold before revealing the statement", 
   await expect(heading).toBeFocused();
   await expect(heading).toBeVisible();
 });
+
+test("Explore blooms the sun before settling into an afterglow", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/");
+  const hero = page.getByRole("main").first();
+  const glow = hero.locator("[data-sun-glow]");
+  const opacity = () => glow.evaluate(el => Number(getComputedStyle(el).opacity));
+
+  await expect(glow).toHaveCSS("opacity", "0");
+  await hero.getByRole("button", { name: "Explore", exact: true }).click();
+  await expect.poll(opacity).toBeGreaterThan(0.8);
+  await expect.poll(opacity).toBeLessThanOrEqual(0.71);
+});
