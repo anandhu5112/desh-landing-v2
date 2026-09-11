@@ -2,6 +2,16 @@ import Image from "next/image";
 import AdvisorCta from "@/components/AdvisorCta";
 import styles from "./AdvisorSection.module.css";
 
+// .photo (AdvisorSection.module.css) caps at 540px above the 1024px
+// breakpoint (1620px at 3x) but grows to the full frame width below it, so
+// 1280 covers phones at 3x — the common case — while native stays for
+// wider tablets/desktop. Regenerate with `npm run optimize:images`.
+const PHOTO_SRCSET = [
+  "/images/advisor-video-call-1280.webp 1280w",
+  "/images/advisor-video-call-2000.webp 2000w",
+].join(", ");
+const PHOTO_SIZES = "(max-width: 1024px) 100vw, 540px";
+
 /**
  * "Got questions about your money?" — Figma node 482:3507. Sits between
  * UsSection and GrowSection (see ServicesSection.tsx). Copied, not shared:
@@ -25,7 +35,7 @@ export default function AdvisorSection() {
     <section className={styles.section}>
       <div className={styles.frame}>
         <Image
-          src="/images/advisor-sky.png"
+          src="/images/advisor-sky.webp"
           alt=""
           width={2000}
           height={1160}
@@ -48,13 +58,19 @@ export default function AdvisorSection() {
         </div>
 
         <div className={styles.photo}>
-          <Image
-            src="/images/advisor-video-call.png"
-            alt="An investor on a video call with their Desh advisor"
-            width={2000}
-            height={1333}
-            className={styles.photoImg}
-          />
+          {/* <picture> needs a real <img> fallback: next/image can't emit
+              multiple width candidates without the optimizer this static
+              export doesn't have (see next.config.ts: images.unoptimized). */}
+          <picture>
+            <source srcSet={PHOTO_SRCSET} sizes={PHOTO_SIZES} type="image/webp" />
+            <img
+              src="/images/advisor-video-call.png"
+              alt="An investor on a video call with their Desh advisor"
+              width={2000}
+              height={1333}
+              className={styles.photoImg}
+            />
+          </picture>
         </div>
 
         {/* A live-looking product moment, not a real alert — decorative,
