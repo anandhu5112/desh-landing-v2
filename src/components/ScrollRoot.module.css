@@ -14,6 +14,16 @@
 }
 
 /*
+ * WebKit: kill the full-page SVG filter. WebKitNavGlass paints pill-sized
+ * refraction from hero images instead. !important because the library sets
+ * both properties inline.
+ */
+.noSvgGlass > :first-child {
+  filter: none !important;
+  will-change: auto !important;
+}
+
+/*
  * The real scroll container for the page. See lib/scroller.ts for why the
  * page scrolls in here instead of in the window.
  */

@@ -1,0 +1,43 @@
+/*
+ * Fixed overlay sized to the pill plus padding, positioned each frame from
+ * YbouaneNavGlass.tsx. Sits just under the nav (z 100) so the pill's own
+ * scrim, rim and shadow paint over the refraction — same layering as the
+ * Blink lens and as WebKitNavGlass.
+ */
+.root {
+  position: fixed;
+  z-index: 99;
+  pointer-events: none;
+}
+
+/* Never seen directly: it is the shader's sample source, kept in the DOM
+   only because ybouane samples root children. The shader canvas covers the
+   pill; the padding ring must not show as a hero-coloured slab. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  z-index: 0;
+}
+
+/* ybouane injects its output canvas here at z-index -1. Isolating the glass
+   keeps that canvas inside this box rather than dropping behind .backdrop
+   in the root's stacking context. */
+.glass {
+  position: absolute;
+  isolation: isolate;
+  z-index: 1;
+}
+
+/* Below the hero — compositor frost only, shader output hidden. */
+.frost .glass {
+  backdrop-filter: blur(var(--ybouane-glass-blur, 2.5px));
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.frost .glass > canvas {
+  visibility: hidden;
+}

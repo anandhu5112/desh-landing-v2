@@ -1,0 +1,21 @@
+.host {
+  position: fixed;
+  z-index: 99;
+  pointer-events: none;
+  border-radius: 16px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+/* Below the hero — compositor frost only (no DOM clone / capture). */
+.frost {
+  backdrop-filter: blur(var(--webkit-glass-blur, 2.5px));
+  background: rgba(255, 255, 255, 0.04);
+}

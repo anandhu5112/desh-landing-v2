@@ -8,8 +8,8 @@
  *
  * One centered black pill (Figma node 297:6248) — logo, links, and
  * Contact us all live inside it and share its background, unlike the
- * previous logo-left/pill-right layout. Nothing here needs to track what
- * section is behind it; the pill is always legible.
+ * previous logo-left/pill-right layout. The scrim is tuned over the hero;
+ * contrast over light sections still needs its own treatment.
  */
 .nav {
   position: fixed;
@@ -44,14 +44,19 @@
   display: flex;
   flex-direction: column;
   background: rgba(0, 0, 0, var(--glass-opacity, 0.4));
-  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(var(--glass-saturate, 1.5)) contrast(var(--glass-contrast, 1.1));
-  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(var(--glass-saturate, 1.5)) contrast(var(--glass-contrast, 1.1));
   box-shadow: 
     inset 0 1px 1px var(--glass-rim-light, rgba(255,255,255,0.15)),
     0 8px 32px rgba(0, 0, 0, var(--glass-shadow-opacity, 0.3));
   border-radius: 16px;
-  /* Optional: subtle border to enforce edge */
   border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Production Chrome frosting — same declarations as git HEAD .pill.
+   Safari never gets this class: saturate/contrast over the hero sky is
+   what turned the pill cyan on WebKit. */
+.chromePill {
+  backdrop-filter: blur(var(--glass-blur, 16px)) saturate(var(--glass-saturate, 1.5)) contrast(var(--glass-contrast, 1.1));
+  -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(var(--glass-saturate, 1.5)) contrast(var(--glass-contrast, 1.1));
 }
 
 .pillRow {

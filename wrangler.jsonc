@@ -3,6 +3,14 @@
   "name": "desh-landing-v2",
   "compatibility_date": "2026-07-27",
 
+  // Gives every `wrangler versions upload` its own
+  // <version>-desh-landing-v2.<subdomain>.workers.dev URL, so a branch can be
+  // looked at on real devices without being promoted to production traffic.
+  // Off by default in wrangler. Affects nothing about the live deployment:
+  // routes, custom domains and which version serves getdesh.com are all
+  // unchanged by it.
+  "preview_urls": true,
+
   // `next build` with output:"export" emits the whole site to out/, so
   // there is normally nothing for a Worker script to do — asset serving
   // alone is enough. The one exception is Range requests: the assets-only

@@ -54,8 +54,10 @@
   justify-content: center;
   padding: var(--space-24);
   background: rgba(0, 0, 0, 0.55);
+  /* No hand-written -webkit- twin here — it suppresses Lightning CSS's own
+     prefixing and ships Chromium/Firefox without the filter. See
+     SiteNav.module.css. */
   backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
   animation: backdropFadeIn 0.3s ease;
 }
 
@@ -525,7 +527,6 @@
 .backdrop:has(.bookingCard) {
   background: rgb(0 0 0 / 55%);
   backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
 }
 
 .bookingCard {
