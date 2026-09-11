@@ -36,7 +36,11 @@ export default function GrowSection() {
           </p>
         </div>
         <div className={styles.media}>
-          <ScrollRevealVideo src="/videos/indian-ruppee.mp4" className={styles.video} />
+          <ScrollRevealVideo
+            src="/videos/indian-ruppee-720.mp4"
+            poster="/images/indian-ruppee-poster.webp"
+            className={styles.video}
+          />
         </div>
       </div>
     </section>
