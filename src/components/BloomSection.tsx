@@ -78,12 +78,12 @@ const TOTAL_FRAMES = BLOOM_ATLASES.length * FRAMES_PER_ATLAS;
  * Slider range. Also defines the ends of the bloom timeline, so widening it
  * automatically re-normalises the animation.
  */
-const AMOUNT = { min: 1_000, max: 200_000, step: 1_000, initial: 25_000 } as const;
+const AMOUNT = { min: 1_000, max: 200_000, step: 1_000, initial: 1_000 } as const;
 
 /** Investment Duration is a fixed set of preset buttons, not a slider (Figma
     node 501:7690) — the last one reads "30 yrs". */
 const YEARS_PRESETS = [5, 10, 15, 20, 25, 30] as const;
-const YEARS_INITIAL: (typeof YEARS_PRESETS)[number] = 15;
+const YEARS_INITIAL: (typeof YEARS_PRESETS)[number] = YEARS_PRESETS[0];
 
 const ASSUMED_ANNUAL_RATE = 12;
 

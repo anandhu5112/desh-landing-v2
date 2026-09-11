@@ -159,7 +159,7 @@ describe("BloomSection coin slider", () => {
       name: /monthly investment amount in rupees/i,
     });
     expect(slider).toBeDefined();
-    expect(slider).toHaveValue("25000");
+    expect(slider).toHaveValue("1000");
 
     // The coin image should be rendered with slider-coin
     const coinImg = document.querySelector('img[src*="slider-coin"]');
@@ -175,7 +175,7 @@ describe("BloomSection coin slider", () => {
     });
 
     // Check initial display
-    expect(screen.getByDisplayValue("₹25,000")).toBeDefined();
+    expect(screen.getByDisplayValue("₹1,000")).toBeDefined();
 
     // Change slider value to ₹50,000
     fireEvent.change(slider, { target: { value: "50000" } });
@@ -193,11 +193,12 @@ describe("BloomSection coin slider", () => {
     expect(fillBar).not.toBeNull();
     expect(thumb).not.toBeNull();
 
-    // At initial ₹25,000, ratio is (25000 - 1000) / (200000 - 1000) = 24 / 199 ≈ 12.06%
-    // positionCalc is calc(pct% + offset px)
+    // The default is the minimum, so the coin and fill are anchored left.
+    // positionCalc includes half the thumb width to keep its centre on-track.
     expect(fillBar.style.width).toContain("calc(");
     expect(thumb.style.left).toContain("calc(");
     expect(fillBar.style.width).toBe(thumb.style.left);
+    expect(fillBar.style.width).toContain("0%");
   });
 });
 
@@ -216,7 +217,7 @@ describe("BloomSection WhatsApp community", () => {
 
     const qrImg = screen.getByAltText(/qr code to join the desh whatsapp community/i);
     expect(qrImg).toBeDefined();
-    expect(qrImg.getAttribute("src")).toContain("community-qr.svg");
+    expect(qrImg.getAttribute("src")).toContain("qr-code.svg");
   });
 });
 
@@ -227,9 +228,9 @@ describe("BloomSection amount editing", () => {
     ["999999", "200000", "₹2,00,000"],
     ["-5", "1000", "₹1,000"],
     ["25500", "26000", "₹26,000"],
-    ["", "25000", "₹25,000"],
-    ["oops", "25000", "₹25,000"],
-    ["Infinity", "25000", "₹25,000"],
+    ["", "1000", "₹1,000"],
+    ["oops", "1000", "₹1,000"],
+    ["Infinity", "1000", "₹1,000"],
   ])("commits %s safely", (draft, amount, display) => {
     render(<BloomSection />);
     const input = screen.getByRole("textbox", { name: "Monthly investment" });
@@ -262,7 +263,7 @@ describe("BloomSection amount editing", () => {
       fireEvent.click(option);
       expect(option).toHaveAttribute("aria-checked", "true");
       expect(screen.getByText(`Estimated value in ${years} years`)).toBeInTheDocument();
-      const value = Math.round(25000 * ((1.01 ** (years * 12) - 1) / 0.01) * 1.01);
+      const value = Math.round(1000 * ((1.01 ** (years * 12) - 1) / 0.01) * 1.01);
       expect(screen.getByText(`₹${value.toLocaleString("en-IN")}`)).toBeInTheDocument();
     }
   });
@@ -409,7 +410,7 @@ describe("BloomSection animation loop lifecycle", () => {
     const raf = window.requestAnimationFrame as unknown as ReturnType<typeof vi.fn>;
     const callsBefore = raf.mock.calls.length;
 
-    fireEvent.click(screen.getByRole("radio", { name: "5 yrs" }));
+    fireEvent.click(screen.getByRole("radio", { name: "10 yrs" }));
 
     expect(raf.mock.calls.length).toBeGreaterThan(callsBefore);
   });
