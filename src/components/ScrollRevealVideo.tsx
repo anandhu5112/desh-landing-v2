@@ -1,21 +1,35 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getScroller } from "@/lib/scroller";
 
 /** Fires as soon as a third of the clip is on screen — near enough to
     the old "it's clearly visible now" point that nothing reads differently. */
-const PLAY_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0.3 };
+export const PLAY_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0.3 };
 
 /**
- * Start fetching the clip once it is within ~1.5 viewports of the screen.
+ * Start fetching the clip once it is within ~1.5 scrollports of the screen.
  * Far enough that a typical scroll through the hero finishes the download
  * before play, close enough that the hero's own images still win the first
  * network slot on a cold mobile load.
+ *
+ * `root` is set at observe-time to `#page-scroller` (see `observerRoot()`):
+ * a viewport root makes this margin a no-op under the nested overflow clip.
  */
 export const WARM_OBSERVER_OPTIONS: IntersectionObserverInit = {
   rootMargin: "150% 0px",
   threshold: 0,
 };
+
+/** The page scrolls in `#page-scroller`, not the window. Observing against
+ *  the viewport (IO's default) clips targets to the scrollport *before*
+ *  `rootMargin` is applied, so a 150% warm margin never fires early — the
+ *  mp4 only starts downloading once the section is already on screen, which
+ *  is the cold-mobile "poster holds, bloom starts late" lag. Same root as
+ *  `useSnapIntoView`. */
+export function observerRoot(): Element | null {
+  return getScroller();
+}
 
 /** Events after which a previously refused `play()` is worth retrying:
     the clip finally has data, or the tab came back to the foreground. */
@@ -66,7 +80,7 @@ export default function ScrollRevealVideo({
       if (!entry.isIntersecting) return;
       setActiveSrc(src);
       warm.disconnect();
-    }, WARM_OBSERVER_OPTIONS);
+    }, { ...WARM_OBSERVER_OPTIONS, root: observerRoot() });
     warm.observe(video);
     return () => warm.disconnect();
   }, [src, activeSrc]);
@@ -98,7 +112,7 @@ export default function ScrollRevealVideo({
     const observer = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       attempt();
-    }, PLAY_OBSERVER_OPTIONS);
+    }, { ...PLAY_OBSERVER_OPTIONS, root: observerRoot() });
     observer.observe(video);
     teardown.push(() => observer.disconnect());
 

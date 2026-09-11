@@ -3,7 +3,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
 
+import { SCROLLER_ID } from "@/lib/scroller";
+
 import ScrollRevealVideo, {
+  PLAY_OBSERVER_OPTIONS,
   WARM_OBSERVER_OPTIONS,
 } from "./ScrollRevealVideo";
 
@@ -40,6 +43,13 @@ function installIntersectionObserver() {
   }
 
   vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver);
+}
+
+function installPageScroller() {
+  const scroller = document.createElement("div");
+  scroller.id = SCROLLER_ID;
+  document.body.appendChild(scroller);
+  return scroller;
 }
 
 function fire(observer: ObserverRecord, isIntersecting: boolean) {
@@ -84,13 +94,17 @@ describe("currency reveal video assets", () => {
 });
 
 describe("ScrollRevealVideo", () => {
+  let scroller: HTMLDivElement;
+
   beforeEach(() => {
     observers.length = 0;
+    scroller = installPageScroller();
     installIntersectionObserver();
     HTMLMediaElement.prototype.play = vi.fn().mockResolvedValue(undefined);
   });
 
   afterEach(() => {
+    scroller.remove();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -111,6 +125,9 @@ describe("ScrollRevealVideo", () => {
     const warm = byRootMargin(WARM_OBSERVER_OPTIONS.rootMargin as string);
     expect(warm).toBeDefined();
     expect(warm?.observe).toHaveBeenCalled();
+    // Nested #page-scroller clips targets before a viewport rootMargin can
+    // see them — warm has to observe against the scroller itself.
+    expect(warm?.options?.root).toBe(scroller);
   });
 
   it("attaches src once the section is approaching, then plays when visible", () => {
@@ -127,8 +144,9 @@ describe("ScrollRevealVideo", () => {
     expect(video).toHaveAttribute("src", "/videos/indian-ruppee-720.mp4");
     expect(video).toHaveAttribute("preload", "auto");
 
-    const playObserver = byThreshold(0.3);
+    const playObserver = byThreshold(PLAY_OBSERVER_OPTIONS.threshold as number);
     expect(playObserver).toBeDefined();
+    expect(playObserver?.options?.root).toBe(scroller);
 
     fire(playObserver!, true);
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
