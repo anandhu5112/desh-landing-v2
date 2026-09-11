@@ -158,6 +158,20 @@
   opacity: 1;
 }
 
+/* Stacks the poster <img> and the <canvas> in the same grid cell — an
+   overlap, not a sequence — so the poster can hold the canvas's exact box
+   (same transform, same margin trick) while the atlases are still loading,
+   without fighting .media's flex centering the way position: absolute would. */
+.bloomStack {
+  display: grid;
+  width: 100%;
+  max-width: 540px;
+}
+
+.bloomStack > .bloom {
+  grid-area: 1 / 1;
+}
+
 /* The bloom frame is matte black but .media's edge is a hard cut; this
    feathers it so the bloom sits in the field rather than in a box. */
 .media::after {
