@@ -66,8 +66,10 @@ function byRootMargin(margin: string | undefined) {
   return observers.find((o) => o.options?.rootMargin === margin);
 }
 
-function byThreshold(threshold: number) {
-  return observers.find((o) => o.options?.threshold === threshold);
+function byPlayObserver() {
+  return observers.find(
+    (o) => o.options?.threshold === 0 && o.options?.rootMargin === undefined,
+  );
 }
 
 describe("currency reveal video assets", () => {
@@ -75,11 +77,12 @@ describe("currency reveal video assets", () => {
 
   it("keeps the dollar and rupee clips small enough for a cold mobile load", () => {
     // These used to ship at 3.7MB + 2.2MB (1280/1440px sources). Phones only
-    // paint them at 320px, so a multi-megabyte first fetch left the animation
-    // blank until the whole file arrived. Cap stays well under 1MB each.
+    // paint them at ~320px, so a multi-megabyte first fetch left the animation
+    // blank until the whole file arrived. Dollar is first on screen and must
+    // finish during the hero scroll; keep it well under half a megabyte.
     const dollar = fs.statSync(path.join(root, "videos/us-dollar-720.mp4")).size;
     const rupee = fs.statSync(path.join(root, "videos/indian-ruppee-720.mp4")).size;
-    expect(dollar).toBeLessThan(900 * 1024);
+    expect(dollar).toBeLessThan(350 * 1024);
     expect(rupee).toBeLessThan(400 * 1024);
   });
 
@@ -144,9 +147,12 @@ describe("ScrollRevealVideo", () => {
     expect(video).toHaveAttribute("src", "/videos/indian-ruppee-720.mp4");
     expect(video).toHaveAttribute("preload", "auto");
 
-    const playObserver = byThreshold(PLAY_OBSERVER_OPTIONS.threshold as number);
+    const playObserver = byPlayObserver();
     expect(playObserver).toBeDefined();
     expect(playObserver?.options?.root).toBe(scroller);
+    expect(playObserver?.options?.threshold).toBe(
+      PLAY_OBSERVER_OPTIONS.threshold,
+    );
 
     fire(playObserver!, true);
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
