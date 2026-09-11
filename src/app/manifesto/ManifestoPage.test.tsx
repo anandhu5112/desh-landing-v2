@@ -76,12 +76,13 @@ describe("manifesto copy", () => {
   it("opens on the line the letter is built around and closes on the welcome", () => {
     const { container } = render(<ManifestoPage />);
 
-    // Read as text, not by accessible name: both of these headings have their
-    // opening letter split into its own span for the script drop cap.
-    expect(container.querySelector("h1")?.textContent).toBe("Desh.");
+    // Read as text: the house script treatment splits a word across spans.
+    expect(container.querySelector("h1")?.textContent).toBe(
+      "A world away.Still home.",
+    );
     expect(
       screen.getByText(
-        /For generations, Indians have left home to build a life somewhere else\./,
+        /A life abroad should bring you closer to everything you hoped to build at home\./,
       ),
     ).toBeInTheDocument();
     expect(
@@ -89,55 +90,26 @@ describe("manifesto copy", () => {
     ).toBe("Welcome to Desh.");
   });
 
-  /**
-   * The four turns are the page's only structure — everything between them
-   * is running prose. They are headings so that structure survives into the
-   * accessibility tree and into a search result, not just into the type
-   * scale, so their level is pinned here rather than left to CSS.
-   */
-  it("sets each turn in the argument as a real heading", () => {
-    render(<ManifestoPage />);
-
-    const headings = screen
-      .getAllByRole("heading", { level: 2 })
-      .map((heading) => heading.textContent ?? "");
-
-    expect(headings[0]).toMatch(
-      /^Most Indian financial products were built for people living in India\./,
-    );
-    // The punchline is part of that same heading, not a paragraph after it.
-    expect(headings[0]).toMatch(
-      /If you live abroad, you are usually an exception to the flow\./,
-    );
-    expect(headings[1]).toBe("So we started Desh.");
-    expect(headings[2]).toBe("A financial home for Indians abroad.");
-    expect(headings[3]).toBe("Welcome to Desh.");
-  });
-
-  it("keeps the seven things Desh is for, each on its own line", () => {
-    render(<ManifestoPage />);
-
-    const lines = [
-      "A place to invest.",
-      "Move money.",
-      "Manage accounts.",
-      "Understand taxes.",
-      "Buy insurance.",
-      "Purchase property.",
-      "Get credit.",
-    ];
-
-    for (const line of lines) {
-      // Own element per line — a paragraph containing all seven would match
-      // a substring check but not this one.
-      expect(screen.getByText(line)).toBeInTheDocument();
-    }
+  it("reads as one letter with one unboxed statement and no career biography", () => {
+    const { container } = render(<ManifestoPage />);
+    expect(container.querySelector("aside")).toBeNull();
+    expect(screen.queryByText(/WHERE IT ALL BEGAN/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/OUR CONVICTION/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Yubi/)).not.toBeInTheDocument();
+    const headings = screen.getAllByRole("heading", { level: 2 });
+    expect(headings.map((heading) => heading.textContent)).toEqual([
+      "Home shouldn’t bethis complicated.",
+      "Welcome to Desh.",
+    ]);
+    expect(
+      screen.getByText(/That is why we are building Desh:/),
+    ).toBeInTheDocument();
   });
 
   /**
    * The letter is signed by two people, and the portraits carry no alt text
-   * of their own — this line is the only place either name is readable, so
-   * it is what a screen reader has to find.
+   * of their own — the signature keeps their names together so
+   * a screen reader can identify the authors.
    */
   it("signs the letter with both names in text", () => {
     const { container } = render(<ManifestoPage />);
@@ -174,6 +146,17 @@ describe("manifesto copy", () => {
     expect(
       screen.getByRole("link", { name: /book a conversation/i }),
     ).toHaveAttribute("href", "/book");
+  });
+
+  it("links the cover to the letter and keeps the cover readable before reveals", () => {
+    const { container } = render(<ManifestoPage />);
+    expect(
+      screen.getByRole("link", { name: /read our letter/i }),
+    ).toHaveAttribute("href", "#letter");
+    expect(
+      screen.getByRole("article", { name: /a letter from the founders/i }),
+    ).toHaveAttribute("id", "letter");
+    expect(container.querySelector("h1")?.closest("[data-reveal]")).toBeNull();
   });
 });
 
