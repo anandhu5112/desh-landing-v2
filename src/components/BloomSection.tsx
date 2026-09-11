@@ -202,53 +202,43 @@ const WhatsappRow = memo(function WhatsappRow() {
   return (
     <div id="community" className={styles.whatsappRow}>
       <div className={styles.whatsappCard}>
+        <div className={styles.qrWrap}>
+          <Image
+            src="/images/community-qr.svg"
+            alt="QR code to join the Desh WhatsApp community"
+            width={286}
+            height={286}
+            className={styles.qrImage}
+          />
+        </div>
         <div className={styles.whatsappTextCol}>
-          <div className={styles.communityEyebrow}>
-            <span className={styles.communityDot} aria-hidden="true" />
-            THE DESH COMMUNITY
+          <div className={styles.avatarStack}>
+            {AVATARS.map((src) => (
+              <Image
+                key={src}
+                src={src}
+                alt=""
+                width={30}
+                height={30}
+                className={styles.avatarImg}
+              />
+            ))}
           </div>
-          <h2 className={styles.whatsappHeading}>
-            A little closer<br />to home.
-          </h2>
-          <p className={styles.whatsappSubtext}>
-            Meet fellow NRIs, ask your questions, and find your footing investing back home.
+          <p className={styles.whatsappHeading}>
+            Join our NRI community on WhatsApp.
           </p>
-          <div className={styles.communityPeople}>
-            <div className={styles.avatarStack}>
-              {AVATARS.map((src) => (
-                <Image
-                  key={src}
-                  src={src}
-                  alt=""
-                  width={30}
-                  height={30}
-                  className={styles.avatarImg}
-                />
-              ))}
-            </div>
-            <span className={styles.communityCaption}>Across borders. On WhatsApp.</span>
-          </div>
+          <p className={styles.whatsappSubtext}>
+            Connect with fellow NRIs, share questions, and learn more about investing
+            back home.
+          </p>
           <Button
             href={COMMUNITY_URL}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.ctaGreen}
           >
-            Join community <span aria-hidden="true">↗</span>
+            Join community
           </Button>
-        </div>
-        <div className={styles.qrPanel}>
-          <div className={styles.qrWrap}>
-            <Image
-              src="/images/qr-code.svg"
-              alt="QR code to join the Desh WhatsApp community"
-              width={164}
-              height={164}
-              className={styles.qrImage}
-            />
-          </div>
-          <p className={styles.qrLabel}>Your people, one scan away.</p>
-          <p className={styles.qrHint}>Scan with your phone camera</p>
         </div>
       </div>
     </div>

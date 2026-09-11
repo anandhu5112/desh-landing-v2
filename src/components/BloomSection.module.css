@@ -19,9 +19,9 @@
   --bloom-hairline: rgba(255, 255, 255, 0.1);
   --bloom-track: rgba(255, 255, 255, 0.13);
   /* Reserve space for the community card where it crosses the panel edge. */
-  --whatsapp-card-height: 374px;
-  --whatsapp-overhang: 170px;
-  --whatsapp-gap: 64px;
+  --whatsapp-card-height: 317px;
+  --whatsapp-overhang: 134px;
+  --whatsapp-gap: 61px;
 
   position: relative;
   width: 100%;
@@ -519,151 +519,36 @@
      gap, on top of FAQ's own top padding. */
   margin-bottom: var(--space-96);
   padding-inline: var(--page-margin);
-  /* SiteNav's "Community" link anchors here (#community); the pill is fixed
-     over the page, so hold the card clear of it on the jump. */
   scroll-margin-top: var(--space-96);
 }
 
 .whatsappCard {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 240px;
-  gap: 36px;
-  width: min(100%, 800px);
-  padding: 36px;
-  border: 1px solid #e8e8df;
-  border-radius: 24px;
-  background: #fafaf5;
-  box-shadow: 0 16px 40px -24px rgba(22, 43, 30, 0.28);
-  color: #172c21;
-}
-
-.whatsappTextCol {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-}
-
-.communityEyebrow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #47705a;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.13em;
-}
-
-.communityDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #16864a;
-}
-
-.whatsappHeading {
-  margin: 16px 0 12px;
-  font-family: var(--font-heading), sans-serif;
-  font-size: 42px;
-  line-height: 1.06;
-  font-weight: 400;
-  letter-spacing: -1.5px;
-  color: #172c21;
-}
-
-.whatsappSubtext {
-  max-width: 36ch;
-  margin: 0;
-  font-family: var(--font-body), serif;
-  font-size: var(--fs-body);
-  font-weight: 300;
-  letter-spacing: var(--ls-body);
-  line-height: 1.6;
-  color: #637067;
-}
-
-.communityPeople {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 20px 0;
-}
-
-.avatarStack {
-  display: flex;
-  align-items: center;
-}
-
-.avatarImg {
   flex: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 2px solid #fafaf5;
-  object-fit: cover;
-}
-
-.avatarStack > .avatarImg:not(:last-child) {
-  margin-right: -8px;
-}
-
-.communityCaption {
-  font-size: var(--fs-caption);
-  line-height: 1.4;
-  color: #637067;
-}
-
-.whatsappCard .ctaGreen {
-  gap: 24px;
-  height: 44px;
-  padding-inline: 20px;
-  border-radius: 9px;
-  font-size: var(--fs-nav);
-  background: #167246;
-  color: #ffffff;
-  box-shadow: none;
-  margin-top: auto;
-  transition: background-color 160ms ease, transform 160ms ease;
-}
-
-.whatsappCard .ctaGreen:hover {
-  transform: none;
-  box-shadow: none;
-  opacity: 1;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .whatsappCard .ctaGreen:hover {
-    background: #105b37;
-  }
-}
-
-.whatsappCard .ctaGreen:focus-visible {
-  outline: 2px solid #167246;
-  outline-offset: 4px;
-}
-
-.whatsappCard .ctaGreen:active {
-  transform: scale(0.97);
-}
-
-.qrPanel {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 24px 16px;
-  border-radius: 16px;
-  background: #edf1e8;
+  gap: var(--space-32);
+  background: #f8f8f8;
+  border-radius: 32px;
+  padding: var(--space-16);
+  /* Multi-layered shadow exported from Figma's Beautiful Shadows plugin —
+     layer order and values are verbatim from the design. The final layer is
+     fully transparent and paints nothing; it is kept so this stack stays a
+     literal match for the source if it is ever re-exported or diffed. */
+  box-shadow:
+    0px 22px 49px rgba(22, 43, 59, 0.1),
+    0px 89px 89px rgba(22, 43, 59, 0.09),
+    0px 200px 120px rgba(22, 43, 59, 0.05),
+    0px 355px 142px rgba(22, 43, 59, 0.01),
+    0px 555px 155px rgba(22, 43, 59, 0);
 }
 
+/* 285px square — Figma node 379:13584. Sets the card's whole height
+   (16 + 285 + 16 = 317, matching Figma's 317.392). */
 .qrWrap {
-  width: 188px;
-  height: 188px;
-  padding: 12px;
-  border: 1px solid #e0e6d9;
-  border-radius: 12px;
-  background: #ffffff;
+  flex: none;
+  width: 285px;
+  height: 285px;
+  overflow: hidden;
 }
 
 .qrImage {
@@ -673,18 +558,66 @@
   object-fit: contain;
 }
 
-.qrLabel {
-  margin: 16px 0 4px;
-  font-size: 12px;
-  font-weight: 500;
-  text-align: center;
+/* Keep the copy together, with the action anchored below it. */
+.whatsappTextCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 12px;
+  width: 312px;
+  height: 285px;
+  padding-block: 12px;
+  flex-shrink: 0;
 }
 
-.qrHint {
+.avatarStack {
+  display: flex;
+  align-items: center;
+}
+
+.avatarImg {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  object-fit: cover;
+}
+
+.avatarStack > .avatarImg:not(:last-child) {
+  margin-right: -8px;
+}
+
+.whatsappHeading {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 22px;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  font-weight: 500;
+  color: var(--color-ink);
   margin: 0;
-  font-size: 10px;
-  color: #637067;
-  text-align: center;
+}
+
+.whatsappSubtext {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #686868;
+  margin: 0;
+}
+
+/* Full-width green pill — Figma node 379:16354 (#00b531, 10px radius). */
+.ctaGreen {
+  width: 100%;
+  height: 44px;
+  margin-top: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  background: #00b531;
+  box-shadow: none;
 }
 
 /* ---------- RESPONSIVE ---------- */
@@ -777,32 +710,34 @@
 
 @media (max-width: 767px) {
   .whatsappCard {
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 480px;
-    padding: 28px;
-    border-radius: 20px;
-  }
-
-  .whatsappHeading {
-    font-size: 38px;
-  }
-
-  .qrPanel {
-    display: none;
-  }
-
-  .whatsappCard .ctaGreen {
+    flex-direction: column;
+    align-items: flex-start;
     width: 100%;
-    justify-content: space-between;
-    height: 48px;
   }
 
+  /* Stacked under .qrWrap rather than beside it — the fixed design width
+     was sized to sit next to the 285px QR column. */
+  .whatsappTextCol {
+    width: 100%;
+    height: auto;
+    gap: var(--space-16);
+  }
+
+  .qrWrap {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Stacked, the card is far taller than --whatsapp-card-height, so the
+     straddle maths above would sling it hundreds of px past the panel.
+     It sits below the panel instead. */
   .whatsappRow {
-    margin-top: -32px;
+    margin-top: var(--space-24);
   }
 
   .darkBox {
-    padding-bottom: 96px;
+    padding-bottom: var(--space-64);
   }
 }
 
