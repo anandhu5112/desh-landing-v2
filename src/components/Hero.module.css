@@ -234,6 +234,26 @@
   will-change: transform;
 }
 
+/* The halo belongs to the sun rather than the frame-wide dawn wash: it moves
+   with the disc and blooms beyond its edge as the rise reaches its crest.
+   Two radial gradients give it a hot, tight corona and a much softer amber
+   falloff without animating blur (which would repaint a very large layer). */
+.sunGlow {
+  position: absolute;
+  z-index: -1;
+  inset: -48%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgb(255 244 184 / 0.88) 0 28%, rgb(255 190 68 / 0.46) 48%, rgb(255 151 25 / 0.18) 65%, transparent 78%),
+    radial-gradient(circle, rgb(255 205 92 / 0.34) 0 38%, transparent 72%);
+  opacity: 0;
+  transform: scale(0.78);
+  transform-origin: center;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
 /* Content overlay — sibling of .zoomWrap so it is never scaled by the zoom */
 .heroContent {
   position: absolute;
@@ -744,6 +764,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sunGlow {
+    mix-blend-mode: normal;
+  }
+
   .dawnGlow,
   .dawnShade,
   .dawnWarmth {

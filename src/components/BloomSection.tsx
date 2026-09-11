@@ -12,6 +12,7 @@ import Image from "next/image";
 
 import Button from "@/components/ui/Button";
 import { COMMUNITY_URL } from "@/lib/contact";
+import { getScroller } from "@/lib/scroller";
 import styles from "./BloomSection.module.css";
 
 /** Also used by ContactModal/GrowSection/UsSection — same four faces.
@@ -44,6 +45,29 @@ const AVATARS = [
 /** Lives in /public. Static export serves these straight from the origin root. */
 const BLOOM_ATLASES = ["/bloom-atlas-01.webp", "/bloom-atlas-02.webp"] as const;
 
+/** Single frame (the bloom's initial state), heavily compressed — shown in
+ *  place of the canvas until the two atlases (~750KB combined) have loaded.
+ *  Regenerate with `node -e` per the atlas frame math in this file if the
+ *  initial amount/duration defaults ever change. */
+const BLOOM_POSTER = "/bloom-poster.webp";
+
+/** The calculator sits well below the hero. Loading ~750KB of atlases on
+ *  every visit, regardless of whether anyone scrolls that far, was the
+ *  actual cost being cut here — so the atlases are requested only once the
+ *  calculator is within this margin of the scrollport, same technique as
+ *  ScrollRevealVideo's warm observer. `root` is set at observe-time to
+ *  `#page-scroller`: the page scrolls inside that div, not the window, so a
+ *  viewport root would clip the target before rootMargin ever applied. */
+const WARM_OBSERVER_OPTIONS: IntersectionObserverInit = {
+  rootMargin: "120% 0px",
+  threshold: 0,
+};
+
+/** Once loaded, pause the rAF loop while the calculator is off-screen and
+ *  resume it (if the bloom hasn't already settled on its target frame) when
+ *  it scrolls back in. */
+const VISIBILITY_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0 };
+
 const ATLAS_COLUMNS = 6;
 const FRAMES_PER_ATLAS = 24;
 const FRAME_WIDTH = 540;
@@ -54,12 +78,12 @@ const TOTAL_FRAMES = BLOOM_ATLASES.length * FRAMES_PER_ATLAS;
  * Slider range. Also defines the ends of the bloom timeline, so widening it
  * automatically re-normalises the animation.
  */
-const AMOUNT = { min: 1_000, max: 200_000, step: 1_000, initial: 25_000 } as const;
+const AMOUNT = { min: 1_000, max: 200_000, step: 1_000, initial: 1_000 } as const;
 
 /** Investment Duration is a fixed set of preset buttons, not a slider (Figma
     node 501:7690) — the last one reads "30 yrs". */
 const YEARS_PRESETS = [5, 10, 15, 20, 25, 30] as const;
-const YEARS_INITIAL: (typeof YEARS_PRESETS)[number] = 15;
+const YEARS_INITIAL: (typeof YEARS_PRESETS)[number] = YEARS_PRESETS[0];
 
 const ASSUMED_ANNUAL_RATE = 12;
 
@@ -251,12 +275,22 @@ export default function BloomSection() {
   const amountInputRef = useRef<HTMLInputElement>(null);
   const [years, setYears] = useState<number>(YEARS_INITIAL);
   const [bloomVisible, setBloomVisible] = useState(false);
+  const [atlasesRequested, setAtlasesRequested] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
 
+  const mediaRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const initialFrame = bloomProgress(AMOUNT.initial, YEARS_INITIAL) * (TOTAL_FRAMES - 1);
   const targetRef = useRef(initialFrame);
   const headRef = useRef(initialFrame);
   const drawnFrameRef = useRef(-1);
+  const inViewRef = useRef(false);
+  const loopRunningRef = useRef(false);
+  /** Set once the atlases have loaded; lets the [monthly, years] effect below
+   *  (which fires before the atlas-loading effect if both change together)
+   *  kick a stalled loop back to life without the two effects needing to
+   *  share more than a ref. */
+  const ensureAnimatingRef = useRef<() => void>(() => {});
 
   const ids = useId();
   const amountId = `${ids}-amount`;
@@ -268,12 +302,36 @@ export default function BloomSection() {
   const amountOffset = (0.5 - amountRatio) * THUMB_SIZE;
   const sliderPosition = `calc(${amountPct}% + ${amountOffset}px)`;
 
-  // Both monthly investment and investment duration move the bloom.
+  // Both monthly investment and investment duration move the bloom. This
+  // runs whether or not the atlases have loaded yet — headRef simply starts
+  // its first animated step from wherever targetRef already points once
+  // loading finishes — but if the loop had already settled and gone idle,
+  // wake it back up so the new target actually gets drawn.
   useEffect(() => {
     targetRef.current = bloomProgress(monthly, years) * (TOTAL_FRAMES - 1);
+    ensureAnimatingRef.current();
   }, [monthly, years]);
 
+  // Begin loading the atlases only once the calculator is within reach of
+  // the scrollport, using the actual scroller as the observer root (see
+  // WARM_OBSERVER_OPTIONS above) — not on mount, which was paying for ~750KB
+  // of decode on every visit regardless of whether anyone scrolled this far.
   useEffect(() => {
+    const node = mediaRef.current;
+    if (!node || atlasesRequested) return;
+
+    const warm = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setAtlasesRequested(true);
+      warm.disconnect();
+    }, { ...WARM_OBSERVER_OPTIONS, root: getScroller() });
+    warm.observe(node);
+    return () => warm.disconnect();
+  }, [atlasesRequested]);
+
+  useEffect(() => {
+    if (!atlasesRequested) return;
+
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d", { alpha: false });
     if (!canvas || !context) return;
@@ -281,6 +339,7 @@ export default function BloomSection() {
     let cancelled = false;
     let animationFrame = 0;
     let lastTime = performance.now();
+    let visibility: IntersectionObserver | null = null;
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
@@ -317,6 +376,13 @@ export default function BloomSection() {
       return image;
     };
 
+    // Settled: reduced motion always is (it snaps straight to target), and
+    // otherwise once the eased follow has closed to within SETTLE_FRAME.
+    // Kept as a query against the *current* refs rather than a stored flag
+    // so a target change is picked up correctly whenever it happens.
+    const isSettled = () =>
+      reducedMotion.matches || Math.abs(targetRef.current - headRef.current) < SETTLE_FRAME;
+
     void Promise.all(BLOOM_ATLASES.map(loadAtlas))
       .then((atlases) => {
         if (cancelled) return;
@@ -324,7 +390,7 @@ export default function BloomSection() {
         draw(atlases, headRef.current);
         setBloomVisible(true);
 
-        const tick = (now: number) => {
+        const step = (now: number) => {
           const elapsed = Math.min(64, now - lastTime);
           lastTime = now;
           const delta = targetRef.current - headRef.current;
@@ -338,11 +404,39 @@ export default function BloomSection() {
           }
 
           draw(atlases, headRef.current);
+        };
+
+        const tick = (now: number) => {
+          step(now);
+          // Stop scheduling once the animation has caught up to its target,
+          // or the calculator has scrolled out of view — resumed by
+          // ensureAnimating below rather than a loop spinning idle forever.
+          if (isSettled() || !inViewRef.current) {
+            loopRunningRef.current = false;
+            return;
+          }
           animationFrame = requestAnimationFrame(tick);
         };
 
-        lastTime = performance.now();
-        animationFrame = requestAnimationFrame(tick);
+        const ensureAnimating = () => {
+          if (cancelled || loopRunningRef.current || !inViewRef.current) return;
+          if (isSettled()) {
+            // Target moved by less than a frame, or reduced motion — draw
+            // the (possibly new) settled frame once, no loop needed.
+            step(performance.now());
+            return;
+          }
+          loopRunningRef.current = true;
+          lastTime = performance.now();
+          animationFrame = requestAnimationFrame(tick);
+        };
+        ensureAnimatingRef.current = ensureAnimating;
+
+        visibility = new IntersectionObserver(([entry]) => {
+          inViewRef.current = entry.isIntersecting;
+          if (entry.isIntersecting) ensureAnimating();
+        }, { ...VISIBILITY_OBSERVER_OPTIONS, root: getScroller() });
+        visibility.observe(canvas);
       })
       .catch(() => {
         // Keep the section usable if an atlas request is interrupted or blocked.
@@ -351,8 +445,11 @@ export default function BloomSection() {
     return () => {
       cancelled = true;
       cancelAnimationFrame(animationFrame);
+      loopRunningRef.current = false;
+      ensureAnimatingRef.current = () => {};
+      visibility?.disconnect();
     };
-  }, []);
+  }, [atlasesRequested]);
 
   const commitAmount = () => {
     const parsed = Number((amountDraft ?? "").replace(/[₹,\s]/g, ""));
@@ -371,14 +468,30 @@ export default function BloomSection() {
         <BloomHeader />
 
         <div className={`grid ${styles.panel} ${styles.calcPanel}`}>
-          <div className={styles.media}>
-            <canvas
-              ref={canvasRef}
-              className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
-              width={FRAME_WIDTH}
-              height={FRAME_HEIGHT}
-              aria-hidden="true"
-            />
+          <div className={styles.media} ref={mediaRef}>
+            <div className={styles.bloomStack}>
+              {/* Frame 0 of the timeline, ~7KB — holds the calculator's
+                  shape on screen while the ~750KB atlas pair still loads. */}
+              {!posterFailed && (
+                <Image
+                  src={BLOOM_POSTER}
+                  alt=""
+                  width={FRAME_WIDTH}
+                  height={FRAME_HEIGHT}
+                  className={`${styles.bloom} ${bloomVisible ? "" : styles.bloomReady}`}
+                  aria-hidden="true"
+                  priority
+                  onError={() => setPosterFailed(true)}
+                />
+              )}
+              <canvas
+                ref={canvasRef}
+                className={`${styles.bloom} ${bloomVisible ? styles.bloomReady : ""}`}
+                width={FRAME_WIDTH}
+                height={FRAME_HEIGHT}
+                aria-hidden="true"
+              />
+            </div>
           </div>
 
           <div className={styles.controlsCol}>

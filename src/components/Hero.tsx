@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useRef, useState, type CSSProperties } from "react";
+import ReactDOM from "react-dom";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -27,6 +28,26 @@ const HERO_BG_PNG = "/images/hero-bg.png";
 // candidate before layout exists, and would otherwise assume full width and
 // over-fetch on small screens.
 const HERO_BG_SIZES = "100vw";
+
+// .heroSky (Hero.module.css) paints this as a CSS background-image behind
+// everything else in the frame, selected by the same three breakpoints as
+// the declarations there. A background-image is invisible to the preload
+// scanner — it's only discovered once the CSSOM is built and styles are
+// computed, which on a cold mobile load put its request ~3s after
+// navigation and made it the page's LCP element. These three preloads,
+// issued from render (so React hoists them into <head> before the
+// stylesheet is even fetched) with `media` matching .heroSky's own
+// breakpoints one-for-one, let the browser start the *one* candidate it
+// will actually use immediately, instead of discovering it late or
+// guessing wrong and fetching a second one.
+const HERO_SKY_PRELOADS = [
+  { href: "/images/hero-sky-1280.webp", media: "(max-width: 1280px)" },
+  {
+    href: "/images/hero-sky-1920.webp",
+    media: "(min-width: 1281px) and (max-width: 1920px)",
+  },
+  { href: "/images/hero-sky-4096.webp", media: "(min-width: 1921px)" },
+] as const;
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -593,12 +614,17 @@ function syncOutroToSun(
 }
 
 export default function Hero() {
+  for (const { href, media } of HERO_SKY_PRELOADS) {
+    ReactDOM.preload(href, { as: "image", type: "image/webp", media });
+  }
+
   const { open: openContact, prefetchBooking } = useContactModal();
   const pinRangeRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const zoomWrapRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
   const sunRef = useRef<HTMLDivElement>(null);
+  const sunGlowRef = useRef<HTMLDivElement>(null);
   const dawnGlowRef = useRef<HTMLDivElement>(null);
   const dawnShadeRef = useRef<HTMLDivElement>(null);
   const dawnWarmthRef = useRef<HTMLDivElement>(null);
@@ -835,6 +861,26 @@ export default function Hero() {
           opacity: 0.18, duration: SUN_RISE_DURATION, ease: "sine.inOut",
         }, SUN_RISE_STARTS_AT);
 
+      // A local bloom makes the disc itself feel luminous instead of only
+      // tinting the scene around it. It rides inside .sun, so its geometry
+      // and travel can never drift from the artwork. The bloom swells just
+      // before the sun arrives, then exhales into a quieter resting halo.
+      tl.fromTo(sunGlowRef.current, {
+        opacity: 0,
+        scale: 0.78,
+      }, {
+        opacity: 0.96,
+        scale: 1.16,
+        duration: SUN_RISE_DURATION * 0.72,
+        ease: "sine.inOut",
+      }, SUN_RISE_STARTS_AT)
+        .to(sunGlowRef.current, {
+          opacity: 0.7,
+          scale: 1.04,
+          duration: SUN_RISE_DURATION * 0.28,
+          ease: "sine.out",
+        }, SUN_RISE_STARTS_AT + SUN_RISE_DURATION * 0.72);
+
       // Move the actual scroller so the cinematic shortcut and manual scroll
       // always share the same position in the pinned sequence.
       let travel: gsap.core.Timeline | null = null;
@@ -923,11 +969,11 @@ export default function Hero() {
 
   return (
     <div ref={pinRangeRef} className={styles.heroPinRange}>
-    <main ref={heroRef} className={styles.hero} data-nav-glass-hero="">
-      {/* Every layer of the interaction lives inside this frame, so the zoom,
-          the sun and the outro statement are all clipped to the same 32px
-          margin and share one coordinate space. */}
-      <div className={styles.heroFrame} data-nav-glass-frame="">
+      <main ref={heroRef} className={styles.hero} data-nav-glass-hero="">
+        {/* Every layer of the interaction lives inside this frame, so the zoom,
+            the sun and the outro statement are all clipped to the same 32px
+            margin and share one coordinate space. */}
+        <div className={styles.heroFrame} data-nav-glass-frame="">
         {/* Sits behind .zoomWrap, not inside it — static for the whole pin
             (no scale/pan, no scroll-driven tween) so it reads as a fixed
             sky backdrop the grassland's transparent areas and the rising
@@ -935,7 +981,14 @@ export default function Hero() {
         <div className={styles.heroSky} data-nav-glass-sky="" />
         <div ref={zoomWrapRef} className={styles.zoomWrap} data-nav-glass-zoom="">
           <div ref={dawnGlowRef} className={styles.dawnGlow} aria-hidden="true" />
-          <div ref={sunRef} className={styles.sun} data-nav-glass-sun="" />
+          <div ref={sunRef} className={styles.sun} data-nav-glass-sun="">
+            <div
+              ref={sunGlowRef}
+              className={styles.sunGlow}
+              data-sun-glow=""
+              aria-hidden="true"
+            />
+          </div>
           {/* A real <img>, not a CSS background: the preload scanner finds
               it in the HTML and starts the download before the stylesheet
               has even parsed, which is most of why the landscape used to
@@ -1050,7 +1103,7 @@ export default function Hero() {
           </div>
         </div>
       </div>
-    </main>
+      </main>
     </div>
   );
 }
