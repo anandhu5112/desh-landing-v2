@@ -21,10 +21,10 @@ const BookingExperience = dynamic(() => import("@/app/book/BookingExperience"), 
 });
 
 const JOIN_AVATARS = [
-  "/images/join-avatar-1.png",
-  "/images/join-avatar-2.png",
-  "/images/join-avatar-3.png",
-  "/images/join-avatar-4.png",
+  "/images/join-avatar-1.webp",
+  "/images/join-avatar-2.webp",
+  "/images/join-avatar-3.webp",
+  "/images/join-avatar-4.webp",
 ];
 
 type Stat = { value: string; label: string; caption: string };
@@ -326,7 +326,7 @@ export default function ContactModal({
         >
         <div className={`${styles.photo} ${isBooking ? styles.portrait : ""} ${contentTab === "start" ? styles.photoStart : ""}`}>
           <Image
-            src={isBooking ? "/images/aswin-portrait.jpg" : "/images/contact-sky.jpg"}
+            src={isBooking ? "/images/aswin-portrait.webp" : "/images/contact-sky.webp"}
             alt={isBooking ? "Aswin PS, co-founder of Desh" : ""}
             fill
             sizes={isBooking ? "(max-width: 700px) 100vw, 360px" : "(max-width: 900px) 100vw, 322px"}

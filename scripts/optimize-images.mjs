@@ -74,6 +74,11 @@ const PLAN = {
   // because ContactModal also renders it as a full-height panel image, where
   // native width is the right size.)
   "vinayak-portrait.jpg": [168],
+  // AdvisorSection.module.css .photo: max-width 540px above the 1024px
+  // breakpoint (1620px at 3x), but full frame width below it, so a wide
+  // tablet can still want up to native. 1280 covers phones at 3x (the
+  // common case); native stays for everything wider.
+  "advisor-video-call.png": [1280, null],
 };
 
 // Only convert unplanned files above this size — below it a WebP rarely wins
