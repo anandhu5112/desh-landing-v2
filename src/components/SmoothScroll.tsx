@@ -7,6 +7,7 @@ import Lenis from "lenis";
 import { lenisRef } from "@/lib/lenis";
 import { getScrollContent, getScroller } from "@/lib/scroller";
 import { lenisLerp } from "@/lib/scrollTuning";
+import { judderExperiment } from "@/lib/judderExperiment";
 
 /**
  * Renders nothing — purely wires Lenis's smoothed scroll into GSAP's ticker
@@ -60,7 +61,14 @@ export default function SmoothScroll() {
     // lerp is set explicitly rather than left at Lenis's default (0.1) —
     // see scrollTuning.ts for why the two smoothing layers are tuned
     // together.
-    const lenis = new Lenis({ wrapper, content, anchors: true, lerp: lenisLerp() });
+    // syncTouch is TEMPORARY, with lib/judderExperiment.ts.
+    const lenis = new Lenis({
+      wrapper,
+      content,
+      anchors: true,
+      lerp: lenisLerp(),
+      syncTouch: judderExperiment().syncTouch,
+    });
     lenis.on("scroll", ScrollTrigger.update);
     lenisRef.current = lenis;
 

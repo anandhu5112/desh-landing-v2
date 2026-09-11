@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useContactModal } from "./ContactModalProvider";
 import navStyles from "./SiteNav.module.css";
+import { heroPinRangeHeight } from "@/lib/heroPin";
 import { lenisRef } from "@/lib/lenis";
 import { getScroller } from "@/lib/scroller";
 import { heroScrub } from "@/lib/scrollTuning";
@@ -171,7 +172,10 @@ const SUN_SETTLE_AT = SUN_RISE_STARTS_AT + SUN_RISE_DURATION;
 // timeline costs. Both derived, so re-timing any beat above carries the pin
 // with it instead of squeezing the others.
 const TIMELINE_UNITS = SUN_SETTLE_AT + HOLD_DURATION;
-const PIN_END = `+=${(TIMELINE_UNITS * SCROLL_PCT_PER_UNIT).toFixed(1)}%`;
+// Share of the scroller, matching the extra CSS-sticky containing-block
+// height in heroPinRangeHeight. Not a GSAP pin — see lib/heroPin.ts.
+const HERO_PIN_EXTRA_PCT = TIMELINE_UNITS * SCROLL_PCT_PER_UNIT;
+const PIN_END = `+=${HERO_PIN_EXTRA_PCT.toFixed(1)}%`;
 
 
 // Soft at both ends: the sun eases up out of the horizon, carries through
@@ -214,13 +218,13 @@ const progressAt = (unit: number) => unit / TIMELINE_UNITS;
 const OUTRO_REVEAL_AT = progressAt(SUN_SETTLE_AT);
 
 /**
- * Carry the hero copy's entrance across ScrollTrigger's pin swaps.
+ * Carry the hero copy's entrance across a ScrollTrigger refresh.
  *
- * `pin: true` wraps <main> in a .pin-spacer, and every refresh swaps that
- * spacer out and back in. Moving a node in the DOM restarts every CSS
- * animation inside it — not resumed, but re-created as fresh Animation
- * objects at time zero — so the copy's fade/blur entrance visibly replayed
- * from the top each time, reading as the text flickering twice.
+ * A refresh used to swap a .pin-spacer around <main>, which moves the node
+ * and restarts every CSS animation inside it. The pin is CSS sticky now and
+ * no longer swaps, but a resize refresh can still recreate Animation
+ * objects at time zero, so the copy's fade/blur entrance would replay from
+ * the top and read as the text flickering twice.
  *
  * The entrance begins at first paint, before any of this code runs, so the
  * fix is to re-seed whatever animations now exist with how long it has
@@ -590,6 +594,7 @@ function syncOutroToSun(
 
 export default function Hero() {
   const { open: openContact } = useContactModal();
+  const pinRangeRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const zoomWrapRef = useRef<HTMLDivElement>(null);
   const heroContentRef = useRef<HTMLDivElement>(null);
@@ -605,7 +610,13 @@ export default function Hero() {
 
   useGSAP(
     () => {
-      if (!heroRef.current || !zoomWrapRef.current || !heroContentRef.current || !sunRef.current)
+      if (
+        !heroRef.current ||
+        !pinRangeRef.current ||
+        !zoomWrapRef.current ||
+        !heroContentRef.current ||
+        !sunRef.current
+      )
         return;
 
       const isMobile = window.matchMedia(MOBILE_QUERY).matches;
@@ -629,6 +640,21 @@ export default function Hero() {
       // reason resyncEntrance is a module function rather than a closure
       // defined further down.
       const hero = heroRef.current;
+      const pinRange = pinRangeRef.current;
+      const sizePinRange = () => {
+        const scroller = getScroller();
+        if (!scroller) return;
+        pinRange.style.height = `${heroPinRangeHeight(
+          hero.offsetHeight,
+          scroller.clientHeight,
+          HERO_PIN_EXTRA_PCT
+        )}px`;
+      };
+      // Before ScrollTrigger measures start/end — a refresh that sized the
+      // range afterwards would use the previous (too-short) containing block.
+      ScrollTrigger.addEventListener("refreshInit", sizePinRange);
+      sizePinRange();
+
       const syncOutro = () => {
         if (!outroTextRef.current) return;
         syncOutroToSun(
@@ -645,26 +671,25 @@ export default function Hero() {
       const tl = gsap.timeline({
         scrollTrigger: {
           // The page scrolls in ScrollRoot's div, not the window — see
-          // lib/scroller.ts. Everything below (start/end, the pin, the
-          // scrub) is measured against this element instead of the viewport.
+          // lib/scroller.ts. Everything below (start/end, the scrub) is
+          // measured against this element instead of the viewport.
+          id: "hero",
           scroller: getScroller(),
-          trigger: heroRef.current,
+          // The sticky hero stays put on screen, so it cannot be the
+          // trigger — ScrollTrigger would see a box that never moves.
+          // The containing block is what actually travels.
+          trigger: pinRange,
           start: "top top",
           end: PIN_END,
           // Paired with Lenis's lerp — see scrollTuning.ts. These two lags
           // stack, so neither is meaningful to tune on its own.
           scrub: heroScrub(),
-          pin: true,
-          // ScrollRoot's content wrapper is display:flex, which makes
-          // ScrollTrigger skip pin-spacing by default (as body's own flex
-          // column did before the page moved inside the scroller).
-          pinSpacing: true,
-          anticipatePin: 1,
+          // CSS sticky holds the hero still (see lib/heroPin.ts). A GSAP
+          // transform pin on this nested scroller is what juddered on phones.
+          pin: false,
           // Makes the sun's function-based from-value re-measure on resize
           // instead of freezing at its first-render measurement.
           invalidateOnRefresh: true,
-          // Every refresh swaps the pin-spacer out and back in, restarting
-          // the copy's entrance animations — see resyncEntrance.
           onRefresh: () => {
             resyncEntrance(content, entranceOrigin);
             // The sun is sized in vw and positioned in %, so a resize moves
@@ -685,8 +710,6 @@ export default function Hero() {
         },
       });
 
-      // Creating the timeline above installed the pin, which performed the
-      // first swap; catch the entrance up before the browser paints it.
       resyncEntrance(content, entranceOrigin);
 
       // The first measurement above may have run against a fallback face —
@@ -891,6 +914,7 @@ export default function Hero() {
         cancelTravel?.();
         exploreRef.current = null;
         disposed = true;
+        ScrollTrigger.removeEventListener("refreshInit", sizePinRange);
         baseImg?.removeEventListener("load", onArtLoad);
       };
     },
@@ -898,19 +922,20 @@ export default function Hero() {
   );
 
   return (
-    <main ref={heroRef} className={styles.hero}>
+    <div ref={pinRangeRef} className={styles.heroPinRange}>
+    <main ref={heroRef} className={styles.hero} data-nav-glass-hero="">
       {/* Every layer of the interaction lives inside this frame, so the zoom,
           the sun and the outro statement are all clipped to the same 32px
           margin and share one coordinate space. */}
-      <div className={styles.heroFrame}>
+      <div className={styles.heroFrame} data-nav-glass-frame="">
         {/* Sits behind .zoomWrap, not inside it — static for the whole pin
             (no scale/pan, no scroll-driven tween) so it reads as a fixed
             sky backdrop the grassland's transparent areas and the rising
             sun both sit in front of. */}
-        <div className={styles.heroSky} />
-        <div ref={zoomWrapRef} className={styles.zoomWrap}>
+        <div className={styles.heroSky} data-nav-glass-sky="" />
+        <div ref={zoomWrapRef} className={styles.zoomWrap} data-nav-glass-zoom="">
           <div ref={dawnGlowRef} className={styles.dawnGlow} aria-hidden="true" />
-          <div ref={sunRef} className={styles.sun} />
+          <div ref={sunRef} className={styles.sun} data-nav-glass-sun="" />
           {/* A real <img>, not a CSS background: the preload scanner finds
               it in the HTML and starts the download before the stylesheet
               has even parsed, which is most of why the landscape used to
@@ -921,6 +946,7 @@ export default function Hero() {
             <img
               ref={baseImgRef}
               className={styles.heroBaseImg}
+              data-nav-glass-base=""
               src={HERO_BG_PNG}
               alt=""
               aria-hidden="true"
@@ -928,7 +954,7 @@ export default function Hero() {
               decoding="async"
             />
           </picture>
-          <div ref={dawnShadeRef} className={styles.dawnShade} aria-hidden="true" />
+          <div ref={dawnShadeRef} className={styles.dawnShade} data-nav-glass-shade="" aria-hidden="true" />
           <div ref={dawnWarmthRef} className={styles.dawnWarmth} aria-hidden="true" />
         </div>
         <div ref={heroContentRef} className={styles.heroContent}>
@@ -1002,7 +1028,12 @@ export default function Hero() {
             <div
               className={`${styles.heroOutroInner} ${showOutro ? styles.heroOutroInnerVisible : ""}`}
             >
-              <h2 ref={outroTextRef} tabIndex={-1} className={styles.heroOutroText}>
+              <h2
+                ref={outroTextRef}
+                tabIndex={-1}
+                className={styles.heroOutroText}
+                data-nav-glass-outro=""
+              >
                 <span className={styles.heroOutroLine}>
                   <span className={styles.dropCap}>F</span>or the life
                 </span>
@@ -1014,5 +1045,6 @@ export default function Hero() {
         </div>
       </div>
     </main>
+    </div>
   );
 }

@@ -8,17 +8,21 @@ export const NAV_PILL_ID = "nav-pill";
 /**
  * The pill's own chrome — plain CSS, drawn on top of the refraction.
  *
- * Tuned against the live page and signed off as a set — the pill stays at 18%
- * black so the refraction underneath reads through it, while the blur,
- * saturate and contrast give the surface its own body.
+ * Blink (production): 18% black, 18px blur, 2.5 saturate, 1.5 contrast,
+ * rim 0.2, shadow 0.25. That is the signed-off Chrome surface. Safari / iOS
+ * never reads this set — it uses `safariPill` and no backdrop-filter, because
+ * saturate/contrast over the hero sky is what turned the pill cyan on WebKit.
  */
-export interface GlassConfig {
-  blur: number;
+export interface PillChrome {
   opacity: number;
-  saturate: number;
-  contrast: number;
   rimLight: number;
   shadowOpacity: number;
+}
+
+export interface GlassConfig extends PillChrome {
+  blur: number;
+  saturate: number;
+  contrast: number;
 }
 
 /**
@@ -29,7 +33,8 @@ export interface GlassConfig {
  * about 1200 × strength on a 1440×900 screen, i.e. ~35px at the value below.
  * That is why it is well under the library's own 0.1 default: the same number
  * tuned against a small demo box would throw the page a hundred-plus pixels
- * sideways.
+ * sideways. Blink uses this unscaled, matching production. Safari never
+ * reads it — YbouaneNavGlass has its own `webgl` knobs.
  */
 export interface LensConfig {
   strength: number;
@@ -42,11 +47,40 @@ export interface LensConfig {
   specular: number;
 }
 
+/**
+ * The Safari / iOS lens — @ybouane/liquidglass's own knobs, passed straight
+ * through by YbouaneNavGlass. Separate from LensConfig because the two
+ * pipelines share no units: `refraction` here is a shader gain, not a
+ * displacement-map scale, and `blurAmount` is 0–1, not CSS px.
+ *
+ * Corner radius, shadow and tint are deliberately not here: the pill's own
+ * CSS draws its radius, scrim, rim and drop shadow over the refraction, on
+ * every engine, so the shader must not double them.
+ */
+export interface WebGlLensConfig {
+  refraction: number;
+  blurAmount: number;
+  chromAberration: number;
+  edgeHighlight: number;
+  specular: number;
+  fresnel: number;
+  /** Bevel depth in CSS px — how far in from the edge the curvature reaches. */
+  zRadius: number;
+  saturation: number;
+  brightness: number;
+  distortion: number;
+}
+
 interface GlassContextValue {
   config: GlassConfig;
   setConfig: React.Dispatch<React.SetStateAction<GlassConfig>>;
+  /** Pill chrome for the Safari / iOS WebGL path only. Blink never reads this. */
+  safariPill: PillChrome;
+  setSafariPill: React.Dispatch<React.SetStateAction<PillChrome>>;
   lens: LensConfig;
   setLens: React.Dispatch<React.SetStateAction<LensConfig>>;
+  webgl: WebGlLensConfig;
+  setWebgl: React.Dispatch<React.SetStateAction<WebGlLensConfig>>;
 }
 
 const GlassContext = createContext<GlassContextValue | null>(null);
@@ -61,6 +95,13 @@ export function GlassProvider({ children }: { children: ReactNode }) {
     shadowOpacity: 0.25,
   });
 
+  // Safari / iOS only — signed off on a real iPhone with ?tune=1.
+  const [safariPill, setSafariPill] = useState<PillChrome>({
+    opacity: 0.04,
+    rimLight: 0.05,
+    shadowOpacity: 0,
+  });
+
   const [lens, setLens] = useState<LensConfig>({
     strength: 0.029,
     chromaticAberration: 0.6,
@@ -72,9 +113,32 @@ export function GlassProvider({ children }: { children: ReactNode }) {
     specular: 0.75,
   });
 
+  // Signed off on a real iPhone with ?tune=1 (Safari / iOS WebGL path).
+  const [webgl, setWebgl] = useState<WebGlLensConfig>({
+    refraction: 0.72,
+    blurAmount: 0.42,
+    chromAberration: 0.09,
+    edgeHighlight: 0,
+    specular: 0,
+    fresnel: 0.25,
+    zRadius: 31,
+    saturation: 0,
+    brightness: -0.16,
+    distortion: 0.11,
+  });
+
   const value = useMemo(
-    () => ({ config, setConfig, lens, setLens }),
-    [config, lens],
+    () => ({
+      config,
+      setConfig,
+      safariPill,
+      setSafariPill,
+      lens,
+      setLens,
+      webgl,
+      setWebgl,
+    }),
+    [config, safariPill, lens, webgl],
   );
 
   return <GlassContext.Provider value={value}>{children}</GlassContext.Provider>;
