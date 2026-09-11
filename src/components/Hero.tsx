@@ -969,19 +969,19 @@ export default function Hero() {
 
   return (
     <div ref={pinRangeRef} className={styles.heroPinRange}>
-      <main ref={heroRef} className={styles.hero}>
+      <main ref={heroRef} className={styles.hero} data-nav-glass-hero="">
         {/* Every layer of the interaction lives inside this frame, so the zoom,
             the sun and the outro statement are all clipped to the same 32px
             margin and share one coordinate space. */}
-        <div className={styles.heroFrame} data-hero-frame="">
+        <div className={styles.heroFrame} data-nav-glass-frame="">
         {/* Sits behind .zoomWrap, not inside it — static for the whole pin
             (no scale/pan, no scroll-driven tween) so it reads as a fixed
             sky backdrop the grassland's transparent areas and the rising
             sun both sit in front of. */}
-        <div className={styles.heroSky} />
-        <div ref={zoomWrapRef} className={styles.zoomWrap}>
+        <div className={styles.heroSky} data-nav-glass-sky="" />
+        <div ref={zoomWrapRef} className={styles.zoomWrap} data-nav-glass-zoom="">
           <div ref={dawnGlowRef} className={styles.dawnGlow} aria-hidden="true" />
-          <div ref={sunRef} className={styles.sun}>
+          <div ref={sunRef} className={styles.sun} data-nav-glass-sun="">
             <div
               ref={sunGlowRef}
               className={styles.sunGlow}
@@ -999,6 +999,7 @@ export default function Hero() {
             <img
               ref={baseImgRef}
               className={styles.heroBaseImg}
+              data-nav-glass-base=""
               src={HERO_BG_PNG}
               alt=""
               aria-hidden="true"
@@ -1006,7 +1007,7 @@ export default function Hero() {
               decoding="async"
             />
           </picture>
-          <div ref={dawnShadeRef} className={styles.dawnShade} aria-hidden="true" />
+          <div ref={dawnShadeRef} className={styles.dawnShade} data-nav-glass-shade="" aria-hidden="true" />
           <div ref={dawnWarmthRef} className={styles.dawnWarmth} aria-hidden="true" />
         </div>
         <div ref={heroContentRef} className={styles.heroContent}>
@@ -1090,6 +1091,7 @@ export default function Hero() {
                 ref={outroTextRef}
                 tabIndex={-1}
                 className={styles.heroOutroText}
+                data-nav-glass-outro=""
               >
                 <span className={styles.heroOutroLine}>
                   <span className={styles.dropCap}>F</span>or the life

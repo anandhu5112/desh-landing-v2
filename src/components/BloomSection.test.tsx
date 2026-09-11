@@ -217,7 +217,7 @@ describe("BloomSection WhatsApp community", () => {
 
     const qrImg = screen.getByAltText(/qr code to join the desh whatsapp community/i);
     expect(qrImg).toBeDefined();
-    expect(qrImg.getAttribute("src")).toContain("qr-code.svg");
+    expect(qrImg.getAttribute("src")).toContain("community-qr.svg");
   });
 });
 

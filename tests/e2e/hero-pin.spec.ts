@@ -5,7 +5,7 @@ test("hero stays put with CSS sticky, not a GSAP transform pin", async ({ page }
   await page.goto("/");
 
   const hero = page.getByRole("main").first();
-  const frame = hero.locator("[data-hero-frame]");
+  const frame = hero.locator("[data-nav-glass-frame]");
 
   await expect(hero).toHaveCSS("position", "sticky");
   expect(await page.locator(".pin-spacer").count()).toBe(0);

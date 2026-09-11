@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LiquidGlass, type LiquidGlassHandle } from "liquid-glass-web-react";
 import { SCROLLER_ID, SCROLL_CONTENT_ID } from "@/lib/scroller";
+import { needsWebKitGlassFallback } from "@/lib/webkitGlass";
 import { NAV_PILL_ID, useGlassConfig } from "./GlassContext";
 import styles from "./ScrollRoot.module.css";
 
@@ -30,7 +31,9 @@ const INITIAL_LENS_SIZE = { width: 420, height: 56 };
  * this is built. Measured at identical geometry and content: 9.03 mean
  * channel delta with a static child, 0.48 with an overflow:auto one. The
  * patch forces userSpaceOnUse everywhere, which is platform-neutral (both
- * paths compute in px) and gives Chrome and WebKit the same working path.
+ * paths compute in px) and gives Chrome the same working path as production.
+ * WebKit still cannot paint liquid-glass's full-page filter, so on Safari /
+ * iOS that filter is disabled and YbouaneNavGlass paints pill-sized refraction.
  *
  * Only page sections belong in here. SiteNav, the contact modal and
  * GlassTuner are siblings outside it — chrome that draws over the refraction
@@ -40,6 +43,8 @@ export default function ScrollRoot({ children }: { children: ReactNode }) {
   const glassRef = useRef<LiquidGlassHandle | null>(null);
   const { lens } = useGlassConfig();
   const [lensSize, setLensSize] = useState(INITIAL_LENS_SIZE);
+  // WebKit: full-page SVG filter is off; YbouaneNavGlass paints pill refraction.
+  const [svgGlass] = useState(() => !needsWebKitGlassFallback());
 
   // Keep the lens sitting exactly under the nav pill. The pill is fixed and
   // no longer hides on scroll, so its box only changes on a resize or when
@@ -47,6 +52,7 @@ export default function ScrollRoot({ children }: { children: ReactNode }) {
   // read. A ResizeObserver covers the menu, including every frame of its
   // width/height transition.
   useEffect(() => {
+    if (!svgGlass) return;
     const pill = document.getElementById(NAV_PILL_ID);
     if (!pill) return;
 
@@ -89,12 +95,12 @@ export default function ScrollRoot({ children }: { children: ReactNode }) {
       observer.disconnect();
       window.removeEventListener("resize", measure);
     };
-  }, []);
+  }, [svgGlass]);
 
   return (
     <LiquidGlass
       ref={glassRef}
-      className={styles.glass}
+      className={`${styles.glass}${svgGlass ? "" : ` ${styles.noSvgGlass}`}`}
       // Inline, not in the stylesheet: the library writes `position: relative`
       // as an inline style and spreads this over it, so a class would lose.
       style={{ position: "fixed", inset: 0 }}

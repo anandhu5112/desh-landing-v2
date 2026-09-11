@@ -7,7 +7,8 @@ import Footer from "@/components/Footer";
 import SiteNav from "@/components/SiteNav";
 import SmoothScroll from "@/components/SmoothScroll";
 import ScrollRoot from "@/components/ScrollRoot";
-import ScrollProbe from "@/components/ScrollProbe";
+import WebKitNavGlass from "@/components/WebKitNavGlass";
+import YbouaneNavGlass from "@/components/YbouaneNavGlass";
 import { GlassProvider } from "@/components/GlassContext";
 
 export default function Home() {
@@ -19,8 +20,8 @@ export default function Home() {
         {/* Renders nothing — wires Lenis into GSAP's ticker for the whole page. */}
         <SmoothScroll />
         {/* The page scrolls inside this, not in the window — see
-            lib/scroller.ts. Everything below is page content; the nav,
-            tuner and contact modal stay outside it as viewport chrome. */}
+            lib/scroller.ts. Everything below is page content; the nav
+            and contact modal stay outside it as viewport chrome. */}
         <ScrollRoot>
           {/* Pinned scroll sequence: spotlight hero -> zoom -> outro statement. */}
           <Hero />
@@ -40,35 +41,21 @@ export default function Home() {
         {/* Fixed to the viewport, not inside Hero — must survive Hero's
             pinned zoom/fade so its links stay usable the whole page down. */}
         <SiteNav />
+        {/* Safari / iOS — pill-sized WebGL refraction (@ybouane/liquidglass)
+            over the hero. Blink already refracts through <LiquidGlass> in
+            ScrollRoot and never mounts this; ?glass=webgl forces it there. */}
+        <YbouaneNavGlass />
+        {/* Legacy Safari canvas refraction — only with ?glass=canvas, kept
+            for side-by-side comparison against the WebGL path above. */}
+        <WebKitNavGlass />
 
-        {/* TEMPORARY — renders nothing unless the URL carries ?probe=1, and
-            comes out with ScrollProbe.tsx once the mobile judder is diagnosed.
-            Static import rather than next/dynamic only because this branch is
-            not going to merge as-is; anything that outlives the diagnosis has
-            to follow the tuner convention noted below. */}
-        <ScrollProbe />
-
-        {/* Neither tuner is mounted. WordmarkTuner drives the footer
-            wordmark's --wm-* properties and its values are baked into
-            Footer.module.css; to tune again, add it back for the session:
+        {/* GlassTuner is not mounted. Values are baked into GlassProvider;
+            to tune again, add it back for the session behind next/dynamic:
               import dynamic from "next/dynamic";
-              const WordmarkTuner = dynamic(() => import("@/components/WordmarkTuner"));
-              <WordmarkTuner />
-            then press Copy CSS, paste the block over the --wm-* defaults in
-            Footer.module.css, update WORDMARK_DEFAULTS to match — a test
-            holds the two together — and take the mount back out. Keep it
-            behind next/dynamic: a static import would leave the panel in the
-            production bundle whatever a NODE_ENV branch evaluates to, which
-            is the same trap the note below describes.
-
-            GlassTuner is deliberately NOT mounted here either. The glass values it
-            produced are baked into GlassProvider, and a NODE_ENV guard was
-            not enough — the component still landed in the production bundle,
-            because the import keeps it in the module graph whatever the
-            branch evaluates to. To tune again, add it back for the session:
-              import GlassTuner from "@/components/GlassTuner";
+              const GlassTuner = dynamic(() => import("@/components/GlassTuner"));
               <GlassTuner />
-            then copy the values into GlassContext and remove it again. */}
+            then copy values into GlassContext and remove it again. A static
+            import would leave the panel in the production bundle. */}
       </GlassProvider>
     </ContactModalProvider>
   );

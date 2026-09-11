@@ -1,10 +1,40 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getScroller } from "@/lib/scroller";
 
-/** Fires as soon as a third of the clip is on screen — near enough to
-    the old "it's clearly visible now" point that nothing reads differently. */
-const OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0.3 };
+/** Fire as soon as any pixel of the clip enters the scrollport. Waiting for
+ *  30% left the poster up while the section was already clearly on screen —
+ *  the lag the dollar illustration was showing on cold phone loads. */
+export const PLAY_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0 };
+
+/**
+ * Start fetching the clip once it is within ~2.5 scrollports of the screen.
+ *
+ * Must clear the hero sticky range (~186% of the scroller — see
+ * `HERO_PIN_EXTRA_PCT` in Hero.tsx) plus ServicesSection's rise offset
+ * (120px). A 150% margin left the dollar clip just past the warm zone at
+ * scrollTop=0, so the 600KB file only started mid-hero and was still
+ * buffering when the section arrived. 250% warms it on/near first paint
+ * without also pulling the further-down rupee clip.
+ *
+ * `root` is set at observe-time to `#page-scroller` (see `observerRoot()`):
+ * a viewport root makes this margin a no-op under the nested overflow clip.
+ */
+export const WARM_OBSERVER_OPTIONS: IntersectionObserverInit = {
+  rootMargin: "250% 0px",
+  threshold: 0,
+};
+
+/** The page scrolls in `#page-scroller`, not the window. Observing against
+ *  the viewport (IO's default) clips targets to the scrollport *before*
+ *  `rootMargin` is applied, so a 150% warm margin never fires early — the
+ *  mp4 only starts downloading once the section is already on screen, which
+ *  is the cold-mobile "poster holds, bloom starts late" lag. Same root as
+ *  `useSnapIntoView`. */
+export function observerRoot(): Element | null {
+  return getScroller();
+}
 
 /** Events after which a previously refused `play()` is worth retrying:
     the clip finally has data, or the tab came back to the foreground. */
@@ -29,19 +59,40 @@ const GESTURE_RETRY_EVENTS = ["pointerdown", "touchstart", "keydown"] as const;
  * Instead: assert `muted` on the element itself, keep the observer
  * connected, and retry on every event that could plausibly have unblocked
  * playback, until the clip has actually run to `ended`.
+ *
+ * Cold mobile loads also refuse to wait on a multi-megabyte `preload="auto"`
+ * race against the hero. The clip's `src` stays unset (and a lightweight
+ * `poster` holds the first frame) until the warm observer says the section
+ * is approaching; only then does the browser start the download.
  */
 export default function ScrollRevealVideo({
   src,
+  poster,
   className,
 }: {
   src: string;
+  poster?: string;
   className?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const [activeSrc, setActiveSrc] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const video = ref.current;
-    if (!video) return;
+    if (!video || activeSrc === src) return;
+
+    const warm = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setActiveSrc(src);
+      warm.disconnect();
+    }, { ...WARM_OBSERVER_OPTIONS, root: observerRoot() });
+    warm.observe(video);
+    return () => warm.disconnect();
+  }, [src, activeSrc]);
+
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || !activeSrc) return;
 
     // React assigns `muted` as a property, after it has already set `src`.
     // WebKit decides autoplay eligibility off the element's own muted
@@ -66,7 +117,7 @@ export default function ScrollRevealVideo({
     const observer = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       attempt();
-    }, OBSERVER_OPTIONS);
+    }, { ...PLAY_OBSERVER_OPTIONS, root: observerRoot() });
     observer.observe(video);
     teardown.push(() => observer.disconnect());
 
@@ -90,7 +141,7 @@ export default function ScrollRevealVideo({
     teardown.push(() => document.removeEventListener("visibilitychange", attempt));
 
     return detach;
-  }, [src]);
+  }, [activeSrc]);
 
   return (
     <video
@@ -98,8 +149,9 @@ export default function ScrollRevealVideo({
       className={className}
       muted
       playsInline
-      preload="auto"
-      src={src}
+      preload={activeSrc ? "auto" : "none"}
+      poster={poster}
+      src={activeSrc}
       aria-hidden="true"
     />
   );
