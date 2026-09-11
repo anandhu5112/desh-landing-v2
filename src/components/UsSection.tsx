@@ -28,7 +28,11 @@ export default function UsSection() {
     <section className={styles.section}>
       <div className={`grid ${styles.panel}`}>
         <div className={styles.media}>
-          <ScrollRevealVideo src="/videos/us-dollar.mp4" className={styles.video} />
+          <ScrollRevealVideo
+            src="/videos/us-dollar-720.mp4"
+            poster="/images/us-dollar-poster.webp"
+            className={styles.video}
+          />
         </div>
         <div className={styles.text}>
           <LogoCarousel logos={COMPANY_LOGOS} className={styles.avatarStack} />

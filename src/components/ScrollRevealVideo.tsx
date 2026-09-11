@@ -1,10 +1,21 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /** Fires as soon as a third of the clip is on screen — near enough to
     the old "it's clearly visible now" point that nothing reads differently. */
-const OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0.3 };
+const PLAY_OBSERVER_OPTIONS: IntersectionObserverInit = { threshold: 0.3 };
+
+/**
+ * Start fetching the clip once it is within ~1.5 viewports of the screen.
+ * Far enough that a typical scroll through the hero finishes the download
+ * before play, close enough that the hero's own images still win the first
+ * network slot on a cold mobile load.
+ */
+export const WARM_OBSERVER_OPTIONS: IntersectionObserverInit = {
+  rootMargin: "150% 0px",
+  threshold: 0,
+};
 
 /** Events after which a previously refused `play()` is worth retrying:
     the clip finally has data, or the tab came back to the foreground. */
@@ -29,19 +40,40 @@ const GESTURE_RETRY_EVENTS = ["pointerdown", "touchstart", "keydown"] as const;
  * Instead: assert `muted` on the element itself, keep the observer
  * connected, and retry on every event that could plausibly have unblocked
  * playback, until the clip has actually run to `ended`.
+ *
+ * Cold mobile loads also refuse to wait on a multi-megabyte `preload="auto"`
+ * race against the hero. The clip's `src` stays unset (and a lightweight
+ * `poster` holds the first frame) until the warm observer says the section
+ * is approaching; only then does the browser start the download.
  */
 export default function ScrollRevealVideo({
   src,
+  poster,
   className,
 }: {
   src: string;
+  poster?: string;
   className?: string;
 }) {
   const ref = useRef<HTMLVideoElement>(null);
+  const [activeSrc, setActiveSrc] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const video = ref.current;
-    if (!video) return;
+    if (!video || activeSrc === src) return;
+
+    const warm = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      setActiveSrc(src);
+      warm.disconnect();
+    }, WARM_OBSERVER_OPTIONS);
+    warm.observe(video);
+    return () => warm.disconnect();
+  }, [src, activeSrc]);
+
+  useEffect(() => {
+    const video = ref.current;
+    if (!video || !activeSrc) return;
 
     // React assigns `muted` as a property, after it has already set `src`.
     // WebKit decides autoplay eligibility off the element's own muted
@@ -66,7 +98,7 @@ export default function ScrollRevealVideo({
     const observer = new IntersectionObserver(([entry]) => {
       inView = entry.isIntersecting;
       attempt();
-    }, OBSERVER_OPTIONS);
+    }, PLAY_OBSERVER_OPTIONS);
     observer.observe(video);
     teardown.push(() => observer.disconnect());
 
@@ -90,7 +122,7 @@ export default function ScrollRevealVideo({
     teardown.push(() => document.removeEventListener("visibilitychange", attempt));
 
     return detach;
-  }, [src]);
+  }, [activeSrc]);
 
   return (
     <video
@@ -98,8 +130,9 @@ export default function ScrollRevealVideo({
       className={className}
       muted
       playsInline
-      preload="auto"
-      src={src}
+      preload={activeSrc ? "auto" : "none"}
+      poster={poster}
+      src={activeSrc}
       aria-hidden="true"
     />
   );
