@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: "/images/og-image.jpg?v=6",
+        url: "/images/og-image.jpg?v=7",
         width: 1200,
         height: 630,
         alt: "Sun rising over green hills and a river, Desh's hero artwork",
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     title: "Desh | Wealth guidance for global Indians",
     description:
       "Build a portfolio across Indian mutual funds and US stocks with dedicated guidance for NRIs.",
-    images: ["/images/og-image.jpg?v=6"],
+    images: ["/images/og-image.jpg?v=7"],
   },
 };
 
