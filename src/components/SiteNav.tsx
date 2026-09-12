@@ -153,7 +153,7 @@ export default function SiteNav() {
             Manifesto
           </Link>
           <a href={servicesHref} className={styles.link}>
-            Company
+            Services
           </a>
           <a href={communityHref} className={styles.link}>
             Community
@@ -202,7 +202,7 @@ export default function SiteNav() {
             Manifesto
           </Link>
           <a href={servicesHref} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
-            Company
+            Services
           </a>
           <a href={communityHref} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
             Community
