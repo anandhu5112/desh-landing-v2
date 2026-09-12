@@ -158,6 +158,96 @@ describe("ScrollRevealVideo", () => {
     expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
   });
 
+  it("keeps retrying while the clip is on screen after a refused autoplay", async () => {
+    vi.useFakeTimers();
+    // WebKit in Low Power Mode (and Chrome on iOS, which is WebKit) refuses
+    // muted inline autoplay outright. The refusal is per-call, not sticky.
+    let refusals = 2;
+    const play = vi.fn(() => {
+      if (refusals > 0) {
+        refusals -= 1;
+        return Promise.reject(new Error("NotAllowedError"));
+      }
+      return Promise.resolve(undefined);
+    });
+    HTMLMediaElement.prototype.play = play as unknown as HTMLMediaElement["play"];
+
+    render(<ScrollRevealVideo src="/videos/us-dollar-720.mp4" />);
+    fire(byRootMargin(WARM_OBSERVER_OPTIONS.rootMargin as string)!, true);
+    fire(byPlayObserver()!, true);
+
+    // The one observer-driven attempt was refused. Nothing else is edge-
+    // triggered any more: the media events fired while the clip was still
+    // off screen, and a wheel-scrolling visitor produces no pointer/touch/key
+    // event at all. Only the timer can recover this.
+    expect(play).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1200);
+    });
+
+    expect(play.mock.calls.length).toBeGreaterThan(1);
+    vi.useRealTimers();
+  });
+
+  it("stops polling once the clip scrolls back off screen", async () => {
+    vi.useFakeTimers();
+    const play = vi.fn(() => Promise.reject(new Error("NotAllowedError")));
+    HTMLMediaElement.prototype.play = play as unknown as HTMLMediaElement["play"];
+
+    render(<ScrollRevealVideo src="/videos/us-dollar-720.mp4" />);
+    fire(byRootMargin(WARM_OBSERVER_OPTIONS.rootMargin as string)!, true);
+    fire(byPlayObserver()!, true);
+    fire(byPlayObserver()!, false);
+
+    const calls = play.mock.calls.length;
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(play.mock.calls.length).toBe(calls);
+    vi.useRealTimers();
+  });
+
+  it("re-attaches the source when the media fetch fails outright", () => {
+    const load = vi.fn();
+    HTMLMediaElement.prototype.load = load;
+
+    const { container } = render(
+      <ScrollRevealVideo src="/videos/us-dollar-720.mp4" />,
+    );
+    const video = container.querySelector("video")!;
+    fire(byRootMargin(WARM_OBSERVER_OPTIONS.rootMargin as string)!, true);
+
+    // A dropped fetch leaves only the poster up, and no media retry event
+    // ever fires again — without this the visit is over for this clip.
+    act(() => {
+      video.dispatchEvent(new Event("error"));
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+
+    // Bounded, so a permanently-404ing asset can't spin forever.
+    act(() => {
+      video.dispatchEvent(new Event("error"));
+      video.dispatchEvent(new Event("error"));
+    });
+    expect(load).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries on a wheel scroll, which is how desktop visitors arrive", () => {
+    const play = vi.fn(() => Promise.reject(new Error("NotAllowedError")));
+    HTMLMediaElement.prototype.play = play as unknown as HTMLMediaElement["play"];
+
+    render(<ScrollRevealVideo src="/videos/us-dollar-720.mp4" />);
+    fire(byRootMargin(WARM_OBSERVER_OPTIONS.rootMargin as string)!, true);
+    fire(byPlayObserver()!, true);
+    const calls = play.mock.calls.length;
+
+    act(() => {
+      window.dispatchEvent(new Event("wheel"));
+    });
+    expect(play.mock.calls.length).toBeGreaterThan(calls);
+  });
+
   it("does not attach src while the warm observer stays out of range", () => {
     const { container } = render(
       <ScrollRevealVideo src="/videos/us-dollar-720.mp4" />,
