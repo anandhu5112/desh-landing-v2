@@ -39,7 +39,17 @@ const INITIAL_LENS_SIZE = { width: 420, height: 56 };
  * GlassTuner are siblings outside it — chrome that draws over the refraction
  * rather than through it. See lib/scroller.ts for the scrolling half of this.
  */
-export default function ScrollRoot({ children }: { children: ReactNode }) {
+export default function ScrollRoot({
+  children,
+  smoothScroll = false,
+}: {
+  children: ReactNode;
+  /** Native CSS smooth-scroll on the scroller itself, for pages that don't
+      run Lenis (SmoothScroll) to animate anchor jumps some other way. The
+      homepage never passes this — Lenis already owns that motion there, and
+      layering native smooth-scroll on top of its own rAF loop would fight it. */
+  smoothScroll?: boolean;
+}) {
   const glassRef = useRef<LiquidGlassHandle | null>(null);
   const { lens } = useGlassConfig();
   const [lensSize, setLensSize] = useState(INITIAL_LENS_SIZE);
@@ -119,7 +129,11 @@ export default function ScrollRoot({ children }: { children: ReactNode }) {
       edgeHighlight={lens.edgeHighlight}
       specular={lens.specular}
     >
-      <div id={SCROLLER_ID} className={styles.scroller}>
+      <div
+        id={SCROLLER_ID}
+        className={styles.scroller}
+        style={smoothScroll ? { scrollBehavior: "smooth" } : undefined}
+      >
         <div id={SCROLL_CONTENT_ID} className={styles.content}>
           {children}
         </div>

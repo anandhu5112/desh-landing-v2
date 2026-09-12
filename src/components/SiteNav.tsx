@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useContactModal } from "./ContactModalProvider";
 import { NAV_PILL_ID, useGlassConfig } from "./GlassContext";
 import { wantsYbouaneGlass } from "@/lib/ybouaneGlass";
@@ -96,6 +97,14 @@ export default function SiteNav() {
   }, []);
   const pillChrome = safariGlass ? safariPill : config;
 
+  // #services/#community only exist on the homepage's own sections — from
+  // any other route (e.g. /manifesto) the bare hash would target nothing,
+  // so route back home first.
+  const pathname = usePathname();
+  const onHome = pathname === "/";
+  const servicesHref = onHome ? "#services" : "/#services";
+  const communityHref = onHome ? "#community" : "/#community";
+
   const pill = (
     <div
       // ScrollRoot's glass lens observes this element's size to sit
@@ -140,10 +149,13 @@ export default function SiteNav() {
           />
         </Link>
         <nav className={styles.links} aria-label="Primary">
-          <a href="#services" className={styles.link}>
+          <Link href="/manifesto" className={styles.link}>
+            Manifesto
+          </Link>
+          <a href={servicesHref} className={styles.link}>
             Company
           </a>
-          <a href="#community" className={styles.link}>
+          <a href={communityHref} className={styles.link}>
             Community
           </a>
           <button
@@ -186,10 +198,13 @@ export default function SiteNav() {
         inert={!menuOpen}
       >
         <nav id="mobile-nav-menu" className={styles.mobileMenu} aria-label="Mobile">
-          <a href="#services" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+          <Link href="/manifesto" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+            Manifesto
+          </Link>
+          <a href={servicesHref} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
             Company
           </a>
-          <a href="#community" className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
+          <a href={communityHref} className={styles.mobileLink} onClick={() => setMenuOpen(false)}>
             Community
           </a>
           <button

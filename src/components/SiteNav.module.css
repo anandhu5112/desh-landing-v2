@@ -62,11 +62,11 @@
 .pillRow {
   display: flex;
   align-items: center;
-  gap: var(--space-40);
-  /* Right padding matches top/bottom; left gets more to optically balance
-     the logo mark's own left edge (matches Figma's 20px/10px). */
+  gap: var(--space-24);
+  /* Keep the right inset aligned with the vertical padding, with a little
+     more room beside the logo for optical balance. */
   padding-block: var(--space-8);
-  padding-inline: 20px 10px;
+  padding-inline: 16px 8px;
 }
 
 .brand {
@@ -95,7 +95,7 @@
 .links {
   display: flex;
   align-items: center;
-  gap: var(--space-32);
+  gap: var(--space-20);
   min-width: 0;
 }
 
@@ -120,7 +120,7 @@
 .contactCta {
   flex: none;
   height: 40px;
-  padding-inline: var(--space-16);
+  padding-inline: var(--space-12);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -295,6 +295,10 @@
 
 .pillOpen .mobileMenu > *:nth-child(3) {
   transition-delay: 0.24s;
+}
+
+.pillOpen .mobileMenu > *:nth-child(4) {
+  transition-delay: 0.30s;
 }
 
 /* No transition of its own: `.mobileMenu > *` above already owns one, and

@@ -2,26 +2,26 @@
    Typography follows the homepage’s shared heading and body tokens. */
 @import "./tokens.css";
 
+/* Scrolling and height live on ScrollRoot's own #page-scroller/
+   #page-scroll-content now (see ManifestoPage.tsx) — the liquid-glass nav
+   needs to own the scroll container so its filter has a fixed viewport-sized
+   box to refract. This is just the content's own paint surface. */
 .page {
   width: 100%;
-  min-height: 0;
-  height: 100dvh;
-  overflow-y: auto;
   overflow-x: clip;
-  scroll-behavior: smooth;
   background: var(--manifesto-paper);
   color: var(--manifesto-ink);
 }
 .hero {
   position: relative;
   isolation: isolate;
-  min-height: 850px;
-  height: calc(100svh - 48px);
-  max-height: 1120px;
+  min-height: 660px;
+  height: calc(88svh - 48px);
+  max-height: 820px;
   margin: var(--space-24);
   border-radius: 32px;
   overflow: hidden;
-  background: var(--manifesto-warm);
+  background: var(--manifesto-surface);
 }
 .heroImage {
   position: absolute;
@@ -32,56 +32,25 @@
   object-position: center 64%;
   z-index: -1;
 }
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 36px;
-  position: relative;
-  z-index: 1;
+@media (hover: hover) and (pointer: fine) {
+  .readLink:hover {
+    opacity: 0.65;
+  }
 }
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-  min-height: 44px;
-  font-size: var(--fs-nav);
-  white-space: nowrap;
-}
-.backLink:hover,
-.readLink:hover {
-  opacity: 0.65;
-}
-.backLink:active,
 .readLink:active {
   transform: translateY(1px);
 }
-.backLink:focus-visible,
-.brand:focus-visible,
 .readLink:focus-visible,
 .cta:focus-visible {
   outline: 2px solid var(--manifesto-ink);
   outline-offset: 6px;
 }
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-8);
-}
-.brandLogo {
-  display: block;
-  filter: invert(1);
-}
-.brandSymbol {
-  display: block;
-  height: 25px;
-  width: auto;
-  filter: invert(1);
-}
 .opening {
   text-align: center;
   position: relative;
-  padding: 30px 24px 0;
+  /* Clears the fixed SiteNav pill (~98px tall including its own top offset
+     at the widest clamp) plus a little breathing room. */
+  padding: 100px 24px 0;
 }
 .eyebrow {
   font-family: var(--font-inter);
@@ -115,9 +84,10 @@
   letter-spacing: -0.065em;
 }
 .lede {
-  font-family: var(--font-body);
-  font-size: 20px;
-  line-height: 1.55;
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
+  letter-spacing: var(--ls-body);
+  line-height: 1.4;
   font-weight: 300;
   max-width: 440px;
   margin: 26px auto 0;
@@ -151,7 +121,7 @@
 .origin,
 .chapter,
 .promise {
-  width: min(100%, 680px);
+  width: min(100%, 720px);
   margin: 0 auto;
   padding: 0 32px;
 }
@@ -166,23 +136,36 @@
   font-family: var(--font-body), serif;
   font-weight: 300;
   font-size: var(--fs-body);
-  line-height: 1.85;
+  line-height: 1.4;
   letter-spacing: var(--ls-body);
   text-wrap: pretty;
   color: var(--manifesto-copy);
+}
+.prose strong {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--manifesto-ink);
+}
+.prose .introduction {
+  color: var(--manifesto-ink);
+  max-width: 600px;
 }
 .prose p + p {
   margin-top: 28px;
 }
 .prose .salutation {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 20px;
-  line-height: 1.5;
+  font-family: var(--font-inter), sans-serif;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 1.4;
   color: var(--manifesto-ink);
   margin-bottom: 32px;
 }
 .belief {
-  padding: 80px 24px;
+  padding: 72px 24px;
+  margin-block: 64px;
+  background: var(--manifesto-surface);
   text-align: center;
 }
 .beliefText {
@@ -196,26 +179,30 @@
   color: var(--manifesto-ink);
   text-wrap: balance;
 }
-.belief + .chapter {
+.belief + .promise {
   margin-top: 0;
 }
+.prose .promiseLead {
+  color: var(--manifesto-ink);
+}
 .signoff {
-  text-align: center;
-  padding: 100px 24px 0;
+  width: min(100%, 720px);
+  margin-inline: auto;
+  padding: 48px 32px 0;
 }
 .closing {
-  font-family: var(--font-body);
-  font-size: 26px;
+  font-family: var(--font-body), serif;
+  font-size: var(--fs-body);
   font-weight: 300;
-  line-height: 1.55;
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-  max-width: 660px;
-  margin: 0 auto 40px;
+  line-height: 1.4;
+  letter-spacing: var(--ls-body);
+  text-wrap: pretty;
+  max-width: 640px;
+  margin: 0 0 32px;
 }
 .founders {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 .founder {
   width: 56px;
@@ -250,7 +237,7 @@
 }
 .welcomeBlock {
   text-align: center;
-  padding: 120px 24px 0;
+  padding: 104px 24px 0;
   position: relative;
   z-index: 1;
 }
@@ -259,7 +246,7 @@
   font-size: var(--fs-heading);
   font-weight: 400;
   line-height: 1.2;
-  letter-spacing: -0.04em;
+  letter-spacing: var(--ls-heading);
 }
 .cta {
   gap: 12px;
@@ -292,19 +279,14 @@
 }
 .page [data-reveal="hidden"] {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(8px);
 }
 .page [data-reveal="shown"] {
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.7s ease,
-    transform 0.7s var(--manifesto-ease);
-}
-@media (min-width: 1700px) {
-  .opening {
-    padding-top: 60px;
-  }
+    opacity 0.3s ease-out,
+    transform 0.3s var(--manifesto-ease);
 }
 @media (max-width: 1000px) {
   .heroCaption span:last-child {
@@ -315,36 +297,23 @@
   .hero {
     margin: 8px;
     border-radius: 24px;
-    height: calc(100svh - 16px);
-    min-height: 730px;
-    max-height: 900px;
+    height: calc(88svh - 16px);
+    min-height: 620px;
+    max-height: 760px;
   }
   .heroImage {
     object-position: 56% center;
   }
-  .header {
-    padding: 14px 18px;
-  }
-  .backLink {
-    font-size: 12px;
-    gap: 6px;
-  }
-  .brandLogo {
-    width: 53px;
-    height: auto;
-  }
-  .brandSymbol {
-    height: 22px;
-  }
   .opening {
-    padding: 44px 20px 0;
+    /* Hero's own margin shrinks to 8px here, so the nav pill needs more
+       clearance from .opening than the desktop rule gives it. */
+    padding: 108px 20px 0;
   }
   .title {
     font-size: var(--fs-heading);
     margin-top: 28px;
   }
   .lede {
-    font-size: 18px;
     max-width: 330px;
     margin-top: 24px;
   }
@@ -366,19 +335,14 @@
     padding-top: 64px;
   }
   .belief {
-    padding: 64px 24px;
+    padding: 48px 24px;
+    margin-block: 48px;
   }
   .signoff {
-    padding-top: 72px;
-  }
-  .closing {
-    font-size: 22px;
+    padding: 40px 28px 0;
   }
   .welcomeBlock {
     padding-top: 80px;
-  }
-  .welcome {
-    font-size: 40px;
   }
   .scene {
     margin-top: 0;
@@ -391,12 +355,6 @@
   }
   .opening {
     padding-inline: 16px;
-  }
-  .lede {
-    font-size: 17px;
-  }
-  .welcome {
-    font-size: 33px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,7 +1,17 @@
+import type { ReactNode } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import ManifestoPage from "./ManifestoPage";
+
+// ScrollRoot's <LiquidGlass> renders its own displacement map on mount via a
+// 2D canvas context, which jsdom doesn't implement (no `canvas` package here)
+// — that's a jsdom gap, not something this page's own tests are about, so
+// it's stubbed to a passthrough the same way ContactModalProvider.test.tsx
+// stubs the Cal.com embed.
+vi.mock("@/components/ScrollRoot", () => ({
+  default: ({ children }: { children: ReactNode }) => children,
+}));
 
 /** Captures every element handed to the observer, so a test can decide when
     each one "enters view" instead of waiting on a real layout jsdom does not
@@ -98,12 +108,25 @@ describe("manifesto copy", () => {
     expect(screen.queryByText(/Yubi/)).not.toBeInTheDocument();
     const headings = screen.getAllByRole("heading", { level: 2 });
     expect(headings.map((heading) => heading.textContent)).toEqual([
-      "Home shouldn’t bethis complicated.",
+      "Indians abroad deserve better",
       "Welcome to Desh.",
     ]);
     expect(
-      screen.getByText(/That is why we are building Desh:/),
+      screen.getByText(/So we're building Desh:/),
     ).toBeInTheDocument();
+  });
+
+  it("includes the new letter's opening, diaspora figures, and closing promise", () => {
+    render(<ManifestoPage />);
+    const letter = screen.getByRole("article");
+    expect(letter).toHaveTextContent("Hi Reader far from home,");
+    expect(letter).toHaveTextContent("You moved abroad. Your connection to India moved with you.");
+    expect(letter).toHaveTextContent("34 Million people");
+    expect(letter).toHaveTextContent("208 countries");
+    expect(letter).toHaveTextContent("$135.6 billion");
+    expect(letter).toHaveTextContent("Within a decade, more Indians will live outside the country than ever before");
+    expect(letter).toHaveTextContent("We're building Desh so distance is never the reason that connection breaks.");
+    expect(letter).not.toHaveTextContent("We both grew up in Kerala");
   });
 
   /**
@@ -114,7 +137,7 @@ describe("manifesto copy", () => {
   it("signs the letter with both names in text", () => {
     const { container } = render(<ManifestoPage />);
 
-    expect(screen.getByText("Aswin & Vinayak")).toBeInTheDocument();
+    expect(screen.getByText("Aswin and Vinayak")).toBeInTheDocument();
     // The portrait lockup itself stays out of the accessibility tree, or
     // both names get announced twice.
     expect(
@@ -139,12 +162,14 @@ describe("manifesto copy", () => {
   it("offers a way out of the letter at both ends", () => {
     render(<ManifestoPage />);
 
-    expect(screen.getByRole("link", { name: /back to desh/i })).toHaveAttribute(
+    // The site nav's brand mark is the way home now, replacing the page's
+    // own "Back to Desh" link.
+    expect(screen.getAllByRole("link", { name: "Desh" }).at(0)).toHaveAttribute(
       "href",
       "/",
     );
     expect(
-      screen.getByRole("link", { name: /book a conversation/i }),
+      screen.getByRole("link", { name: /let's talk money/i }),
     ).toHaveAttribute("href", "/book");
   });
 

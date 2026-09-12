@@ -1,11 +1,11 @@
 /* Desh manifesto palette; scoped to this route, using the house typefaces. */
 [data-manifesto] {
-  --manifesto-paper: #ffffff;
-  --manifesto-warm: #f5f3ed;
+  --manifesto-paper: var(--background);
+  --manifesto-surface: #f8f8f8; /* Homepage FAQ surface. */
   --manifesto-ink: var(--color-ink);
-  --manifesto-copy: #2c2822;
-  --manifesto-muted: #666666;
+  --manifesto-copy: var(--color-ink);
+  --manifesto-muted: var(--color-ink);
   --manifesto-caption: #ffffff;
-  --manifesto-shade: #13201888;
+  --manifesto-shade: #00000088;
   --manifesto-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }

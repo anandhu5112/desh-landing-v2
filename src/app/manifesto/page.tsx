@@ -4,14 +4,14 @@ import ManifestoPage from "./ManifestoPage";
 export const metadata: Metadata = {
   title: "Manifesto | Desh",
   description:
-    "From our families in Kerala to Indians around the world: why we are building Desh, a financial home for Indians abroad.",
+    "Indians abroad deserve better. A letter from our founders on building Desh so distance never breaks your connection to India.",
   openGraph: {
     type: "article",
     url: "https://getdesh.com/manifesto",
     siteName: "Desh",
     title: "Manifesto | Desh",
     description:
-      "From our families in Kerala to Indians around the world: why we are building Desh, a financial home for Indians abroad.",
+      "Indians abroad deserve better. A letter from our founders on building Desh so distance never breaks your connection to India.",
   },
 };
 
