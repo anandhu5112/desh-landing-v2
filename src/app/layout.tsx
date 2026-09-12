@@ -62,7 +62,7 @@ export const metadata: Metadata = {
         url: "/images/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Desh landscape artwork with chairs by a river",
+        alt: "Sun rising over green hills and a river, Desh's hero artwork",
       },
     ],
   },
